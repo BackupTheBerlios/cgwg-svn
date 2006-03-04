@@ -1,0 +1,43 @@
+The Calana Grid Workload Generator can create grid workloads for grid scheduler
+evaluation. This software is GPL-licensed (see LICENSE file). You can obtain
+the latest version from the project page at Berlios:
+
+    http://developer.berlios.de/projects/cgwg/
+
+The generator works as follows:
+(1) Generate several cluster workloads using Lublin's model.
+(2) Add runtime estimates.
+(3) Mix these workloads together.
+(4) Add users to the jobs in the mixed workload.
+(5) Scale the workload to different workload levels.
+(6) Generate a XML output file for each workload level
+
+Since the workloads are stored as files, it is possible to reuse the same
+workload several times, ensuring that different simulation runs of a grid
+scheduler are comparable.
+
+PREREQUISITES:
+You need Ruby V1.8 installed. In addition, you need rubygems (a CPAN-like
+repository for Ruby) and the gem "builder" installed. Please see
+
+    http://docs.rubygems.org/read/book/1
+    http://docs.rubygems.org/read/chapter/3
+
+on how to install rubygems and the "builder" gem.
+
+USAGE:
+The configuration is directly build into the script workloadgen.rb, which
+you may want to read.
+
+Then, you may run
+
+    ruby workloadgen.rb
+    
+to create a set of workload files in XML format.
+
+TODO: (as of March 4, 2005)
+* Need to switch to Dan Tsafrir's runtime estimate model (MD)
+* Integrate coallocation jobs (MD)
+* Incorporate workflows, which would replace the "preceedingJobID" values in
+  the job description elements.
+* Incorporate data transfers.
