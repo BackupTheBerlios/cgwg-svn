@@ -83,7 +83,7 @@ class Lublin
         # compile the stuff... Note that there will be a warning about the 
         # redefinition of some preprocessor directives
         print "compilation... "
-        compile_cmd="gcc -o "+@@config.runPath+"/m_lublin99 "+
+        compile_cmd="gcc "+@@config.compilerFlags+" -o "+@@config.runPath+"/m_lublin99 "+
                 sourcePath+"/m_lublin99.c"
         compile_msg=`#{compile_cmd}`
     end

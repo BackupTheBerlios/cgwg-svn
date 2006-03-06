@@ -80,6 +80,7 @@ print "Calana Workload Generator\n"
 @@config = ConfigManager.new
 clusterA=ClusterConfig.new("ClusterA", 128, 2)
 clusterB=ClusterConfig.new("ClusterB", 64, 1)
+coallocationCluster=ClusterConfig.new("Coallocation", 128, 2)
 @@config.addCluster(clusterA)
 @@config.addCluster(clusterB)
 print "Starting up in directory #{@@config.basePath}\n"
@@ -100,6 +101,24 @@ aggregatedWorkload = nil
         tempWorkload.mergeWorkloadTo(aggregatedWorkload)
     end
 }
+
+###
+## MD: Working on the coallocation. We now can split a workload in
+## two workloads that contain splitted jobs. Next, we need to ensure
+## that we wrap them in multijob tags when we process them.
+## tomorrow...
+#
+
+#coallocationWorkload = genLublinCluster(coallocationCluster)
+#print "The original workload:\n"
+#builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
+#coallocationWorkload.xmlize(builder)
+
+#(coallocatedA, coallocatedB) = coallocationWorkload.splitWorkload()
+#print "The modified workload\n"
+#builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
+#coallocatedB.xmlize(builder)
+#exit
 
 ###
 ## Next step: We generate a set of users and connect them to jobs at random.

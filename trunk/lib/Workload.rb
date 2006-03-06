@@ -15,14 +15,7 @@
 # along with CGWG; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-###
-## Mixin for a real clone of a class instance.
-#
-module DeepClone
-    def deep_clone
-        return Marshal::load(Marshal.dump(self))
-    end
-end
+require 'lib/Utils'
 
 ###
 ## Contains the description of an atomic job. A coallocation job 
@@ -122,9 +115,15 @@ class AtomicJob
     ## Returns an array containing the two cloned jobs.
     #
     def splitJob
-        retval = Array.new()
         job1=self.deep_clone()
         job2=self.deep_clone()
+        newNodes=(@numberAllocatedProcessors / 2).to_i
+        if newNodes == 0 # we do not want to have null jobs ;-)
+            newNodes = 1
+        end
+        job1.numberAllocatedProcessors=newNodes
+        job2.numberAllocatedProcessors=newNodes
+        return job1, job2
     end
     def to_s
         writeSWFFormat()
@@ -219,6 +218,32 @@ class Workload
     # Add an array of jobs to the workload.
     def addJobs(additionalJobs)
         @jobs = @jobs | additionalJobs
+    end
+    # adds an additional job to the workload.
+    def addJob(aJob)
+        @jobs.push(aJob)
+    end
+    # Splits the workload in two: We use the splitJob method on
+    # all jobs in the workload. Used for coallocation. Returns two
+    # workload instances. Example usage:
+    # (coallocatedA, coallocatedB) = coallocationWorkload.splitWorkload()
+    def splitWorkload()
+        # Create new configurations and workloads.
+        nodes = (@clusterConfig.nodes / 2).to_i
+        smallestJobSize = (@clusterConfig.nodes / 2).to_i
+        name = @clusterConfig.name
+        leftConfig=ClusterConfig.new("left"+name, nodes, smallestJobSize)
+        leftWorkload = Workload.new(@clusterConfig)
+        rightConfig=ClusterConfig.new("right"+name, nodes, smallestJobSize)
+        rightWorkload = Workload.new(@clusterConfig)
+        # Split each job of this workload and add it to the new workloads
+        @jobs.each {|j|
+            leftJob, rightJob = j.splitJob()
+            print "leftJob: \n#{leftJob}\nrightJob: \n#{rightJob}"
+            leftWorkload.addJob(leftJob)
+            rightWorkload.addJob(rightJob)
+        }
+        return leftWorkload, rightWorkload
     end
     ###
     ## Sorts the jobs according to their submit time.
