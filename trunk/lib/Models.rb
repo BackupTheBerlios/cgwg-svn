@@ -42,10 +42,14 @@ class Lublin
         # This defines the change point in the cdf, see Lublin's code.
         umed = uhi - 2.5
         @clusterConfig = <<-EOC
+#undef SIZE
 #define SIZE #{size}          
 /* UHI: Needs to be adjusted, depending on the cluster */
+#undef UHI
 #define UHI #{uhi}
+#undef ULOW
 #define ULOW #{ulow}
+#undef UMED
 #define UMED #{umed}
         EOC
     end
@@ -57,8 +61,11 @@ class Lublin
     def prepare()
         loadConfig = <<-EOC
 /* Values for a different load level */
+#undef A1
 #define A1 4.2
+#undef AARR
 #define AARR 10.23
+#undef BARR
 #define BARR 0.4871
         EOC
         # Create a new configuration including the load and the number of jobs
