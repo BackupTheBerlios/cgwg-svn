@@ -16,10 +16,20 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 ###
+## Mixin for a real clone of a class instance.
+#
+module DeepClone
+    def deep_clone
+        return Marshal::load(Marshal.dump(self))
+    end
+end
+
+###
 ## Contains the description of an atomic job. A coallocation job 
 ## might just reference its atomic jobs.
 #
 class AtomicJob
+    include DeepClone
     attr_accessor :jobID, :submitTime, :waitTime, :runTime, 
         :numberAllocatedProcessors, :averageCPUTimeUsed, :usedMemory,
         :reqNumProcessors, :wallTime, :reqMemory, :status, :userID, :groupID,
@@ -102,7 +112,20 @@ class AtomicJob
         @partitionID = items[15].to_i
         @preceedingJobID = items[16].to_i
         @timeAfterPreceedingJob = items[17].to_i
-    end    
+    end
+    ###
+    ## Splits a job in two parts for coallocation. 
+    ## The nodes are divided by two, and all other parameters are
+    ## left intact. So one job is split in two concurrent jobs.
+    ## The job IDs are set to zero because they are not valid any more,
+    ## you need to reassign a new ID.
+    ## Returns an array containing the two cloned jobs.
+    #
+    def splitJob
+        retval = Array.new()
+        job1=self.deep_clone()
+        job2=self.deep_clone()
+    end
     def to_s
         writeSWFFormat()
     end
@@ -131,6 +154,7 @@ end
 ## This class defines the workload as a collection of jobs.
 #
 class Workload
+    include DeepClone
     attr_accessor :jobs, :clusterConfig
     def initialize(clusterConfig)
         @clusterConfig=clusterConfig
@@ -252,9 +276,6 @@ class Workload
         #print "Mean Runtime: #{meanRuntime}, Mean Interarrival Time: #{meanInterArrival}\n"
         @load=(@meanRuntime * @meanNodes) / (@clusterConfig.nodes * @meanInterArrival)
         return @load
-    end
-    def deep_clone
-        return Marshal::load(Marshal.dump(self))
     end
 end
 

@@ -33,11 +33,12 @@ require 'lib/Helpers'
 # 
 class ConfigManager
     attr_accessor :size, :outFile,  :clusters, :numUsers,
-        :timeCorrection, :basePath, :runPath, :loadDeviation
+        :timeCorrection, :basePath, :runPath, :loadDeviation,
+        :compilerFlags
     def initialize()
         @clusters = Array.new
         # Number of jobs in each workload
-        @size=1000
+        @size=10
         @numUsers = 10
         @outFile = "workload"
         @timeCorrection = 10
@@ -46,6 +47,9 @@ class ConfigManager
         @loadDeviation = 0.025
         @basePath = Dir.getwd()
         @runPath=@basePath+"/var"
+        # Adjust this to your environment. With Linux, we need to link
+        # against the GNU math lib (-lm /usr/lib/libm.a)
+        @compilerFlags="-lm /usr/lib/libm.a"
     end
     
     def addCluster(cluster)
