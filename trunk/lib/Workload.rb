@@ -110,8 +110,8 @@ class AtomicJob
     ## Splits a job in two parts for coallocation. 
     ## The nodes are divided by two, and all other parameters are
     ## left intact. So one job is split in two concurrent jobs.
-    ## The job IDs are set to zero because they are not valid any more,
-    ## you need to reassign a new ID.
+    ## The job IDs are the one of the original job. We expect that they
+    ## are embedded in a MultiJob.
     ## Returns an array containing the two cloned jobs.
     #
     def splitJob
@@ -130,6 +130,97 @@ class AtomicJob
     end
 end
 
+###
+## Encapsulates a coallocation job. Contains at least two atomic
+## jobs. Behaves like a single job for the manipulations in general,
+## but maps certain modifications to the contained atomic jobs.
+#
+class MultiJob
+    attr_accessor :jobs, :runTime, :userID
+    ###
+    ## Creates a multijob. The given bigJob is
+    ## split using bigJob.splitJob(), and the two jobs are used
+    ## to initialize the instance.
+    #
+    def initialize(bigJob)
+        job1, job2 = bigJob.splitJob()
+        @jobs = Array.new
+        @primaryJob = job1
+        ###
+        ## Mapping some values to the primary job. Redefinition for
+        ## other values happens below.
+        #
+        @runTime = @primaryJob.runTime()
+        @userID = @primaryJob.userID()
+        self.addJob(job1)
+        self.addJob(job2)
+    end
+    ###
+    ## add an atomic job to the multijob.
+    #
+    def addJob(job)
+        # We assume we always have the same ID for all subjobs.
+        job.jobID=@primaryJob.jobID()
+        @jobs.push(job)
+    end
+    ###
+    ## Iterates over each job.
+    #
+    def eachJob
+        @jobs.each {|j| yield j}
+    end
+    ###
+    ## Returns the individual jobs of this multijob in SWF Format.
+    #
+    def writeSWFFormat
+        retval = ""
+        self.eachJob {|j|
+            retval += j.writeSWFFormat() + "\n"
+        }
+        return retval
+    end
+    ###
+    ## Returns a <multijob/> tag with the associated atomic jobs inside.
+    #
+    def writeXMLFormat(builder)
+        builder.multijob("ID" => "#{@primaryJob.jobID}") { |mj|
+            self.eachJob {|j|
+                j.writeXMLFormat(mj)
+            }
+        }
+    end
+    
+    ###
+    ## The following methods are needed to emulate the behaviour
+    ## of a single job.
+    #
+    def numberAllocatedProcessors
+        retval=0
+        self.eachJob {|j|
+            retval+=j.numberAllocatedProcessors
+        }
+        return retval
+    end
+    def submitTime=(newSubmitTime)
+        self.eachJob {|j|
+            j.submitTime = newSubmitTime
+        }
+    end
+    def submitTime
+        return @primaryJob.submitTime
+    end
+    def jobID=(newID)
+        self.eachJob {|j|
+            j.jobID = newID
+        }
+    end
+    def jobID
+        return @primaryJob.jobID()
+    end
+    def to_s
+        writeSWFFormat()
+    end
+end
 
 ###
 ## Models the users.
@@ -211,9 +302,9 @@ class Workload
     ## iterate over both workloads, and put them in the right sequence. 
     #
     def mergeWorkloadTo(aWorkload)
-        # TODO: Create a new cluster config!
         aWorkload.addJobs(self.jobs)
         aWorkload.sort!
+        @clusterConfig.mergeTo(aWorkload.clusterConfig)
     end
     # Add an array of jobs to the workload.
     def addJobs(additionalJobs)
@@ -245,6 +336,25 @@ class Workload
         }
         return leftWorkload, rightWorkload
     end
+    
+    ###
+    ## Turns each job in this workload in a multijob. The jobs are splitted in
+    ## two parts using job.splitJob().
+    #
+    def createMultiJobWorkload()
+        nodes = (@clusterConfig.nodes / 2).to_i
+        smallestJobSize = (@clusterConfig.nodes / 2).to_i
+        name = @clusterConfig.name
+        retval = Workload.new(@clusterConfig)
+        @jobs.each {|j|
+            #leftJob, rightJob = j.splitJob()
+            #multiJob=MultiJob.new(leftJob, rightJob)
+            multiJob=MultiJob.new(j)
+            retval.addJob(multiJob)
+        }
+        return retval        
+    end
+    
     ###
     ## Sorts the jobs according to their submit time.
     #
@@ -295,9 +405,9 @@ class Workload
             aggInterarrivalTime += (job.submitTime - lastArrival)
             lastArrival = job.submitTime
         }
-        @meanRuntime = aggRuntime / @@config.size.to_f
-        @meanNodes = aggNodes / @@config.size.to_f
-        @meanInterArrival = aggInterarrivalTime / @@config.size.to_f
+        @meanRuntime = aggRuntime / @clusterConfig.size.to_f
+        @meanNodes = aggNodes / @clusterConfig.size.to_f
+        @meanInterArrival = aggInterarrivalTime / @clusterConfig.size.to_f
         #print "Mean Runtime: #{meanRuntime}, Mean Interarrival Time: #{meanInterArrival}\n"
         @load=(@meanRuntime * @meanNodes) / (@clusterConfig.nodes * @meanInterArrival)
         return @load

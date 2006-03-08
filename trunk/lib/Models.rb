@@ -35,7 +35,7 @@ class Lublin
     def initialize(machineConfig)
         @machineConfig = machineConfig
         # Calculate size-dependent values
-        size=@@config.size
+        size=@machineConfig.size
         uhi = log2(@machineConfig.nodes).to_i
         ulow = log2(@machineConfig.smallestJobSize())
         # UMED should be in [UHI-1.5, UHI-3.5], make this a static setting.

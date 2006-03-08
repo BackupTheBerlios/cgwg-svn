@@ -51,16 +51,30 @@ end
 ## Encapsulate the configuration of a cluster.
 #
 class ClusterConfig
-    attr_accessor :name, :nodes, :smallestJobSize
-    def initialize(name, nodes, smallestJobSize)
+    attr_accessor :name, :nodes, :smallestJobSize, :size
+    ###
+    ## Provides all data a cluster needs to have:
+    ## - a name
+    ## - the number of nodes available in the system (max. job size)
+    ## - the smallest possible job size
+    ## - the size of the workload (the number of jobs to generate)
+    #
+    def initialize(name, nodes, smallestJobSize, size)
         @name = name
         @nodes = nodes.to_i
         @smallestJobSize = smallestJobSize.to_i
+        @size = size
     end
     def to_s
         retval = "Cluster ID: #{@name}\n"
         retval += " - number of nodes: #{@nodes}\n"
         retval += " - smallest job size: #{@smallestJobSize}\n"
+    end
+    def mergeTo(other)
+        other.nodes += @nodes
+        if (@smallestJobSize < other.smallestJobSize)
+            other.smallestJobSize = @smallestJobSize
+        end
     end
 end
 

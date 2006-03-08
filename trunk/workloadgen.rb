@@ -32,13 +32,11 @@ require 'lib/Helpers'
 ## Configuration goes here. Adjust to your desired settings.
 # 
 class ConfigManager
-    attr_accessor :size, :outFile,  :clusters, :numUsers,
+    attr_accessor :outFile,  :clusters, :numUsers,
         :timeCorrection, :basePath, :runPath, :loadDeviation,
         :compilerFlags
     def initialize()
         @clusters = Array.new
-        # Number of jobs in each workload
-        @size=10
         @numUsers = 10
         @outFile = "workload"
         @timeCorrection = 10
@@ -78,9 +76,9 @@ end
 #
 print "Calana Workload Generator\n"
 @@config = ConfigManager.new
-clusterA=ClusterConfig.new("ClusterA", 128, 2)
-clusterB=ClusterConfig.new("ClusterB", 64, 1)
-coallocationCluster=ClusterConfig.new("Coallocation", 128, 2)
+clusterA=ClusterConfig.new("ClusterA", 128, 2, 10)
+clusterB=ClusterConfig.new("ClusterB", 64, 1, 10)
+coallocationCluster=ClusterConfig.new("Coallocation", 128, 2, 10)
 @@config.addCluster(clusterA)
 @@config.addCluster(clusterB)
 print "Starting up in directory #{@@config.basePath}\n"
@@ -102,23 +100,14 @@ aggregatedWorkload = nil
     end
 }
 
-###
-## MD: Working on the coallocation. We now can split a workload in
-## two workloads that contain splitted jobs. Next, we need to ensure
-## that we wrap them in multijob tags when we process them.
-## tomorrow...
-#
 
-#coallocationWorkload = genLublinCluster(coallocationCluster)
-#print "The original workload:\n"
-#builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
-#coallocationWorkload.xmlize(builder)
-
-#(coallocatedA, coallocatedB) = coallocationWorkload.splitWorkload()
+coallocationWorkload = genLublinCluster(coallocationCluster)
+multiJobbedWorkload = coallocationWorkload.createMultiJobWorkload()
 #print "The modified workload\n"
 #builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
-#coallocatedB.xmlize(builder)
-#exit
+#multiJobbedWorkload.xmlize(builder)
+
+multiJobbedWorkload.mergeWorkloadTo(aggregatedWorkload)
 
 ###
 ## Next step: We generate a set of users and connect them to jobs at random.
