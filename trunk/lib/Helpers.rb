@@ -78,3 +78,42 @@ class ClusterConfig
     end
 end
 
+###
+## Configuration goes here. Adjust to your desired settings.
+# 
+class ConfigManager
+    attr_accessor :outFile,  :clusters, :numUsers,
+        :timeCorrection, :basePath, :runPath, :loadDeviation,
+        :compilerFlags
+    def initialize()
+        @clusters = Array.new
+        @numUsers = 10
+        @outFile = "workload"
+        @timeCorrection = 10
+        # Deviation: Which deviation in the load level is acceptable for a load?
+        # This is percent, for 2.5% write 0.025
+        @loadDeviation = 0.025
+        @basePath = Dir.getwd()
+        @runPath=@basePath+"/var"
+        # Adjust this to your environment. With Linux, we need to link
+        # against the GNU math lib (-lm /usr/lib/libm.a)
+        @compilerFlags="-lm /usr/lib/libm.a"
+    end
+    
+    def addCluster(cluster)
+        @clusters.push(cluster)
+    end
+    
+    def eachCluster
+        @clusters.each {|p|
+            yield p
+        }
+    end
+    def printConfig
+        print "Running with the configuration:\n"
+        print self.to_yaml()+"\n";
+    end
+    def to_s
+        printConfig
+    end
+end

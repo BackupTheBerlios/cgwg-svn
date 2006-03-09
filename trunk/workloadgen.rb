@@ -25,57 +25,20 @@ require 'lib/Helpers'
 
 ###
 ## This is the main workload generator file. You should look at the
-## ConfigManager class and the main program below.
+## ConfigManager class (in lib/Helpers.rb) and the main program below.
 #
-
-###
-## Configuration goes here. Adjust to your desired settings.
-# 
-class ConfigManager
-    attr_accessor :outFile,  :clusters, :numUsers,
-        :timeCorrection, :basePath, :runPath, :loadDeviation,
-        :compilerFlags
-    def initialize()
-        @clusters = Array.new
-        @numUsers = 10
-        @outFile = "workload"
-        @timeCorrection = 10
-        # Deviation: Which deviation in the load level is acceptable for a load?
-        # This is percent, for 2.5% write 0.025
-        @loadDeviation = 0.025
-        @basePath = Dir.getwd()
-        @runPath=@basePath+"/var"
-        # Adjust this to your environment. With Linux, we need to link
-        # against the GNU math lib (-lm /usr/lib/libm.a)
-        @compilerFlags="-lm /usr/lib/libm.a"
-    end
-    
-    def addCluster(cluster)
-        @clusters.push(cluster)
-    end
-    
-    def eachCluster
-        @clusters.each {|p|
-            yield p
-        }
-    end
-    def printConfig
-        print "Running with the configuration:\n"
-        print self.to_yaml()+"\n";
-    end
-    def to_s
-        printConfig
-    end
-end
-
-
-
 
 ###
 ## Script startup
 #
 print "Calana Workload Generator\n"
+
+###
+## You may also want to check out the ConfigManager class in lib/Helpers.rb.
+#
 @@config = ConfigManager.new
+@@config.numUsers = 10
+
 clusterA=ClusterConfig.new("ClusterA", 128, 2, 10)
 clusterB=ClusterConfig.new("ClusterB", 64, 1, 10)
 coallocationCluster=ClusterConfig.new("Coallocation", 128, 2, 10)
@@ -106,7 +69,6 @@ multiJobbedWorkload = coallocationWorkload.createMultiJobWorkload()
 #print "The modified workload\n"
 #builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
 #multiJobbedWorkload.xmlize(builder)
-
 multiJobbedWorkload.mergeWorkloadTo(aggregatedWorkload)
 
 ###
