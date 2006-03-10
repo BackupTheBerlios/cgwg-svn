@@ -60,7 +60,7 @@ class AtomicJob
         retval += "#{@preceedingJobID}\t#{@timeAfterPreceedingJob}\n"
     end
     def writeXMLFormat(builder)
-        builder.job("ID" => "#{@jobID}") { |j| 
+        builder.job("id" => "#{@jobID}") { |j| 
             j.timing("waittime" => "#{@waitTime.to_i}", 
                     "submittime"=> "#{@submitTime.to_i}") 
             j.size { |s|
@@ -183,7 +183,7 @@ class MultiJob
     ## Returns a <multijob/> tag with the associated atomic jobs inside.
     #
     def writeXMLFormat(builder)
-        builder.multijob("ID" => "#{@primaryJob.jobID}") { |mj|
+        builder.multijob("id" => "#{@primaryJob.jobID}") { |mj|
             self.eachJob {|j|
                 j.writeXMLFormat(mj)
             }
@@ -217,6 +217,15 @@ class MultiJob
     def jobID
         return @primaryJob.jobID()
     end
+    def userID=(newID)
+	self.eachJob {|j|
+            j.userID = newID
+        }
+    end
+    def userID
+        return @primaryJob.userID()
+    end
+
     def to_s
         writeSWFFormat()
     end
@@ -233,7 +242,7 @@ class User
         @id=id
     end
     def writeXMLFormat(builder)
-        builder.user("ID"=>"#{@id}") {|u|
+        builder.user("id"=>"#{@id}") {|u|
             u.pref("key"=>"price", "weight"=>"#{@pricePreference}")
             u.pref("key"=>"finishtime", "weight"=>"#{@perfPreference}")
         }
