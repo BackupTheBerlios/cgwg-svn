@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 # This file is part of the calana grid workload generator.
 # (c) 2006 Mathias Dalheimer, md@gonium.net
 #
@@ -113,3 +113,4 @@ collection.eachWorkload {|w|
     w.xmlize(builder)
     outFile.close
 }
+
