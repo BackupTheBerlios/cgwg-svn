@@ -61,16 +61,16 @@ class AtomicJob
     end
     def writeXMLFormat(builder)
         builder.job("ID" => "#{@jobID}") { |j| 
-            j.timing("waittime" => "#{@waitTime}", 
-                    "submittime"=> "#{@submitTime}") 
+            j.timing("waittime" => "#{@waitTime.to_i}", 
+                    "submittime"=> "#{@submitTime.to_i}") 
             j.size { |s|
                 s.actual("cpus"=> "#{@numberAllocatedProcessors}",
                         "memory" => "#{@usedMemory}",
-                        "runtime" => "#{@runTime}",
-                        "avgcputime" => "#{@averageCPUTimeUsed}")
+                        "runtime" => "#{@runTime.to_i}",
+                        "avgcputime" => "#{@averageCPUTimeUsed.to_i}")
                 s.requested("cpus" => "#{@reqNumProcessors}",
-                        "memory" => "#{@reqMemory}",
-                        "walltime" => "#{@wallTime}")
+                        "memory" => "#{@reqMemory.to_i}",
+                        "walltime" => "#{@wallTime.to_i}")
             }
             j.meta { |m|
                 m.status("value"=>"#{@status}")
@@ -82,7 +82,7 @@ class AtomicJob
             j.cluster("partitionID" => "#{@partitionID}",
                     "queueID" => "#{@queueID}")
             j.dependency("preceedingJobID"=>"#{@preceedingJobID}",
-                "timeAfterPreceedingJob"=>"#{@timeAfterPreceedingJob}")
+                "timeAfterPreceedingJob"=>"#{@timeAfterPreceedingJob.to_i}")
         }
     end 
     def readSWFFormat(line)
@@ -455,22 +455,20 @@ class WorkloadCollection
     ## slots between low and high.
     #
     def isDense?(low, high)
-        dense=true;
         if (! @workloads.has_key?(low) or ! @workloads.has_key?(high))
             raise "Illegal argument: key not present"
         end
         keys=@workloads.keys
         keys.sort!
-        started = false;
         keys.each{ |key|
             if ((key >= low) and (key <= high))
                 workload=@workloads[key]
                 if (workload == nil)
-                    dense = false;
+                    return false;
                 end
             end
         }
-        return dense
+        return true
     end
     # Provides an iterator to walk over all desired load levels.
     def generateEachSlot
