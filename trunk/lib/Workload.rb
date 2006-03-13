@@ -131,107 +131,6 @@ class AtomicJob
 end
 
 ###
-## Encapsulates a coallocation job. Contains at least two atomic
-## jobs. Behaves like a single job for the manipulations in general,
-## but maps certain modifications to the contained atomic jobs.
-#
-class MultiJob
-    attr_accessor :jobs, :runTime, :userID
-    ###
-    ## Creates a multijob. The given bigJob is
-    ## split using bigJob.splitJob(), and the two jobs are used
-    ## to initialize the instance.
-    #
-    def initialize(bigJob)
-        job1, job2 = bigJob.splitJob()
-        @jobs = Array.new
-        @primaryJob = job1
-        ###
-        ## Mapping some values to the primary job. Redefinition for
-        ## other values happens below.
-        #
-        @runTime = @primaryJob.runTime()
-        @userID = @primaryJob.userID()
-        self.addJob(job1)
-        self.addJob(job2)
-    end
-    ###
-    ## add an atomic job to the multijob.
-    #
-    def addJob(job)
-        # We assume we always have the same ID for all subjobs.
-        job.jobID=@primaryJob.jobID()
-        @jobs.push(job)
-    end
-    ###
-    ## Iterates over each job.
-    #
-    def eachJob
-        @jobs.each {|j| yield j}
-    end
-    ###
-    ## Returns the individual jobs of this multijob in SWF Format.
-    #
-    def writeSWFFormat
-        retval = ""
-        self.eachJob {|j|
-            retval += j.writeSWFFormat() + "\n"
-        }
-        return retval
-    end
-    ###
-    ## Returns a <multijob/> tag with the associated atomic jobs inside.
-    #
-    def writeXMLFormat(builder)
-        builder.multijob("id" => "#{@primaryJob.jobID}") { |mj|
-            self.eachJob {|j|
-                j.writeXMLFormat(mj)
-            }
-        }
-    end
-    
-    ###
-    ## The following methods are needed to emulate the behaviour
-    ## of a single job.
-    #
-    def numberAllocatedProcessors
-        retval=0
-        self.eachJob {|j|
-            retval+=j.numberAllocatedProcessors
-        }
-        return retval
-    end
-    def submitTime=(newSubmitTime)
-        self.eachJob {|j|
-            j.submitTime = newSubmitTime
-        }
-    end
-    def submitTime
-        return @primaryJob.submitTime
-    end
-    def jobID=(newID)
-        self.eachJob {|j|
-            j.jobID = newID
-        }
-    end
-    def jobID
-        return @primaryJob.jobID()
-    end
-    def userID=(newID)
-	self.eachJob {|j|
-            j.userID = newID
-        }
-    end
-    def userID
-        return @primaryJob.userID()
-    end
-
-    def to_s
-        writeSWFFormat()
-    end
-end
-
-###
 ## Models the users.
 #
 class User
@@ -250,15 +149,60 @@ class User
 end
 
 ###
+## Encapsulates the task tag in the workload XML file.
+#
+class Task
+    attr_accessor :id
+    ###
+    ## Create a new task. type must be a string of either "sequence"
+    ## or "coallocation" and describes how the associated jobs are
+    ## related.
+    #
+    def initialize(id, type)
+        @id = id
+        @type = type
+        @jobs = []
+    end
+    # Adds a single job.
+    def addJob(job)
+        @jobs.push(job)
+    end
+    # Add an array of jobs to the tasks.
+    def addJobs(additionalJobs)
+        @jobs = @jobs | additionalJobs
+    end
+    def writeXMLFormat(builder)
+        builder.task("id"=>"task-#{@id}", "type"=>"#{@type}") {|t|
+            @jobs.each {|j|
+                t.part("jobIDRef"=>"job-#{j.jobID}")
+            }
+        }
+    end
+    # Determines the earliest submit time of all jobs in this task.
+    def getEarliestSubmitTime()
+        retval = @jobs[0].submitTime()
+        @jobs.each {|j|
+            if retval > j.submitTime
+                retval = j.submitTime
+            end
+        }
+        return retval
+    end
+end
+
+###
 ## This class defines the workload as a collection of jobs.
+## TODO: Refactor so that we have two workload classes: One containing
+## only jobs, and another adding users and tasks.
 #
 class Workload
     include DeepClone
-    attr_accessor :jobs, :clusterConfig
+    attr_accessor :jobs, :clusterConfig, :tasks
     def initialize(clusterConfig)
         @clusterConfig=clusterConfig
         @jobs=Array.new
         @users=Array.new
+        @tasks=Array.new
         @swf=nil
     end
     def to_s
@@ -312,6 +256,7 @@ class Workload
     #
     def mergeWorkloadTo(aWorkload)
         aWorkload.addJobs(self.jobs)
+        aWorkload.addTasks(self.tasks)
         aWorkload.sort!
         @clusterConfig.mergeTo(aWorkload.clusterConfig)
     end
@@ -319,53 +264,54 @@ class Workload
     def addJobs(additionalJobs)
         @jobs = @jobs | additionalJobs
     end
+    def addTasks(additionalTasks)
+        @tasks = @tasks | additionalTasks
+    end
     # adds an additional job to the workload.
     def addJob(aJob)
         @jobs.push(aJob)
     end
-    # Splits the workload in two: We use the splitJob method on
-    # all jobs in the workload. Used for coallocation. Returns two
-    # workload instances. Example usage:
-    # (coallocatedA, coallocatedB) = coallocationWorkload.splitWorkload()
-    def splitWorkload()
-        # Create new configurations and workloads.
+    # Turns each job in this workload in a multijob. The jobs are splitted in
+    # two parts using job.splitJob().
+    def createCoallocationJobWorkload()
         nodes = (@clusterConfig.nodes / 2).to_i
         smallestJobSize = (@clusterConfig.nodes / 2).to_i
         name = @clusterConfig.name
-        leftConfig=ClusterConfig.new("left"+name, nodes, smallestJobSize)
-        leftWorkload = Workload.new(@clusterConfig)
-        rightConfig=ClusterConfig.new("right"+name, nodes, smallestJobSize)
-        rightWorkload = Workload.new(@clusterConfig)
-        # Split each job of this workload and add it to the new workloads
+        newConfig=ClusterConfig.new(name, nodes, smallestJobSize, @jobs.length)
+        retval = Workload.new(newConfig)
         @jobs.each {|j|
             leftJob, rightJob = j.splitJob()
-            print "leftJob: \n#{leftJob}\nrightJob: \n#{rightJob}"
-            leftWorkload.addJob(leftJob)
-            rightWorkload.addJob(rightJob)
-        }
-        return leftWorkload, rightWorkload
-    end
-    
-    ###
-    ## Turns each job in this workload in a multijob. The jobs are splitted in
-    ## two parts using job.splitJob().
-    #
-    def createMultiJobWorkload()
-        nodes = (@clusterConfig.nodes / 2).to_i
-        smallestJobSize = (@clusterConfig.nodes / 2).to_i
-        name = @clusterConfig.name
-        retval = Workload.new(@clusterConfig)
-        @jobs.each {|j|
-            #leftJob, rightJob = j.splitJob()
-            #multiJob=MultiJob.new(leftJob, rightJob)
-            multiJob=MultiJob.new(j)
-            retval.addJob(multiJob)
+            retval.addJob(leftJob)
+            retval.addJob(rightJob)
+            retval.buildCoallocationTask(leftJob, rightJob)
         }
         return retval        
     end
-    
+    def createSequentialJobWorkload()
+        retval = Workload.new(@clusterConfig)
+        @jobs.each {|j|
+            retval.addJob(j)
+            retval.buildSequentialTask(j)
+        }
+        return retval
+    end
+    # Adds a new task for the given job to the task list.
+    def buildSequentialTask(job)
+        task=Task.new(@tasks.length, "sequence")
+        task.addJob(job)
+        @tasks.push(task)
+    end
+    # Adds a new coallocation task consisting of the given jobs
+    # to the task list.
+    def buildCoallocationTask(job1, job2)
+        task=Task.new(@tasks.length, "coallocation")
+        task.addJob(job1)
+        task.addJob(job2)
+        @tasks.push(task)
+    end
     ###
-    ## Sorts the jobs according to their submit time.
+    ## Sorts the jobs according to their submit time. The task structure is
+    ## adjusted as well.
     #
     def sort!
         # Strip out eventual nils, then sort accorting to the submit time
@@ -373,9 +319,17 @@ class Workload
         @jobs.sort! { |a, b|
             a.submitTime <=> b.submitTime
         }
-        # Check that the array index equals the job id.
+        @tasks.sort! { |a,b|
+            a.getEarliestSubmitTime <=> b.getEarliestSubmitTime
+        }
+        # Check that the array index equals the job id. otherwise, the
+        # produced XML will have mixed indices...
         for i in 0..@jobs.length-1
             @jobs[i].jobID = i+1
+        end
+        # same for tasks.
+        for i in 0..@tasks.length-1
+            @tasks[i].id = i+1
         end
     end
     def xmlize(builder)
@@ -389,6 +343,12 @@ class Workload
             w.users {|u|
                 @users.each{|user|
                     user.writeXMLFormat(u)
+                }
+            }
+            builder.comment! "Task structure definition"
+            w.tasks {|t|
+                @tasks.each {|task|
+                    task.writeXMLFormat(t)
                 }
             }
             builder.comment! "Job definitions"

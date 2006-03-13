@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>new (AtomicJob)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 31</span>
+    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">initialize</span>
+        <span class="ruby-comment cmt"># These are the default values as defined in the SWF definition,</span>
+        <span class="ruby-comment cmt"># see http://www.cs.huji.ac.il/labs/parallel/workload/swf.html</span>
+        <span class="ruby-ivar">@jobID</span> = <span class="ruby-value">0</span>
+        <span class="ruby-ivar">@submitTime</span> = <span class="ruby-value">-1</span>
+        <span class="ruby-ivar">@waitTime</span> = <span class="ruby-value">-1</span>
+        <span class="ruby-ivar">@runTime</span> = <span class="ruby-value">-1</span>
+        <span class="ruby-ivar">@numberAllocatedProcessors</span> = <span class="ruby-value">-1</span>
+        <span class="ruby-ivar">@averageCPUTimeUsed</span> = <span class="ruby-value">-1</span>
+        <span class="ruby-ivar">@usedMemory</span> = <span class="ruby-value">-1</span>
+        <span class="ruby-ivar">@reqNumProcessors</span> = <span class="ruby-value">-1</span>
+        <span class="ruby-ivar">@wallTime</span> = <span class="ruby-value">-1</span>
+        <span class="ruby-ivar">@reqMemory</span> = <span class="ruby-value">-1</span>
+        <span class="ruby-ivar">@status</span> = <span class="ruby-value">-1</span>
+        <span class="ruby-ivar">@userID</span> = <span class="ruby-value">-1</span>
+        <span class="ruby-ivar">@groupID</span> = <span class="ruby-value">-1</span>
+        <span class="ruby-ivar">@appID</span> = <span class="ruby-value">-1</span>
+        <span class="ruby-ivar">@penalty</span> = <span class="ruby-value">0</span>
+        <span class="ruby-ivar">@queueID</span> = <span class="ruby-value">0</span>
+        <span class="ruby-ivar">@partitionID</span> = <span class="ruby-value">-1</span>
+        <span class="ruby-ivar">@preceedingJobID</span> = <span class="ruby-value">-1</span>
+        <span class="ruby-ivar">@timeAfterPreceedingJob</span> = <span class="ruby-value">-1</span>
+    <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>

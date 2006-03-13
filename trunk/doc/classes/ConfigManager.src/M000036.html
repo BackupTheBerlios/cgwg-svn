@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>new (ConfigManager)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/Helpers.rb, line 94</span>
+    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">initialize</span>()
+        <span class="ruby-ivar">@clusters</span> = <span class="ruby-constant">Array</span>.<span class="ruby-identifier">new</span>
+        <span class="ruby-ivar">@numUsers</span> = <span class="ruby-value">10</span>
+        <span class="ruby-ivar">@outFile</span> = <span class="ruby-value str">&quot;workload&quot;</span>
+        <span class="ruby-ivar">@timeCorrection</span> = <span class="ruby-value">10</span>
+        <span class="ruby-comment cmt"># Deviation: Which deviation in the load level is acceptable for a load?</span>
+        <span class="ruby-comment cmt"># This is percent, for 2.5% write 0.025</span>
+        <span class="ruby-ivar">@loadDeviation</span> = <span class="ruby-value">0</span><span class="ruby-value">.025</span>
+        <span class="ruby-ivar">@basePath</span> = <span class="ruby-constant">Dir</span>.<span class="ruby-identifier">getwd</span>()
+        <span class="ruby-ivar">@runPath</span>=<span class="ruby-ivar">@basePath</span><span class="ruby-operator">+</span><span class="ruby-value str">&quot;/var&quot;</span>
+        <span class="ruby-comment cmt"># Adjust this to your environment. With Linux, we need to link</span>
+        <span class="ruby-comment cmt"># against the GNU math lib (-lm /usr/lib/libm.a)</span>
+        <span class="ruby-ivar">@compilerFlags</span>=<span class="ruby-value str">&quot;-lm /usr/lib/libm.a&quot;</span>
+    <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>

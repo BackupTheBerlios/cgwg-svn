@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>writeSWFFormat (AtomicJob)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 54</span>
+    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">writeSWFFormat</span>
+        <span class="ruby-identifier">retval</span> = <span class="ruby-node">&quot;#{@jobID}\t#{@submitTime}\t#{@waitTime}\t#{@runTime}\t&quot;</span>
+        <span class="ruby-identifier">retval</span> <span class="ruby-operator">+=</span> <span class="ruby-node">&quot;#{@numberAllocatedProcessors}\t#{@averageCPUTimeUsed}\t&quot;</span>
+        <span class="ruby-identifier">retval</span> <span class="ruby-operator">+=</span> <span class="ruby-node">&quot;#{@usedMemory}\t#{@reqNumProcessors}\t#{@wallTime}\t&quot;</span>
+        <span class="ruby-identifier">retval</span> <span class="ruby-operator">+=</span> <span class="ruby-node">&quot;#{@reqMemory}\t#{@status}\t#{@userID}\t#{@groupID}\t&quot;</span>
+        <span class="ruby-identifier">retval</span> <span class="ruby-operator">+=</span> <span class="ruby-node">&quot;#{@appID}\t#{@queueID}\t#{@partitionID}\t&quot;</span>
+        <span class="ruby-identifier">retval</span> <span class="ruby-operator">+=</span> <span class="ruby-node">&quot;#{@preceedingJobID}\t#{@timeAfterPreceedingJob}\n&quot;</span>
+    <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>

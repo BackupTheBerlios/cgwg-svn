@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>prepare (Lublin)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/Models.rb, line 62</span>
+    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">prepare</span>()
+        <span class="ruby-identifier">loadConfig</span> = <span class="ruby-value str">&quot;/* Values for a different load level */\n#undef A1\n#define A1 4.2\n#undef AARR\n#define AARR 10.23\n#undef BARR\n#define BARR 0.4871\n&quot;</span>
+        <span class="ruby-comment cmt"># Create a new configuration including the load and the number of jobs</span>
+        <span class="ruby-identifier">print</span> <span class="ruby-value str">&quot;configuration... &quot;</span>
+        <span class="ruby-identifier">config</span> = <span class="ruby-value str">&quot;\#{@clusterConfig}\n\#{loadConfig}\n&quot;</span>
+        <span class="ruby-identifier">sourcePath</span>=<span class="ruby-ivar">@@config</span>.<span class="ruby-identifier">basePath</span><span class="ruby-operator">+</span><span class="ruby-value str">&quot;/externalmodels/lublin99-clusterworkload&quot;</span>
+        <span class="ruby-identifier">configFile</span>=<span class="ruby-constant">File</span>.<span class="ruby-identifier">new</span>(<span class="ruby-identifier">sourcePath</span><span class="ruby-operator">+</span><span class="ruby-value str">&quot;/lublin_config.h&quot;</span>, <span class="ruby-value str">&quot;w&quot;</span>)
+        <span class="ruby-identifier">config</span>.<span class="ruby-identifier">each_line</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">line</span><span class="ruby-operator">|</span>
+            <span class="ruby-identifier">configFile</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-identifier">line</span>)
+        }
+        <span class="ruby-identifier">configFile</span>.<span class="ruby-identifier">close</span>
+        <span class="ruby-comment cmt"># compile the stuff... Note that there will be a warning about the </span>
+        <span class="ruby-comment cmt"># redefinition of some preprocessor directives</span>
+        <span class="ruby-identifier">print</span> <span class="ruby-value str">&quot;compilation... &quot;</span>
+        <span class="ruby-identifier">compile_cmd</span>=<span class="ruby-value str">&quot;gcc &quot;</span><span class="ruby-operator">+</span><span class="ruby-ivar">@@config</span>.<span class="ruby-identifier">compilerFlags</span><span class="ruby-operator">+</span><span class="ruby-value str">&quot; -o &quot;</span><span class="ruby-operator">+</span><span class="ruby-ivar">@@config</span>.<span class="ruby-identifier">runPath</span><span class="ruby-operator">+</span><span class="ruby-value str">&quot;/m_lublin99 &quot;</span><span class="ruby-operator">+</span>
+                <span class="ruby-identifier">sourcePath</span><span class="ruby-operator">+</span><span class="ruby-value str">&quot;/m_lublin99.c&quot;</span>
+        <span class="ruby-identifier">compile_msg</span>=<span class="ruby-node">`#{compile_cmd}`</span>
+    <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>

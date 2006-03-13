@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>writeXMLFormat (AtomicJob)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 62</span>
+    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">writeXMLFormat</span>(<span class="ruby-identifier">builder</span>)
+        <span class="ruby-identifier">builder</span>.<span class="ruby-identifier">job</span>(<span class="ruby-value str">&quot;id&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@jobID}&quot;</span>) { <span class="ruby-operator">|</span><span class="ruby-identifier">j</span><span class="ruby-operator">|</span> 
+            <span class="ruby-identifier">j</span>.<span class="ruby-identifier">timing</span>(<span class="ruby-value str">&quot;waittime&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@waitTime.to_i}&quot;</span>, 
+                    <span class="ruby-value str">&quot;submittime&quot;</span>=<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@submitTime.to_i}&quot;</span>) 
+            <span class="ruby-identifier">j</span>.<span class="ruby-identifier">size</span> { <span class="ruby-operator">|</span><span class="ruby-identifier">s</span><span class="ruby-operator">|</span>
+                <span class="ruby-identifier">s</span>.<span class="ruby-identifier">actual</span>(<span class="ruby-value str">&quot;cpus&quot;</span>=<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@numberAllocatedProcessors}&quot;</span>,
+                        <span class="ruby-value str">&quot;memory&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@usedMemory}&quot;</span>,
+                        <span class="ruby-value str">&quot;runtime&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@runTime.to_i}&quot;</span>,
+                        <span class="ruby-value str">&quot;avgcputime&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@averageCPUTimeUsed.to_i}&quot;</span>)
+                <span class="ruby-identifier">s</span>.<span class="ruby-identifier">requested</span>(<span class="ruby-value str">&quot;cpus&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@reqNumProcessors}&quot;</span>,
+                        <span class="ruby-value str">&quot;memory&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@reqMemory.to_i}&quot;</span>,
+                        <span class="ruby-value str">&quot;walltime&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@wallTime.to_i}&quot;</span>)
+            }
+            <span class="ruby-identifier">j</span>.<span class="ruby-identifier">meta</span> { <span class="ruby-operator">|</span><span class="ruby-identifier">m</span><span class="ruby-operator">|</span>
+                <span class="ruby-identifier">m</span>.<span class="ruby-identifier">status</span>(<span class="ruby-value str">&quot;value&quot;</span>=<span class="ruby-operator">&gt;</span><span class="ruby-node">&quot;#{@status}&quot;</span>)
+                <span class="ruby-identifier">m</span>.<span class="ruby-identifier">userID</span>(<span class="ruby-value str">&quot;value&quot;</span>=<span class="ruby-operator">&gt;</span><span class="ruby-node">&quot;#{@userID}&quot;</span>)
+                <span class="ruby-identifier">m</span>.<span class="ruby-identifier">groupID</span>(<span class="ruby-value str">&quot;value&quot;</span>=<span class="ruby-operator">&gt;</span><span class="ruby-node">&quot;#{@groupID}&quot;</span>)
+                <span class="ruby-identifier">m</span>.<span class="ruby-identifier">appID</span>(<span class="ruby-value str">&quot;value&quot;</span>=<span class="ruby-operator">&gt;</span><span class="ruby-node">&quot;#{@appID}&quot;</span>)
+                <span class="ruby-identifier">m</span>.<span class="ruby-identifier">penalty</span>(<span class="ruby-value str">&quot;value&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@penalty}&quot;</span>)
+            }
+            <span class="ruby-identifier">j</span>.<span class="ruby-identifier">cluster</span>(<span class="ruby-value str">&quot;partitionID&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@partitionID}&quot;</span>,
+                    <span class="ruby-value str">&quot;queueID&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@queueID}&quot;</span>)
+            <span class="ruby-identifier">j</span>.<span class="ruby-identifier">dependency</span>(<span class="ruby-value str">&quot;preceedingJobID&quot;</span>=<span class="ruby-operator">&gt;</span><span class="ruby-node">&quot;#{@preceedingJobID}&quot;</span>,
+                <span class="ruby-value str">&quot;timeAfterPreceedingJob&quot;</span>=<span class="ruby-operator">&gt;</span><span class="ruby-node">&quot;#{@timeAfterPreceedingJob.to_i}&quot;</span>)
+        }
+    <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>

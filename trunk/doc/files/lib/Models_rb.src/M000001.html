@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>run_lModelRuntimeEstimates (lib/Models.rb)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/Models.rb, line 114</span>
+<span class="ruby-keyword kw">def</span> <span class="ruby-identifier">run_lModelRuntimeEstimates</span>(<span class="ruby-identifier">workload</span>)
+    <span class="ruby-identifier">workload</span>.<span class="ruby-identifier">eachJob</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">job</span><span class="ruby-operator">|</span>
+        <span class="ruby-identifier">job</span>.<span class="ruby-identifier">wallTime</span>=(<span class="ruby-identifier">job</span>.<span class="ruby-identifier">runTime</span><span class="ruby-operator">*</span><span class="ruby-value">1.10</span>).<span class="ruby-identifier">to_i</span>
+    }
+<span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>

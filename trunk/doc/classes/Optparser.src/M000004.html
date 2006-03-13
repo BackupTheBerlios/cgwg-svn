@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>parse (Optparser)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File bin/pbs2swf.rb, line 33</span>
+    <span class="ruby-keyword kw">def</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">parse</span>(<span class="ruby-identifier">args</span>)
+        <span class="ruby-comment cmt"># The options specified on the command line will be collected in *options*.</span>
+        <span class="ruby-comment cmt"># We set default values here.</span>
+        <span class="ruby-identifier">options</span> = <span class="ruby-constant">OpenStruct</span>.<span class="ruby-identifier">new</span>
+        <span class="ruby-identifier">options</span>.<span class="ruby-identifier">inplace</span> = <span class="ruby-keyword kw">false</span>
+        <span class="ruby-identifier">options</span>.<span class="ruby-identifier">encoding</span> = <span class="ruby-value str">&quot;utf8&quot;</span>
+        <span class="ruby-identifier">options</span>.<span class="ruby-identifier">verbose</span> = <span class="ruby-keyword kw">false</span>
+        <span class="ruby-identifier">opts</span> = <span class="ruby-constant">OptionParser</span>.<span class="ruby-identifier">new</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">opts</span><span class="ruby-operator">|</span>
+            <span class="ruby-identifier">opts</span>.<span class="ruby-identifier">banner</span> = <span class="ruby-value str">&quot;Usage: PBSLog-Parser.rb [options]&quot;</span>
+            <span class="ruby-identifier">opts</span>.<span class="ruby-identifier">separator</span> <span class="ruby-value str">&quot;&quot;</span>
+            <span class="ruby-identifier">opts</span>.<span class="ruby-identifier">separator</span> <span class="ruby-value str">&quot;Specific options:&quot;</span>
+            <span class="ruby-comment cmt"># Mandatory argument.</span>
+            <span class="ruby-identifier">opts</span>.<span class="ruby-identifier">on</span>(<span class="ruby-value str">&quot;-i&quot;</span>, <span class="ruby-value str">&quot;--input FILE&quot;</span>, <span class="ruby-value str">&quot;the input file in PBS format&quot;</span>) <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">inFile</span><span class="ruby-operator">|</span>
+                <span class="ruby-identifier">options</span>.<span class="ruby-identifier">infile</span>=<span class="ruby-identifier">inFile</span>
+            <span class="ruby-keyword kw">end</span>
+            <span class="ruby-identifier">opts</span>.<span class="ruby-identifier">on</span>(<span class="ruby-value str">&quot;-o&quot;</span>, <span class="ruby-value str">&quot;--output FILE&quot;</span>,<span class="ruby-value str">&quot;the output file for SWF format&quot;</span>) <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">outFile</span><span class="ruby-operator">|</span>
+                <span class="ruby-identifier">options</span>.<span class="ruby-identifier">outfile</span>=<span class="ruby-identifier">outFile</span>
+            <span class="ruby-keyword kw">end</span>
+            <span class="ruby-comment cmt"># Boolean switch.</span>
+            <span class="ruby-identifier">opts</span>.<span class="ruby-identifier">on</span>(<span class="ruby-value str">&quot;-v&quot;</span>, <span class="ruby-value str">&quot;--verbose&quot;</span>, <span class="ruby-value str">&quot;Run verbosely&quot;</span>) <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">v</span><span class="ruby-operator">|</span>
+                <span class="ruby-identifier">options</span>.<span class="ruby-identifier">verbose</span> = <span class="ruby-identifier">v</span>
+            <span class="ruby-keyword kw">end</span>
+            <span class="ruby-identifier">opts</span>.<span class="ruby-identifier">on_tail</span>(<span class="ruby-value str">&quot;-h&quot;</span>, <span class="ruby-value str">&quot;--help&quot;</span>, <span class="ruby-value str">&quot;Show this message&quot;</span>) <span class="ruby-keyword kw">do</span>
+                <span class="ruby-identifier">puts</span> <span class="ruby-identifier">opts</span>
+                <span class="ruby-identifier">exit</span>
+            <span class="ruby-keyword kw">end</span>
+        <span class="ruby-keyword kw">end</span>
+        <span class="ruby-identifier">opts</span>.<span class="ruby-identifier">parse!</span>(<span class="ruby-identifier">args</span>)
+        <span class="ruby-identifier">options</span>
+    <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>readSWFFormat (AtomicJob)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 88</span>
+    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">readSWFFormat</span>(<span class="ruby-identifier">line</span>)
+        <span class="ruby-identifier">items</span> = <span class="ruby-identifier">line</span>.<span class="ruby-identifier">split</span>()
+        <span class="ruby-ivar">@jobID</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">0</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@submitTime</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">1</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@waitTime</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">2</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@runTime</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">3</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@numberAllocatedProcessors</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">4</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@averageCPUTimeUsed</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">5</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@usedMemory</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">6</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@reqNumProcessors</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">7</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@wallTime</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">8</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@reqMemory</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">9</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@status</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">10</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@userID</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">11</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@groupID</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">12</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@appID</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">13</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@queueID</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">14</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@partitionID</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">15</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@preceedingJobID</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">16</span>].<span class="ruby-identifier">to_i</span>
+        <span class="ruby-ivar">@timeAfterPreceedingJob</span> = <span class="ruby-identifier">items</span>[<span class="ruby-value">17</span>].<span class="ruby-identifier">to_i</span>
+    <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>

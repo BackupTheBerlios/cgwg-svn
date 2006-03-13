@@ -12,9 +12,17 @@ The generator works as follows:
 (5) Scale the workload to different workload levels.
 (6) Generate a XML output file for each workload level
 
+Usually, you will change the statements in workloadgen.rb in order to create
+the workload you desire. An example is keeworkloadgen.rb, which reflects a grid
+infrastructure based on the findings of Kee et al.
+
 Since the workloads are stored as files, it is possible to reuse the same
 workload several times, ensuring that different simulation runs of a grid
 scheduler are comparable.
+
+In addition to the workload generator, there is also a script "pbs2swf.rb"
+which converts PBS accounting logs to the standard workload format (SWF), see
+http://www.cs.huji.ac.il/labs/parallel/workload/swf.html.
 
 PREREQUISITES:
 You need Ruby V1.8 installed. In addition, you need rubygems (a CPAN-like
@@ -27,17 +35,16 @@ on how to install rubygems and the "builder" gem.
 
 USAGE:
 The configuration is directly build into the script workloadgen.rb, which
-you may want to read.
+you may want to read and adjust.
 
-Then, you may run
+Then, you may run (when in the root directory of your installation)
 
-    ruby workloadgen.rb
+    ruby bin/workloadgen.rb
     
-to create a set of workload files in XML format.
+to create a set of workload files in XML format in the subdirectory "var".
 
-TODO: (as of March 4, 2005)
+TODO: (as of March 13, 2005)
 * Need to switch to Dan Tsafrir's runtime estimate model (MD)
-* Integrate coallocation jobs (MD)
 * Incorporate workflows, which would replace the "preceedingJobID" values in
   the job description elements.
 * Incorporate data transfers.

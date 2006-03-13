@@ -39,9 +39,9 @@ print "Calana Workload Generator\n"
 @@config = ConfigManager.new
 @@config.numUsers = 10
 
-clusterA=ClusterConfig.new("ClusterA", 128, 2, 10)
-clusterB=ClusterConfig.new("ClusterB", 64, 1, 10)
-coallocationCluster=ClusterConfig.new("Coallocation", 128, 2, 10)
+clusterA=ClusterConfig.new("ClusterA", 128, 2, 1000)
+clusterB=ClusterConfig.new("ClusterB", 64, 1, 1000)
+coallocationCluster=ClusterConfig.new("Coallocation", 128, 2, 1000)
 @@config.addCluster(clusterA)
 @@config.addCluster(clusterB)
 print "Starting up in directory #{@@config.basePath}\n"
@@ -63,8 +63,10 @@ aggregatedWorkload = nil
     end
 }
 
+aggregatedWorkload=aggregatedWorkload.createSequentialJobWorkload()
+
 coallocationWorkload = genLublinCluster(coallocationCluster)
-multiJobbedWorkload = coallocationWorkload.createMultiJobWorkload()
+multiJobbedWorkload = coallocationWorkload.createCoallocationJobWorkload()
 #print "The modified workload\n"
 #builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
 #multiJobbedWorkload.xmlize(builder)

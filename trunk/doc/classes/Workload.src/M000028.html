@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>calculateLoadLevel (Workload)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 368</span>
+    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">calculateLoadLevel</span>()
+        <span class="ruby-identifier">lastArrival</span> = <span class="ruby-value">0</span>
+        <span class="ruby-identifier">aggRuntime</span> = <span class="ruby-identifier">aggNodes</span> = <span class="ruby-identifier">aggInterarrivalTime</span> = <span class="ruby-value">0</span>
+        <span class="ruby-ivar">@jobs</span>.<span class="ruby-identifier">each</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">job</span><span class="ruby-operator">|</span>
+            <span class="ruby-identifier">aggRuntime</span> <span class="ruby-operator">+=</span> <span class="ruby-identifier">job</span>.<span class="ruby-identifier">runTime</span>
+            <span class="ruby-identifier">aggNodes</span> <span class="ruby-operator">+=</span> <span class="ruby-identifier">job</span>.<span class="ruby-identifier">numberAllocatedProcessors</span>
+            <span class="ruby-identifier">aggInterarrivalTime</span> <span class="ruby-operator">+=</span> (<span class="ruby-identifier">job</span>.<span class="ruby-identifier">submitTime</span> <span class="ruby-operator">-</span> <span class="ruby-identifier">lastArrival</span>)
+            <span class="ruby-identifier">lastArrival</span> = <span class="ruby-identifier">job</span>.<span class="ruby-identifier">submitTime</span>
+        }
+        <span class="ruby-ivar">@meanRuntime</span> = <span class="ruby-identifier">aggRuntime</span> <span class="ruby-operator">/</span> <span class="ruby-ivar">@clusterConfig</span>.<span class="ruby-identifier">size</span>.<span class="ruby-identifier">to_f</span>
+        <span class="ruby-ivar">@meanNodes</span> = <span class="ruby-identifier">aggNodes</span> <span class="ruby-operator">/</span> <span class="ruby-ivar">@clusterConfig</span>.<span class="ruby-identifier">size</span>.<span class="ruby-identifier">to_f</span>
+        <span class="ruby-ivar">@meanInterArrival</span> = <span class="ruby-identifier">aggInterarrivalTime</span> <span class="ruby-operator">/</span> <span class="ruby-ivar">@clusterConfig</span>.<span class="ruby-identifier">size</span>.<span class="ruby-identifier">to_f</span>
+        <span class="ruby-comment cmt">#print &quot;Mean Runtime: #{meanRuntime}, Mean Interarrival Time: #{meanInterArrival}\n&quot;</span>
+        <span class="ruby-ivar">@load</span>=(<span class="ruby-ivar">@meanRuntime</span> <span class="ruby-operator">*</span> <span class="ruby-ivar">@meanNodes</span>) <span class="ruby-operator">/</span> (<span class="ruby-ivar">@clusterConfig</span>.<span class="ruby-identifier">nodes</span> <span class="ruby-operator">*</span> <span class="ruby-ivar">@meanInterArrival</span>)
+        <span class="ruby-keyword kw">return</span> <span class="ruby-ivar">@load</span>
+    <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>
