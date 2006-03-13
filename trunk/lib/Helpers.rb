@@ -76,6 +76,12 @@ class ClusterConfig
             other.smallestJobSize = @smallestJobSize
         end
     end
+    def writeSWFFormat()
+        retval = "; Workload description for #{@name} in standard workload format\n"
+        retval += "; Number of nodes: #{@nodes}\n"
+        retval += "; Smallest Job size: #{@smallestJobSize}\n"
+        retval += "; add some more comments here\n"
+    end
 end
 
 ###

@@ -63,7 +63,6 @@ aggregatedWorkload = nil
     end
 }
 
-
 coallocationWorkload = genLublinCluster(coallocationCluster)
 multiJobbedWorkload = coallocationWorkload.createMultiJobWorkload()
 #print "The modified workload\n"
