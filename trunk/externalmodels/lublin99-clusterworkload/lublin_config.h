@@ -1,5 +1,5 @@
 #undef SIZE
-#define SIZE 10          
+#define SIZE 1000          
 /* UHI: Needs to be adjusted, depending on the cluster */
 #undef UHI
 #define UHI 7

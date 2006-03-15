@@ -43,7 +43,7 @@ class AtomicJob
         @reqMemory = -1
         @status = -1
         @userID = -1
-        @groupID = -1
+        @groupID = 0
         @appID = -1
         @penalty = 0
         @queueID = 0
@@ -60,7 +60,7 @@ class AtomicJob
         retval += "#{@preceedingJobID}\t#{@timeAfterPreceedingJob}\n"
     end
     def writeXMLFormat(builder)
-        builder.job("id" => "#{@jobID}") { |j| 
+        builder.job("id" => "job-#{@jobID}") { |j| 
             j.timing("waittime" => "#{@waitTime.to_i}", 
                     "submittime"=> "#{@submitTime.to_i}") 
             j.size { |s|
@@ -74,8 +74,8 @@ class AtomicJob
             }
             j.meta { |m|
                 m.status("value"=>"#{@status}")
-                m.userID("value"=>"#{@userID}")
-                m.groupID("value"=>"#{@groupID}")
+                m.userID("value"=>"user-#{@userID}")
+                m.groupID("value"=>"group-#{@groupID}")
                 m.appID("value"=>"#{@appID}")
                 m.penalty("value" => "#{@penalty}")
             }
@@ -141,7 +141,7 @@ class User
         @id=id
     end
     def writeXMLFormat(builder)
-        builder.user("id"=>"#{@id}") {|u|
+        builder.user("id"=>"user-#{@id}") {|u|
             u.pref("key"=>"price", "weight"=>"#{@pricePreference}")
             u.pref("key"=>"finishtime", "weight"=>"#{@perfPreference}")
         }
@@ -174,7 +174,7 @@ class Task
     def writeXMLFormat(builder)
         builder.task("id"=>"task-#{@id}", "type"=>"#{@type}") {|t|
             @jobs.each {|j|
-                t.part("jobIDRef"=>"job-#{j.jobID}")
+                t.part("job-ref"=>"job-#{j.jobID}")
             }
         }
     end
