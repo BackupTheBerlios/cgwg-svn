@@ -89,10 +89,16 @@ inFile.each_line {|line|
     fields=line.split()
     id = fields[0]
     submitTime = fields[1]
+    if submitTime.to_i < 0
+      print "Invalid submittime found: #{id} -> #{submitTime}\n"
+    end
     queueTime = fields[2]
     runTime = fields[3]
+    if runTime.to_i < 0
+      print "Invalid runtime found: #{id} -> #{runTime}\n"
+    end
     nodes = fields[4]
-    wallTime = [8]
+    wallTime = fields[8]
     outFile.puts("#{id}\t#{submitTime}\t#{queueTime}\t#{runTime}\t" + 
       "#{nodes}\t#{wallTime}")
 }

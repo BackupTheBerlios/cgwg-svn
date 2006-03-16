@@ -85,6 +85,7 @@ inFile=File.new($inFileName, "r")
 jobID=1
 print "Reading PBS log\n"
 inFile.each_line {|line|
+    validRecord = true
     fields=line.split(";")
     # E indicates an end of record entry, all information
     # is collected here.
@@ -108,6 +109,11 @@ inFile.each_line {|line|
                 startTime = value.to_i
                 print "\n\tStarttime: #{startTime-job.submitTime}" if $verbose
                 job.waitTime = startTime - job.submitTime
+                if job.waitTime < 0
+                    validRecord = false
+                    print "\nWARNING: Negative waitTime found"
+                    print "\nrunTime = #{job.waitTime}" if $verbose
+                end
             when /Resource_List.nodect/
                 # nodect contains the number of processors PBS assigned to this
                 # job.
@@ -120,6 +126,11 @@ inFile.each_line {|line|
                 job.wallTime = walltime
             when /end/
                 job.runTime = value.to_i - startTime
+                if job.runTime < 0
+                    validRecord = false
+                    print "\nWARNING: Negative runTime found"
+                    print "\nrunTime = #{job.runTime}" if $verbose
+                end
                 print "\n\truntime: #{job.runTime}" if $verbose
             when /Exit_status/
                 # Unfortunately, the exit code has a user-defined meaning, so we
@@ -131,7 +142,11 @@ inFile.each_line {|line|
             end
         }
         jobID+=1;
-        workload.addJob(job)
+        if validRecord
+          workload.addJob(job)
+        else
+          print "\nWARNING: Skipping invalid record"
+        end
     end
 }
 inFile.close()
