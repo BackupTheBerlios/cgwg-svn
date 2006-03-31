@@ -335,7 +335,7 @@ class Workload
     def xmlize(builder)
         @load=self.calculateLoadLevel(); 
         builder.instruct!
-        builder.declare! :DOCTYPE, :gridworkload, :PUBLIC, "http://calana.net/schemas/gridworkload/v1/workload.xsd"
+        builder.declare! :DOCTYPE, :gridworkload, :SYSTEM, "http://calana.net/schemas/gridworkload/v1/workload.dtd"
         builder.gridworkload("timecorrection"=>"#{@@config.timeCorrection}",
             "load"=>"#{self.calculateLoadLevel}",                  
             "xmlns:gridworkload" => "http://calana.net/gridworkload") {|w|

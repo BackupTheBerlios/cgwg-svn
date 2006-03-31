@@ -151,6 +151,9 @@ inFile.each_line {|line|
 }
 inFile.close()
 
+print "Sorting jobs according to job submission times"
+workload.sort!
+
 minSubmitTime = nil
 print "Normalizing job submission times\n"
 workload.eachJob{|job|
