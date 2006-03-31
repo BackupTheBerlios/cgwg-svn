@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!-- Authors: Mathias Dalheimer, Alexander Petry. -->
+
+<!-- Version: 0.2 -->
+
+<!-- A workload consists of users and jobs -->
+<!ELEMENT gridworkload (users,tasks,jobs)>
+<!ATTLIST gridworkload
+  load              	CDATA #IMPLIED
+  timecorrection	CDATA #IMPLIED
+  xmlns:gridworkload    CDATA #FIXED "http://calana.net/gridworkload"
+>
+
+<!-- the users element holds all defined user definitions -->
+<!ELEMENT users (user+)>
+<!ATTLIST users >
+
+<!-- the user element requires an id and may specify a set of preferences -->
+<!ELEMENT user (pref+)>
+<!ATTLIST user
+  id 		ID 	#REQUIRED
+>
+
+<!-- a preference consists of a key which describes the preference and a weight -->
+<!ELEMENT pref EMPTY>
+<!ATTLIST pref
+  key		CDATA	#REQUIRED
+  weight	CDATA	#REQUIRED
+>
+
+<!ELEMENT tasks (task+)>
+<!ATTLIST tasks >
+
+<!ELEMENT task (part+)>
+<!ATTLIST task 
+  id		ID	#REQUIRED
+  type		(sequence|coallocation) #REQUIRED
+>
+
+<!ELEMENT part EMPTY>
+<!ATTLIST part
+  job-ref	IDREF	#IMPLIED
+>
+
+<!-- this element holds all defined jobs -->
+<!ELEMENT jobs (job+)>
+<!ATTLIST jobs >
+
+<!-- a job consists of timing information, such as the point in time at
+     which the job enters the system and so on.
+     
+     a job can be exluded from the experiment by specifying the exclude
+     attribute, this means the job is handled as normal but does not count to
+     statistics and so on.
+ -->
+<!ELEMENT job (timing,size,meta,cluster,dependency)>
+<!ATTLIST job
+  id		ID 	#REQUIRED
+  exclude	(true|false) "false"
+>
+
+<!ELEMENT timing EMPTY>
+<!ATTLIST timing
+  submittime	CDATA	#REQUIRED
+  waittime	CDATA	"0"
+>
+
+<!--
+Here are the jobs dimensions going to be specified, a job has actual size
+parameters and requested parameters. Requested time is also known as
+'walltime', here it is the attribute 'time' in the requested child.
+
+-->
+<!ELEMENT size (actual,requested)>
+<!ATTLIST size>
+
+<!ELEMENT actual EMPTY>
+<!ATTLIST actual
+  cpus		CDATA	#REQUIRED
+  runtime	CDATA	#REQUIRED
+  memory	CDATA	"-1"
+  avgcputime	CDATA	"-1"
+>
+
+<!ELEMENT requested EMPTY>
+<!ATTLIST requested
+  cpus		CDATA	"-1"
+  walltime	CDATA	#REQUIRED
+  memory	CDATA	"-1"
+>
+
+<!--
+	The meta information hold things such as the executing user (uid) with which
+	group (gid) and an application id. It also contains penalty information, that
+	are those costs a provider has to pay, if he cancels the job due to some
+	failure.
+-->
+<!ELEMENT meta (status,userID,groupID?,appID?,penalty?)>
+<!ATTLIST meta>
+
+<!ELEMENT status EMPTY>
+<!ATTLIST status
+  value		CDATA	"0"
+>
+<!ELEMENT userID EMPTY>
+<!ATTLIST userID
+  value		IDREF	#IMPLIED
+>
+<!ELEMENT groupID EMPTY>
+<!ATTLIST groupID
+  value		CDATA	"0"
+>	
+<!ELEMENT appID	EMPTY>
+<!ATTLIST appID
+  value		CDATA	"0"
+>
+<!ELEMENT penalty EMPTY>
+<!ATTLIST penalty
+  value		CDATA	"0"
+>
+
+<!--
+	The cluster child holds information about the cluster at which this job
+	has been scheduled.
+-->
+<!ELEMENT cluster EMPTY>
+<!ATTLIST cluster
+  queueID	CDATA	"-1"
+  partitionID	CDATA	"-1"
+>
+
+<!--
+	A job may depend on some other jobs. These information is given here.
+	One can give several 'depends' to specify how a job depends on other
+	jobs. The id of the precursor-job and an optional amount of time this
+	job has to wait before it can execute.
+
+	Some implications for a dependence:
+		This job cannot be started as long as not all of the jobs this one
+		is depending on have finished.
+-->
+<!ELEMENT dependency EMPTY>
+<!ATTLIST dependency
+  preceedingJobID		CDATA	#REQUIRED
+  timeAfterPreceedingJob	CDATA	"0"
+>
+
+<!ELEMENT multijob (job+)>
+<!ATTLIST multijob
+  id	CDATA	#REQUIRED
+>
+
