@@ -34,16 +34,24 @@
 def genLublinCluster(clusterConfig)
     # Create a new workload to start with.
     # This could also be replaced by reading a workload file.
-    print "Generating workload for cluster config: \n#{clusterConfig}"
+    print "Generating workload using Uri Lublin's model for cluster config: \n#{clusterConfig}"
     lublin=Lublin.new(clusterConfig)
     lublin.prepare()
     # Read data in Workload class, add runtime estimates and users
-    swf = lublin.run_lublin()
+    swf = lublin.execute()
     workload=Workload.new(clusterConfig)
     print "Parsing workload\n"
     workload.parseSWF(swf)
-    print "Adding runtime estimates\n"
-    run_lModelRuntimeEstimates(workload)
+    #print "Adding runtime estimates\n"
+    #run_lModelRuntimeEstimates(workload)
+    return workload
+end
+
+def addUserRuntimeEstimates(workload)
+    print "Adding user estimates using Dan Tsafrir's model\n"
+    runtimeModel=TsafrirRuntime.new(workload)
+    runtimeModel.prepare()
+    workload = runtimeModel.execute()
     return workload
 end
 
@@ -90,7 +98,7 @@ end
 class ConfigManager
     attr_accessor :outFile,  :clusters, :numUsers,
         :timeCorrection, :basePath, :runPath, :loadDeviation,
-        :compilerFlags
+        :compilerFlags, :runtimeestimatesPath
     def initialize()
         @clusters = Array.new
         @numUsers = 10
@@ -101,9 +109,12 @@ class ConfigManager
         @loadDeviation = 0.025
         @basePath = Dir.getwd()
         @runPath=@basePath+"/var"
+        @runtimeestimatesPath=@basePath+"/externalmodels/m_tsafrir05"
         # Adjust this to your environment. With Linux, we need to link
         # against the GNU math lib (-lm /usr/lib/libm.a)
-        @compilerFlags="-lm /usr/lib/libm.a"
+        #@compilerFlags="-lm /usr/lib/libm.a"
+        # For Mac OS X, no flags are needed (tested on Tiger)
+        @compilerFlags=""
     end
     
     def addCluster(cluster)

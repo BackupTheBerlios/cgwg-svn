@@ -36,6 +36,7 @@ class Lublin
         @machineConfig = machineConfig
         # Calculate size-dependent values
         size=@machineConfig.size
+        #print "Generating #{size} jobs."
         uhi = log2(@machineConfig.nodes).to_i
         ulow = log2(@machineConfig.smallestJobSize())
         # UMED should be in [UHI-1.5, UHI-3.5], make this a static setting.
@@ -75,22 +76,26 @@ class Lublin
 #{loadConfig}
         EOC
         sourcePath=@@config.basePath+"/externalmodels/lublin99-clusterworkload"
-        configFile=File.new(sourcePath+"/lublin_config.h", "w")
+        configFilePath=sourcePath+"/lublin_config.h"
+        configFile=File.new(configFilePath, "w")
         config.each_line {|line|
             configFile.puts(line)
         }
         configFile.close
+        # TODO: Move to a nice Makefile.
         # compile the stuff... Note that there will be a warning about the 
         # redefinition of some preprocessor directives
         print "compilation... "
-        compile_cmd="gcc "+@@config.compilerFlags+" -o "+@@config.runPath+"/m_lublin99 "+
+        compile_cmd="cd #{sourcePath}; gcc "+@@config.compilerFlags+" -o "+@@config.runPath+"/m_lublin99 "+
                 sourcePath+"/m_lublin99.c"
+        #print "compile cmd: #{compile_cmd}\n"
         compile_msg=`#{compile_cmd}`
+        print "#{compile_msg}\n"
     end
     ###
     ## Run the previously compiled binary, fetch the results.
     #
-    def run_lublin()
+    def execute()
         print "\nRunning Lublin's Generator: "
         # run the model
         print "exec... "
@@ -101,6 +106,47 @@ class Lublin
     end
     def getRange()
         return 0.00, 0.10
+    end
+end
+
+###
+## Encapsulates Dan Tsafrir's runtime estimation tool.
+#
+class TsafrirRuntime
+    def initialize(workload)
+        @workload = workload
+    end
+    ###
+    ## Prepares the model for execution. For Dan Tsafrirs runtime 
+    ## estimation tool, compile the code using make.
+    #
+    def prepare()
+        print "compilation...\n"
+        compile_cmd="cd #{@@config.runtimeestimatesPath}; make"
+        compile_msg=`#{compile_cmd}`
+    end
+    ###
+    ## Run the model. Returns a workload with defined runtime 
+    ## estimates.
+    #
+    def execute()
+        print "running...\n"
+        swfFormat=@workload.writeSWFFormat()
+        # Put the workload in a file
+        swfFilePath=@@config.runPath+"/runtime-tmp.swf"
+        swfFile=File.new(swfFilePath, "w")
+        swfFormat.each_line {|line|
+            swfFile.puts(line)
+        }
+        swfFile.close()
+        maxRuntime = @workload.maxRuntime()
+        run_cmd="#{@@config.runtimeestimatesPath}/est_driver #{maxRuntime} #{swfFilePath}"
+        #print run_cmd
+        run_msg=`#{run_cmd}`
+        retval=Workload.new(@workload.clusterConfig)
+        retval.parseSWF(run_msg)
+        print "finished.\n"
+        return retval
     end
 end
 

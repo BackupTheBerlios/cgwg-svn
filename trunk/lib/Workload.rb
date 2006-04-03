@@ -223,6 +223,13 @@ class Workload
         }
         @jobs.compact!               # remove all nil elements
     end
+    def writeSWFFormat()
+        retval=""
+        @jobs.each{|job|
+            retval += job.writeSWFFormat()
+        }    
+        return retval
+    end
     def generateRandomUsers()
         count=@@config.numUsers;
         for i in 0..(count-1)
@@ -380,6 +387,15 @@ class Workload
         #print "Mean Runtime: #{meanRuntime}, Mean Interarrival Time: #{meanInterArrival}\n"
         @load=(@meanRuntime * @meanNodes) / (@clusterConfig.nodes * @meanInterArrival)
         return @load
+    end
+    def maxRuntime()
+        maxRuntime=0
+        @jobs.each{|job|
+            if (job.runTime > maxRuntime)
+                maxRuntime = job.runTime
+            end
+        }
+        return maxRuntime
     end
 end
 

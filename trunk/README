@@ -35,7 +35,7 @@ on how to install rubygems and the "builder" gem.
 
 USAGE:
 The configuration is directly build into the script workloadgen.rb, which
-you may want to read and adjust.
+you may want to read and adjust. You may also want to adjust the @compilerFlags options of the ConfigManager class in lib/Helpers.rb.
 
 Then, you may run (when in the root directory of your installation)
 
@@ -43,8 +43,9 @@ Then, you may run (when in the root directory of your installation)
     
 to create a set of workload files in XML format in the subdirectory "var".
 
-TODO: (as of March 13, 2005)
-* Need to switch to Dan Tsafrir's runtime estimate model (MD)
+TODO: (as of April 3, 2006)
+* Create a Makefile for the compilation of Lublin's model. (MD)
+* Switch to REXML for faster XML generation.
 * Incorporate workflows, which would replace the "preceedingJobID" values in
   the job description elements.
 * Incorporate data transfers.

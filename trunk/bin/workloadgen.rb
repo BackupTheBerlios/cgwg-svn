@@ -53,7 +53,7 @@ print "Starting up in directory #{@@config.basePath}\n"
 #
 aggregatedWorkload = nil
 @@config.clusters.each{|clusterConfig|
-    #print clusterConfig
+    print clusterConfig
     print "### Working on cluster #{clusterConfig.name}\n"
     if aggregatedWorkload == nil
         aggregatedWorkload = genLublinCluster(clusterConfig)
@@ -63,9 +63,22 @@ aggregatedWorkload = nil
     end
 }
 
+###
+## Add runtime estimates for backfilling
+#
+aggregatedWorkload = addUserRuntimeEstimates(aggregatedWorkload)
+
+###
+## Build a sequential task structure
+#
 aggregatedWorkload=aggregatedWorkload.createSequentialJobWorkload()
 
+
+###
+## Now, we deal with the creation of some coallocation jobs.
+#
 coallocationWorkload = genLublinCluster(coallocationCluster)
+coallocationWorkload = addUserRuntimeEstimates(coallocationWorkload)
 multiJobbedWorkload = coallocationWorkload.createCoallocationJobWorkload()
 #print "The modified workload\n"
 #builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
@@ -83,8 +96,8 @@ aggregatedWorkload.linkUsers()
 ###
 ## Just to have it on the screen: Put the original workload on the screen.
 #
-builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
-aggregatedWorkload.xmlize(builder)
+#builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
+#aggregatedWorkload.xmlize(builder)
 
 
 # Create a new workload connection where we gather all generated workloads
@@ -105,13 +118,22 @@ collection.generateEachSlot {|load|
 ## Finally: Put the generated workloads on the disk.
 #
 collection.eachWorkload {|w|
-    file=@@config.runPath+"/"+@@config.outFile+"-"+
-        w.calculateLoadLevel().to_s + ".xml"
+    filePrefix=@@config.runPath+"/"+@@config.outFile+"-"+
+        w.calculateLoadLevel().to_s
+    file=filePrefix+".xml"
     outFile=File.new(file, "w")
     builder = Builder::XmlMarkup.new(:target=>outFile, :indent=>2)
 # produce output
     print "Generating XML workload file #{file}\n"
     w.xmlize(builder)
+    outFile.close
+    file=filePrefix+".swf"
+    outFile=File.new(file, "w")
+    print "Generating SWF workload file #{file}"
+    swfDump=w.writeSWFFormat()
+    swfDump.each_line{|line|
+        outFile.write(line)
+    }
     outFile.close
 }
 
