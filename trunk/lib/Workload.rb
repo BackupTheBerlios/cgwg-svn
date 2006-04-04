@@ -247,6 +247,21 @@ class Workload
             job.userID=thisUserID
         }
     end
+    ###
+    ## Checks for strange jobs that have both a submitTime and runTime of zero.
+    ## Use for debugging.
+    #
+    def checkForNullJobs
+        @jobs.each{|job|
+            if (job.runTime == 0 and job.submitTime == 0)
+                print("Found invalid job: #{job}")
+            end
+        }
+    end
+    ###
+    ## Scales the load level to another value. Iterates over all jobs, modifies the
+    ## submission time, and returns a new workload.
+    #
     def scaleLoadLevel(destinationLoad)
         scaledJobs=self.deep_clone()
         currentLoad=self.calculateLoadLevel()

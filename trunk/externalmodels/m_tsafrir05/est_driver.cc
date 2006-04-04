@@ -46,7 +46,6 @@ int main(int argc, char *argv[])
     //   model_params.binsiz_head_sum = 85; // % of "head" estimates
     EstParams_t model_params(args.njobs, args.maxest, args.userbins);
 
-    	cout << "DEBUG-0" << "\n";
     // generate an estimate distribution according to the above parameters.
     // the model uses the drand48/lrand48 standard random generators.
     vector<EstBin_t> estimate_distribution;

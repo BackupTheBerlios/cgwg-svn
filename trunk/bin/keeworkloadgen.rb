@@ -39,7 +39,7 @@ print "as described by Kee et al. (http://vgrads.rice.edu/publications/andrew2)"
 ## You may also want to check out the ConfigManager class in lib/Helpers.rb.
 #
 @@config = ConfigManager.new
-@@config.numUsers = 10
+@@config.numUsers = 1000
 numJobsPerCluster = 10
 
 for i in 1..9 # Nine single-node systems

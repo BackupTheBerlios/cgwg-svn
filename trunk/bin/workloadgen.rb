@@ -41,6 +41,7 @@ print "Calana Workload Generator\n"
 
 clusterA=ClusterConfig.new("ClusterA", 128, 2, 1000)
 clusterB=ClusterConfig.new("ClusterB", 64, 1, 1000)
+clusterB=ClusterConfig.new("ClusterC", 64, 1, 1000)
 coallocationCluster=ClusterConfig.new("Coallocation", 128, 2, 1000)
 @@config.addCluster(clusterA)
 @@config.addCluster(clusterB)
@@ -99,7 +100,6 @@ aggregatedWorkload.linkUsers()
 #builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
 #aggregatedWorkload.xmlize(builder)
 
-
 # Create a new workload connection where we gather all generated workloads
 collection=WorkloadCollection.new
 
@@ -129,7 +129,7 @@ collection.eachWorkload {|w|
     outFile.close
     file=filePrefix+".swf"
     outFile=File.new(file, "w")
-    print "Generating SWF workload file #{file}"
+    print "Generating SWF workload file #{file}\n"
     swfDump=w.writeSWFFormat()
     swfDump.each_line{|line|
         outFile.write(line)
