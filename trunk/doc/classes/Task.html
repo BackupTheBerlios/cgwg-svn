@@ -92,11 +92,12 @@ Encapsulates the task tag in the workload XML file.
       <h3 class="section-bar">Methods</h3>
 
       <div class="name-list">
-      <a href="#M000044">addJob</a>&nbsp;&nbsp;
-      <a href="#M000045">addJobs</a>&nbsp;&nbsp;
-      <a href="#M000047">getEarliestSubmitTime</a>&nbsp;&nbsp;
-      <a href="#M000043">new</a>&nbsp;&nbsp;
-      <a href="#M000046">writeXMLFormat</a>&nbsp;&nbsp;
+      <a href="#M000052">addJob</a>&nbsp;&nbsp;
+      <a href="#M000053">addJobs</a>&nbsp;&nbsp;
+      <a href="#M000056">eachJob</a>&nbsp;&nbsp;
+      <a href="#M000055">getEarliestSubmitTime</a>&nbsp;&nbsp;
+      <a href="#M000051">new</a>&nbsp;&nbsp;
+      <a href="#M000054">writeXMLFormat</a>&nbsp;&nbsp;
       </div>
     </div>
 
@@ -131,12 +132,12 @@ Encapsulates the task tag in the workload XML file.
     <div id="methods">
       <h3 class="section-bar">Public Class methods</h3>
 
-      <div id="method-M000043" class="method-detail">
-        <a name="M000043"></a>
+      <div id="method-M000051" class="method-detail">
+        <a name="M000051"></a>
 
         <div class="method-heading">
-          <a href="Task.src/M000043.html" target="Code" class="method-signature"
-            onclick="popupCode('Task.src/M000043.html');return false;">
+          <a href="Task.src/M000051.html" target="Code" class="method-signature"
+            onclick="popupCode('Task.src/M000051.html');return false;">
           <span class="method-name">new</span><span class="method-args">(id, type)</span>
           </a>
         </div>
@@ -151,12 +152,12 @@ Create a new task. type must be a string of either &quot;sequence&quot; or
 
       <h3 class="section-bar">Public Instance methods</h3>
 
-      <div id="method-M000044" class="method-detail">
-        <a name="M000044"></a>
+      <div id="method-M000052" class="method-detail">
+        <a name="M000052"></a>
 
         <div class="method-heading">
-          <a href="Task.src/M000044.html" target="Code" class="method-signature"
-            onclick="popupCode('Task.src/M000044.html');return false;">
+          <a href="Task.src/M000052.html" target="Code" class="method-signature"
+            onclick="popupCode('Task.src/M000052.html');return false;">
           <span class="method-name">addJob</span><span class="method-args">(job)</span>
           </a>
         </div>
@@ -168,12 +169,12 @@ Adds a single job.
         </div>
       </div>
 
-      <div id="method-M000045" class="method-detail">
-        <a name="M000045"></a>
+      <div id="method-M000053" class="method-detail">
+        <a name="M000053"></a>
 
         <div class="method-heading">
-          <a href="Task.src/M000045.html" target="Code" class="method-signature"
-            onclick="popupCode('Task.src/M000045.html');return false;">
+          <a href="Task.src/M000053.html" target="Code" class="method-signature"
+            onclick="popupCode('Task.src/M000053.html');return false;">
           <span class="method-name">addJobs</span><span class="method-args">(additionalJobs)</span>
           </a>
         </div>
@@ -185,12 +186,26 @@ Add an array of jobs to the tasks.
         </div>
       </div>
 
-      <div id="method-M000047" class="method-detail">
-        <a name="M000047"></a>
+      <div id="method-M000056" class="method-detail">
+        <a name="M000056"></a>
 
         <div class="method-heading">
-          <a href="Task.src/M000047.html" target="Code" class="method-signature"
-            onclick="popupCode('Task.src/M000047.html');return false;">
+          <a href="Task.src/M000056.html" target="Code" class="method-signature"
+            onclick="popupCode('Task.src/M000056.html');return false;">
+          <span class="method-name">eachJob</span><span class="method-args">() {|p| ...}</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000055" class="method-detail">
+        <a name="M000055"></a>
+
+        <div class="method-heading">
+          <a href="Task.src/M000055.html" target="Code" class="method-signature"
+            onclick="popupCode('Task.src/M000055.html');return false;">
           <span class="method-name">getEarliestSubmitTime</span><span class="method-args">()</span>
           </a>
         </div>
@@ -202,12 +217,12 @@ Determines the earliest submit time of all jobs in this task.
         </div>
       </div>
 
-      <div id="method-M000046" class="method-detail">
-        <a name="M000046"></a>
+      <div id="method-M000054" class="method-detail">
+        <a name="M000054"></a>
 
         <div class="method-heading">
-          <a href="Task.src/M000046.html" target="Code" class="method-signature"
-            onclick="popupCode('Task.src/M000046.html');return false;">
+          <a href="Task.src/M000054.html" target="Code" class="method-signature"
+            onclick="popupCode('Task.src/M000054.html');return false;">
           <span class="method-name">writeXMLFormat</span><span class="method-args">(builder)</span>
           </a>
         </div>

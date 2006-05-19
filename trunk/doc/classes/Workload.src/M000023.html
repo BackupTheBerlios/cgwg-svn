@@ -5,19 +5,18 @@
 
 <html>
 <head>
-  <title>createSequentialJobWorkload (Workload)</title>
+  <title>checkForNullJobs (Workload)</title>
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
   <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
 </head>
 <body class="standalone-code">
-  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 290</span>
-    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">createSequentialJobWorkload</span>()
-        <span class="ruby-identifier">retval</span> = <span class="ruby-constant">Workload</span>.<span class="ruby-identifier">new</span>(<span class="ruby-ivar">@clusterConfig</span>)
-        <span class="ruby-ivar">@jobs</span>.<span class="ruby-identifier">each</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">j</span><span class="ruby-operator">|</span>
-            <span class="ruby-identifier">retval</span>.<span class="ruby-identifier">addJob</span>(<span class="ruby-identifier">j</span>)
-            <span class="ruby-identifier">retval</span>.<span class="ruby-identifier">buildSequentialTask</span>(<span class="ruby-identifier">j</span>)
+  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 263</span>
+    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">checkForNullJobs</span>
+        <span class="ruby-ivar">@jobs</span>.<span class="ruby-identifier">each</span>{<span class="ruby-operator">|</span><span class="ruby-identifier">job</span><span class="ruby-operator">|</span>
+            <span class="ruby-keyword kw">if</span> (<span class="ruby-identifier">job</span>.<span class="ruby-identifier">runTime</span> <span class="ruby-operator">==</span> <span class="ruby-value">0</span> <span class="ruby-keyword kw">and</span> <span class="ruby-identifier">job</span>.<span class="ruby-identifier">submitTime</span> <span class="ruby-operator">==</span> <span class="ruby-value">0</span>)
+                <span class="ruby-identifier">print</span>(<span class="ruby-node">&quot;Found invalid job: #{job}&quot;</span>)
+            <span class="ruby-keyword kw">end</span>
         }
-        <span class="ruby-keyword kw">return</span> <span class="ruby-identifier">retval</span>
     <span class="ruby-keyword kw">end</span></pre>
 </body>
 </html>

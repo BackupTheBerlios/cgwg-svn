@@ -5,14 +5,21 @@
 
 <html>
 <head>
-  <title>addJob (Workload)</title>
+  <title>generateRandomUsers (Workload)</title>
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
   <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
 </head>
 <body class="standalone-code">
-  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 271</span>
-    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">addJob</span>(<span class="ruby-identifier">aJob</span>)
-        <span class="ruby-ivar">@jobs</span>.<span class="ruby-identifier">push</span>(<span class="ruby-identifier">aJob</span>)
+  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 236</span>
+    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">generateRandomUsers</span>()
+        <span class="ruby-identifier">count</span>=<span class="ruby-ivar">@@config</span>.<span class="ruby-identifier">numUsers</span>;
+        <span class="ruby-keyword kw">for</span> <span class="ruby-identifier">i</span> <span class="ruby-keyword kw">in</span> <span class="ruby-value">0</span><span class="ruby-operator">..</span>(<span class="ruby-identifier">count</span><span class="ruby-operator">-</span><span class="ruby-value">1</span>)
+            <span class="ruby-identifier">current</span>=<span class="ruby-constant">User</span>.<span class="ruby-identifier">new</span>(<span class="ruby-identifier">i</span>)
+            <span class="ruby-identifier">pref</span>=<span class="ruby-identifier">rand</span>
+            <span class="ruby-identifier">current</span>.<span class="ruby-identifier">pricePreference</span> = <span class="ruby-identifier">pref</span>
+            <span class="ruby-identifier">current</span>.<span class="ruby-identifier">perfPreference</span> = <span class="ruby-value">1</span><span class="ruby-operator">-</span><span class="ruby-identifier">pref</span>
+            <span class="ruby-ivar">@users</span>.<span class="ruby-identifier">push</span>(<span class="ruby-identifier">current</span>)
+        <span class="ruby-keyword kw">end</span>
     <span class="ruby-keyword kw">end</span></pre>
 </body>
 </html>

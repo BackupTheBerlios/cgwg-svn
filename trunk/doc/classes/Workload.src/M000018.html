@@ -5,17 +5,14 @@
 
 <html>
 <head>
-  <title>mergeWorkloadTo (Workload)</title>
+  <title>eachJob (Workload)</title>
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
   <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
 </head>
 <body class="standalone-code">
-  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 257</span>
-    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">mergeWorkloadTo</span>(<span class="ruby-identifier">aWorkload</span>)
-        <span class="ruby-identifier">aWorkload</span>.<span class="ruby-identifier">addJobs</span>(<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">jobs</span>)
-        <span class="ruby-identifier">aWorkload</span>.<span class="ruby-identifier">addTasks</span>(<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">tasks</span>)
-        <span class="ruby-identifier">aWorkload</span>.<span class="ruby-identifier">sort!</span>
-        <span class="ruby-ivar">@clusterConfig</span>.<span class="ruby-identifier">mergeTo</span>(<span class="ruby-identifier">aWorkload</span>.<span class="ruby-identifier">clusterConfig</span>)
+  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 214</span>
+    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">eachJob</span>
+        <span class="ruby-ivar">@jobs</span>.<span class="ruby-identifier">each</span> { <span class="ruby-operator">|</span><span class="ruby-identifier">p</span><span class="ruby-operator">|</span> <span class="ruby-keyword kw">yield</span> <span class="ruby-identifier">p</span> }
     <span class="ruby-keyword kw">end</span></pre>
 </body>
 </html>

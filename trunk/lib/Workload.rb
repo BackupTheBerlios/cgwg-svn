@@ -249,9 +249,9 @@ class Workload
         size=@users.size()
         @tasks.each{|task|
             thisUserID=(rand(size.to_i))
-            puts "considering task #{task}, userID = #{thisUserID}"
+            #puts "considering task #{task}, userID = #{thisUserID}"
             task.eachJob{|job|
-                puts "subjob: userID = #{thisUserID}"
+                #puts "subjob: userID = #{thisUserID}"
                 job.userID=thisUserID
             }
         }

@@ -5,18 +5,18 @@
 
 <html>
 <head>
-  <title>linkUsers (Workload)</title>
+  <title>new (Workload)</title>
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
   <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
 </head>
 <body class="standalone-code">
-  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 236</span>
-    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">linkUsers</span>
-        <span class="ruby-ivar">@jobs</span>.<span class="ruby-identifier">each</span>{<span class="ruby-operator">|</span><span class="ruby-identifier">job</span><span class="ruby-operator">|</span>
-            <span class="ruby-identifier">size</span>=<span class="ruby-ivar">@users</span>.<span class="ruby-identifier">size</span>()
-            <span class="ruby-identifier">thisUserID</span>=(<span class="ruby-identifier">rand</span><span class="ruby-operator">*</span><span class="ruby-value">10</span>).<span class="ruby-identifier">to_i</span>
-            <span class="ruby-identifier">job</span>.<span class="ruby-identifier">userID</span>=<span class="ruby-identifier">thisUserID</span>
-        }
+  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 204</span>
+    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">initialize</span>(<span class="ruby-identifier">clusterConfig</span>)
+        <span class="ruby-ivar">@clusterConfig</span>=<span class="ruby-identifier">clusterConfig</span>
+        <span class="ruby-ivar">@jobs</span>=<span class="ruby-constant">Array</span>.<span class="ruby-identifier">new</span>
+        <span class="ruby-ivar">@users</span>=<span class="ruby-constant">Array</span>.<span class="ruby-identifier">new</span>
+        <span class="ruby-ivar">@tasks</span>=<span class="ruby-constant">Array</span>.<span class="ruby-identifier">new</span>
+        <span class="ruby-ivar">@swf</span>=<span class="ruby-keyword kw">nil</span>
     <span class="ruby-keyword kw">end</span></pre>
 </body>
 </html>

@@ -12,7 +12,7 @@
 <body class="standalone-code">
   <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 62</span>
     <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">writeXMLFormat</span>(<span class="ruby-identifier">builder</span>)
-        <span class="ruby-identifier">builder</span>.<span class="ruby-identifier">job</span>(<span class="ruby-value str">&quot;id&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@jobID}&quot;</span>) { <span class="ruby-operator">|</span><span class="ruby-identifier">j</span><span class="ruby-operator">|</span> 
+        <span class="ruby-identifier">builder</span>.<span class="ruby-identifier">job</span>(<span class="ruby-value str">&quot;id&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;job-#{@jobID}&quot;</span>) { <span class="ruby-operator">|</span><span class="ruby-identifier">j</span><span class="ruby-operator">|</span> 
             <span class="ruby-identifier">j</span>.<span class="ruby-identifier">timing</span>(<span class="ruby-value str">&quot;waittime&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@waitTime.to_i}&quot;</span>, 
                     <span class="ruby-value str">&quot;submittime&quot;</span>=<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@submitTime.to_i}&quot;</span>) 
             <span class="ruby-identifier">j</span>.<span class="ruby-identifier">size</span> { <span class="ruby-operator">|</span><span class="ruby-identifier">s</span><span class="ruby-operator">|</span>
@@ -26,8 +26,8 @@
             }
             <span class="ruby-identifier">j</span>.<span class="ruby-identifier">meta</span> { <span class="ruby-operator">|</span><span class="ruby-identifier">m</span><span class="ruby-operator">|</span>
                 <span class="ruby-identifier">m</span>.<span class="ruby-identifier">status</span>(<span class="ruby-value str">&quot;value&quot;</span>=<span class="ruby-operator">&gt;</span><span class="ruby-node">&quot;#{@status}&quot;</span>)
-                <span class="ruby-identifier">m</span>.<span class="ruby-identifier">userID</span>(<span class="ruby-value str">&quot;value&quot;</span>=<span class="ruby-operator">&gt;</span><span class="ruby-node">&quot;#{@userID}&quot;</span>)
-                <span class="ruby-identifier">m</span>.<span class="ruby-identifier">groupID</span>(<span class="ruby-value str">&quot;value&quot;</span>=<span class="ruby-operator">&gt;</span><span class="ruby-node">&quot;#{@groupID}&quot;</span>)
+                <span class="ruby-identifier">m</span>.<span class="ruby-identifier">userID</span>(<span class="ruby-value str">&quot;value&quot;</span>=<span class="ruby-operator">&gt;</span><span class="ruby-node">&quot;user-#{@userID}&quot;</span>)
+                <span class="ruby-identifier">m</span>.<span class="ruby-identifier">groupID</span>(<span class="ruby-value str">&quot;value&quot;</span>=<span class="ruby-operator">&gt;</span><span class="ruby-node">&quot;group-#{@groupID}&quot;</span>)
                 <span class="ruby-identifier">m</span>.<span class="ruby-identifier">appID</span>(<span class="ruby-value str">&quot;value&quot;</span>=<span class="ruby-operator">&gt;</span><span class="ruby-node">&quot;#{@appID}&quot;</span>)
                 <span class="ruby-identifier">m</span>.<span class="ruby-identifier">penalty</span>(<span class="ruby-value str">&quot;value&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{@penalty}&quot;</span>)
             }

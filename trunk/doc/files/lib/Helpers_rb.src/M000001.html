@@ -14,16 +14,16 @@
 <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">genLublinCluster</span>(<span class="ruby-identifier">clusterConfig</span>)
     <span class="ruby-comment cmt"># Create a new workload to start with.</span>
     <span class="ruby-comment cmt"># This could also be replaced by reading a workload file.</span>
-    <span class="ruby-identifier">print</span> <span class="ruby-node">&quot;Generating workload for cluster config: \n#{clusterConfig}&quot;</span>
+    <span class="ruby-identifier">print</span> <span class="ruby-node">&quot;Generating workload using Uri Lublin's model for cluster config: \n#{clusterConfig}&quot;</span>
     <span class="ruby-identifier">lublin</span>=<span class="ruby-constant">Lublin</span>.<span class="ruby-identifier">new</span>(<span class="ruby-identifier">clusterConfig</span>)
     <span class="ruby-identifier">lublin</span>.<span class="ruby-identifier">prepare</span>()
     <span class="ruby-comment cmt"># Read data in Workload class, add runtime estimates and users</span>
-    <span class="ruby-identifier">swf</span> = <span class="ruby-identifier">lublin</span>.<span class="ruby-identifier">run_lublin</span>()
+    <span class="ruby-identifier">swf</span> = <span class="ruby-identifier">lublin</span>.<span class="ruby-identifier">execute</span>()
     <span class="ruby-identifier">workload</span>=<span class="ruby-constant">Workload</span>.<span class="ruby-identifier">new</span>(<span class="ruby-identifier">clusterConfig</span>)
     <span class="ruby-identifier">print</span> <span class="ruby-value str">&quot;Parsing workload\n&quot;</span>
     <span class="ruby-identifier">workload</span>.<span class="ruby-identifier">parseSWF</span>(<span class="ruby-identifier">swf</span>)
-    <span class="ruby-identifier">print</span> <span class="ruby-value str">&quot;Adding runtime estimates\n&quot;</span>
-    <span class="ruby-identifier">run_lModelRuntimeEstimates</span>(<span class="ruby-identifier">workload</span>)
+    <span class="ruby-comment cmt">#print &quot;Adding runtime estimates\n&quot;</span>
+    <span class="ruby-comment cmt">#run_lModelRuntimeEstimates(workload)</span>
     <span class="ruby-keyword kw">return</span> <span class="ruby-identifier">workload</span>
 <span class="ruby-keyword kw">end</span></pre>
 </body>

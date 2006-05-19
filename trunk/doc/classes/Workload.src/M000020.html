@@ -5,14 +5,18 @@
 
 <html>
 <head>
-  <title>addTasks (Workload)</title>
+  <title>writeSWFFormat (Workload)</title>
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
   <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
 </head>
 <body class="standalone-code">
-  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 267</span>
-    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">addTasks</span>(<span class="ruby-identifier">additionalTasks</span>)
-        <span class="ruby-ivar">@tasks</span> = <span class="ruby-ivar">@tasks</span> <span class="ruby-operator">|</span> <span class="ruby-identifier">additionalTasks</span>
+  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 229</span>
+    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">writeSWFFormat</span>()
+        <span class="ruby-identifier">retval</span>=<span class="ruby-value str">&quot;&quot;</span>
+        <span class="ruby-ivar">@jobs</span>.<span class="ruby-identifier">each</span>{<span class="ruby-operator">|</span><span class="ruby-identifier">job</span><span class="ruby-operator">|</span>
+            <span class="ruby-identifier">retval</span> <span class="ruby-operator">+=</span> <span class="ruby-identifier">job</span>.<span class="ruby-identifier">writeSWFFormat</span>()
+        }    
+        <span class="ruby-keyword kw">return</span> <span class="ruby-identifier">retval</span>
     <span class="ruby-keyword kw">end</span></pre>
 </body>
 </html>

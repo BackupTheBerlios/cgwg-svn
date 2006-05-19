@@ -5,14 +5,16 @@
 
 <html>
 <head>
-  <title>log2 (lib/Models.rb)</title>
+  <title>run_lModelRuntimeEstimates (lib/Models.rb)</title>
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
   <link rel="stylesheet" href="../../.././rdoc-style.css" type="text/css" media="screen" />
 </head>
 <body class="standalone-code">
-  <pre><span class="ruby-comment cmt"># File lib/Models.rb, line 123</span>
-<span class="ruby-keyword kw">def</span> <span class="ruby-identifier">log2</span>(<span class="ruby-identifier">n</span>)
-    <span class="ruby-keyword kw">return</span> (<span class="ruby-constant">Math</span>.<span class="ruby-identifier">log</span>(<span class="ruby-identifier">n</span>)<span class="ruby-operator">/</span><span class="ruby-constant">Math</span>.<span class="ruby-identifier">log</span>(<span class="ruby-value">2</span>))
+  <pre><span class="ruby-comment cmt"># File lib/Models.rb, line 160</span>
+<span class="ruby-keyword kw">def</span> <span class="ruby-identifier">run_lModelRuntimeEstimates</span>(<span class="ruby-identifier">workload</span>)
+    <span class="ruby-identifier">workload</span>.<span class="ruby-identifier">eachJob</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">job</span><span class="ruby-operator">|</span>
+        <span class="ruby-identifier">job</span>.<span class="ruby-identifier">wallTime</span>=(<span class="ruby-identifier">job</span>.<span class="ruby-identifier">runTime</span><span class="ruby-operator">*</span><span class="ruby-value">1.10</span>).<span class="ruby-identifier">to_i</span>
+    }
 <span class="ruby-keyword kw">end</span></pre>
 </body>
 </html>

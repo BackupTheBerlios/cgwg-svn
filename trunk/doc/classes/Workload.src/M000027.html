@@ -5,38 +5,14 @@
 
 <html>
 <head>
-  <title>xmlize (Workload)</title>
+  <title>addTasks (Workload)</title>
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
   <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
 </head>
 <body class="standalone-code">
-  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 335</span>
-    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">xmlize</span>(<span class="ruby-identifier">builder</span>)
-        <span class="ruby-ivar">@load</span>=<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">calculateLoadLevel</span>(); 
-        <span class="ruby-identifier">builder</span>.<span class="ruby-identifier">instruct!</span>
-        <span class="ruby-identifier">builder</span>.<span class="ruby-identifier">declare!</span> <span class="ruby-identifier">:DOCTYPE</span>, <span class="ruby-identifier">:gridworkload</span>, <span class="ruby-identifier">:PUBLIC</span>, <span class="ruby-value str">&quot;http://calana.net/schemas/gridworkload/v1/workload.xsd&quot;</span>
-        <span class="ruby-identifier">builder</span>.<span class="ruby-identifier">gridworkload</span>(<span class="ruby-value str">&quot;timecorrection&quot;</span>=<span class="ruby-operator">&gt;</span><span class="ruby-node">&quot;#{@@config.timeCorrection}&quot;</span>,
-            <span class="ruby-value str">&quot;load&quot;</span>=<span class="ruby-operator">&gt;</span><span class="ruby-node">&quot;#{self.calculateLoadLevel}&quot;</span>,                  
-            <span class="ruby-value str">&quot;xmlns:gridworkload&quot;</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-value str">&quot;http://calana.net/gridworkload&quot;</span>) {<span class="ruby-operator">|</span><span class="ruby-identifier">w</span><span class="ruby-operator">|</span>
-            <span class="ruby-identifier">builder</span>.<span class="ruby-identifier">comment!</span> <span class="ruby-value str">&quot;User definitions&quot;</span>
-            <span class="ruby-identifier">w</span>.<span class="ruby-identifier">users</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">u</span><span class="ruby-operator">|</span>
-                <span class="ruby-ivar">@users</span>.<span class="ruby-identifier">each</span>{<span class="ruby-operator">|</span><span class="ruby-identifier">user</span><span class="ruby-operator">|</span>
-                    <span class="ruby-identifier">user</span>.<span class="ruby-identifier">writeXMLFormat</span>(<span class="ruby-identifier">u</span>)
-                }
-            }
-            <span class="ruby-identifier">builder</span>.<span class="ruby-identifier">comment!</span> <span class="ruby-value str">&quot;Task structure definition&quot;</span>
-            <span class="ruby-identifier">w</span>.<span class="ruby-identifier">tasks</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">t</span><span class="ruby-operator">|</span>
-                <span class="ruby-ivar">@tasks</span>.<span class="ruby-identifier">each</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">task</span><span class="ruby-operator">|</span>
-                    <span class="ruby-identifier">task</span>.<span class="ruby-identifier">writeXMLFormat</span>(<span class="ruby-identifier">t</span>)
-                }
-            }
-            <span class="ruby-identifier">builder</span>.<span class="ruby-identifier">comment!</span> <span class="ruby-value str">&quot;Job definitions&quot;</span>
-            <span class="ruby-identifier">w</span>.<span class="ruby-identifier">jobs</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">j</span><span class="ruby-operator">|</span>
-                <span class="ruby-ivar">@jobs</span>.<span class="ruby-identifier">each</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">job</span><span class="ruby-operator">|</span>
-                    <span class="ruby-identifier">job</span>.<span class="ruby-identifier">writeXMLFormat</span>(<span class="ruby-identifier">j</span>)    
-                }
-            }
-        }
+  <pre><span class="ruby-comment cmt"># File lib/Workload.rb, line 298</span>
+    <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">addTasks</span>(<span class="ruby-identifier">additionalTasks</span>)
+        <span class="ruby-ivar">@tasks</span> = <span class="ruby-ivar">@tasks</span> <span class="ruby-operator">|</span> <span class="ruby-identifier">additionalTasks</span>
     <span class="ruby-keyword kw">end</span></pre>
 </body>
 </html>
