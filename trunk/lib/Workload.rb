@@ -188,6 +188,9 @@ class Task
         }
         return retval
     end
+    def eachJob
+        @jobs.each { |p| yield p }
+    end
 end
 
 ###
@@ -240,11 +243,17 @@ class Workload
             @users.push(current)
         end
     end
+    ###
+    ## Links the users with the tasks on a random basis.
     def linkUsers
-        @jobs.each{|job|
-            size=@users.size()
-            thisUserID=(rand*10).to_i
-            job.userID=thisUserID
+        size=@users.size()
+        @tasks.each{|task|
+            thisUserID=(rand(size.to_i))
+            puts "considering task #{task}, userID = #{thisUserID}"
+            task.eachJob{|job|
+                puts "subjob: userID = #{thisUserID}"
+                job.userID=thisUserID
+            }
         }
     end
     ###
