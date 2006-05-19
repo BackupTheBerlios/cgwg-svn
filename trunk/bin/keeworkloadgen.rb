@@ -33,7 +33,8 @@ require 'lib/Helpers'
 #
 print "Calana Workload Generator\n"
 print "We generate a grid workload based on the machine characteristics"
-print "as described by Kee et al. (http://vgrads.rice.edu/publications/andrew2)"
+print "as described by Kee et al. (http://vgrads.rice.edu/publications/andrew2)\n"
+print "There is no coallocation\n"
 
 ###
 ## You may also want to check out the ConfigManager class in lib/Helpers.rb.
@@ -88,7 +89,7 @@ for i in 1..1 # 10 1024-node systems
 end
 
 
-coallocationCluster=ClusterConfig.new("Coallocation", 128, 2, 10)
+#coallocationCluster=ClusterConfig.new("Coallocation", 128, 2, 10)
 print "Starting up in directory #{@@config.basePath}\n"
 
 ###
@@ -110,12 +111,12 @@ aggregatedWorkload = nil
 
 aggregatedWorkload=aggregatedWorkload.createSequentialJobWorkload()
 
-coallocationWorkload = genLublinCluster(coallocationCluster)
-multiJobbedWorkload = coallocationWorkload.createCoallocationJobWorkload()
+#coallocationWorkload = genLublinCluster(coallocationCluster)
+#multiJobbedWorkload = coallocationWorkload.createCoallocationJobWorkload()
 #print "The modified workload\n"
 #builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
 #multiJobbedWorkload.xmlize(builder)
-multiJobbedWorkload.mergeWorkloadTo(aggregatedWorkload)
+#multiJobbedWorkload.mergeWorkloadTo(aggregatedWorkload)
 
 ###
 ## Next step: We generate a set of users and connect them to jobs at random.
@@ -128,8 +129,8 @@ aggregatedWorkload.linkUsers()
 ###
 ## Just to have it on the screen: Put the original workload on the screen.
 #
-builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
-aggregatedWorkload.xmlize(builder)
+#builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
+#aggregatedWorkload.xmlize(builder)
 
 
 # Create a new workload connection where we gather all generated workloads

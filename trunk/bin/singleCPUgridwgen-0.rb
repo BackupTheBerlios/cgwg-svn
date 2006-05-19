@@ -32,8 +32,10 @@ require 'lib/Helpers'
 ## Script startup
 #
 print "Calana Workload Generator\n"
-print "We generate a grid workload based on the machine characteristics"
-print "as described by Kee et al. (http://vgrads.rice.edu/publications/andrew2)"
+print "We generate a single-CPU grid workload: Consists of \n"
+print "50 single-node machines.\n"
+print "There is no coallocation.\n"
+print "We create 10000 jobs."
 
 ###
 ## You may also want to check out the ConfigManager class in lib/Helpers.rb.
