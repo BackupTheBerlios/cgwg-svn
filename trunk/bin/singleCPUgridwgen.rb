@@ -22,6 +22,8 @@ require_gem 'builder' #we need xml builder
 require 'lib/Models'
 require 'lib/Workload'
 require 'lib/Helpers'
+require 'optparse'
+require 'ostruct'
 
 ###
 ## This is the main workload generator file. You should look at the
@@ -29,28 +31,92 @@ require 'lib/Helpers'
 #
 
 ###
-## Script startup
+## Commandline parser
 #
-print "Calana Workload Generator\n"
-print "We generate a single-CPU grid workload: Consists of \n"
-print "50 single-node machines.\n"
-print "There is no coallocation.\n"
-print "We create 10000 jobs."
+class Optparser
+    CODES = %w[iso-2022-jp shift_jis euc-jp utf8 binary]
+    CODE_ALIASES = { "jis" => "iso-2022-jp", "sjis" => "shift_jis" }
+    #
+    # Return a structure describing the options.
+    #
+    def self.parse(args)
+        # The options specified on the command line will be collected in *options*.
+        # We set default values here.
+        options = OpenStruct.new
+        options.inplace = false
+        options.encoding = "utf8"
+        options.verbose = false
+        opts = OptionParser.new do |opts|
+            opts.banner = "Usage: swf2r.rb [options]"
+            opts.separator ""
+            opts.separator "Specific options:"
+            # Mandatory argument.
+            opts.on("-u", "--numUsers INT", "the number of users to generate") do |numUsers|
+                options.numUsers=numUsers
+            end
+            opts.on("-j", "--numJobs INT","the number of jobs to generate") do |numJobs|
+                options.numJobs=numJobs
+            end
+            opts.on("-c", "--percentCoallocation FLOAT","the number of jobs to generate") do |percentCoallocation|
+                options.percentCoallocation = percentCoallocation
+            end
+            # Boolean switch.
+            opts.on("-v", "--verbose", "Run verbosely") do |v|
+                options.verbose = v
+            end
+            opts.on_tail("-h", "--help", "Show this message") do
+                puts opts
+                exit
+            end
+        end
+        opts.parse!(args)
+        options
+    end
+end
+
 
 ###
 ## You may also want to check out the ConfigManager class in lib/Helpers.rb.
 #
 @@config = ConfigManager.new
-@@config.numUsers = 1000
-# We want to have 10000 jobs with the 50 systems defined below.
-numJobsPerCluster = 500
+options = Optparser.parse(ARGV)
+    
+numTotalJobs = options.numJobs.to_i
+@@config.numUsers = options.numUsers.to_i
+$verbose = options.verbose
+percentCoallocation = options.percentCoallocation.to_f
 
-for i in 1..50 # single-node systems
+if numTotalJobs == nil or @@config.numUsers == nil or percentCoallocation == nil
+    print "please read usage note (-h)\n"
+    exit
+end
+
+numTotalSystems = 50
+# First, take the number of coallocationJobs off...
+coallocationJobs = numTotalJobs * percentCoallocation
+# Then, calculate how many jobs each resource must have
+# to add up to numTotalJobs
+numJobsPerCluster = ((numTotalJobs - coallocationJobs) / numTotalSystems).to_i
+
+###
+## Script startup
+#
+print "Calana Workload Generator\n"
+print "We generate a single-CPU grid workload: Consists of \n"
+print "#{numTotalSystems} single-node machines.\n"
+print "We create #{numTotalJobs} jobs.\n"
+print "We generate #{percentCoallocation*100} % coallocationjobs:\n"
+print "CoallocationJobs: #{coallocationJobs}, numJobsPerCluster (rounded): #{numJobsPerCluster}\n"
+
+
+for i in 1..numTotalSystems # single-node systems
     cluster = ClusterConfig.new("Cluster1-"+i.to_s, 1, 1, numJobsPerCluster)
     @@config.addCluster(cluster)
 end
 
-#coallocationCluster=ClusterConfig.new("Coallocation", 128, 2, 10)
+if coallocationJobs > 0
+    coallocationCluster=ClusterConfig.new("Coallocation", 2, 2, coallocationJobs)
+end
 print "Starting up in directory #{@@config.basePath}\n"
 
 ###
@@ -72,12 +138,14 @@ aggregatedWorkload = nil
 
 aggregatedWorkload=aggregatedWorkload.createSequentialJobWorkload()
 
-#coallocationWorkload = genLublinCluster(coallocationCluster)
-#multiJobbedWorkload = coallocationWorkload.createCoallocationJobWorkload()
-#print "The modified workload\n"
-#builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
-#multiJobbedWorkload.xmlize(builder)
-#multiJobbedWorkload.mergeWorkloadTo(aggregatedWorkload)
+if (coallocationJobs > 0)
+    coallocationWorkload = genLublinCluster(coallocationCluster)
+    multiJobbedWorkload = coallocationWorkload.createCoallocationJobWorkload()
+    #print "The modified workload\n"
+    #builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
+    #multiJobbedWorkload.xmlize(builder)
+    multiJobbedWorkload.mergeWorkloadTo(aggregatedWorkload)
+end    
 
 ###
 ## Next step: We generate a set of users and connect them to jobs at random.

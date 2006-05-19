@@ -112,9 +112,9 @@ class ConfigManager
         @runtimeestimatesPath=@basePath+"/externalmodels/m_tsafrir05"
         # Adjust this to your environment. With Linux, we need to link
         # against the GNU math lib (-lm /usr/lib/libm.a)
-        @compilerFlags="-lm /usr/lib/libm.a"
+        #@compilerFlags="-lm /usr/lib/libm.a"
         # For Mac OS X, no flags are needed (tested on Tiger)
-        #@compilerFlags=""
+        @compilerFlags=""
     end
     
     def addCluster(cluster)
