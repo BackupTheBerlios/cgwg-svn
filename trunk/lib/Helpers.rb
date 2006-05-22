@@ -44,6 +44,7 @@ def genLublinCluster(clusterConfig)
     workload.parseSWF(swf)
     #print "Adding runtime estimates\n"
     #run_lModelRuntimeEstimates(workload)
+    addUserRuntimeEstimates(workload)
     return workload
 end
 

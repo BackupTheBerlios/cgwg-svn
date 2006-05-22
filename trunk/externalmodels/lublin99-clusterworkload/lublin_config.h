@@ -1,12 +1,12 @@
 #undef SIZE
-#define SIZE 240.0          
+#define SIZE 1000          
 /* UHI: Needs to be adjusted, depending on the cluster */
 #undef UHI
-#define UHI 4
+#define UHI 7
 #undef ULOW
 #define ULOW 1.0
 #undef UMED
-#define UMED 1.5
+#define UMED 4.5
 
 /* Values for a different load level */
 #undef A1
