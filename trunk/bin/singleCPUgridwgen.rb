@@ -130,6 +130,7 @@ aggregatedWorkload = nil
     print "### Working on cluster #{clusterConfig.name}\n"
     if aggregatedWorkload == nil
         aggregatedWorkload = genLublinCluster(clusterConfig)
+        
     else
         tempWorkload = genLublinCluster(clusterConfig)
         tempWorkload.mergeWorkloadTo(aggregatedWorkload)

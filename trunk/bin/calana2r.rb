@@ -143,8 +143,8 @@ end
 #
 class PriceRTPrefReport
     def initialize(directory, load)
-        reportFileName = directory+"/price-rt-preference-"+load+".txt"
         @load = load
+        reportFileName = directory+"/price-rt-preference-"+load+".txt"
         if (File.exists?("reportFileName"))
             @reportFile = File.new(reportFileName, "a")
         else
