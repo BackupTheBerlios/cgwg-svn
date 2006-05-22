@@ -74,7 +74,7 @@ end
 #
 class Job
     attr_accessor :type, :responseTime, :jid, :price, :pricePref,
-            :perfPref, :runTime
+            :perfPref, :runTime, :queueTime
     def initialize(jid)
         @jid=jid
     end
@@ -149,19 +149,79 @@ class PriceRTPrefReport
             @reportFile = File.new(reportFileName, "a")
         else
             @reportFile = File.new(reportFileName, "w")
-            @reportFile.puts("pricePerSecond\tpricePref\tresponseTime\tperfPref")
+            @reportFile.puts("pricePerSecond\tpricePref\tqueueTime\tperfPref")
         end
     end
     
     def addJob(job)
         pricePerSecond = job.price.to_f / job.runTime.to_f
         @reportFile.puts("#{pricePerSecond}\t#{job.pricePref}\t"+
-            "#{job.responseTime}\t#{job.perfPref}")
+            "#{job.queueTime}\t#{job.perfPref}")
     end
     
     def finalize()
-        avgprice = (@cumulativePrice.to_f / @jobCounter.to_f)
-        @reportFile.puts("#{@load}\t#{avgprice}")
+        @reportFile.close
+    end
+end
+
+###
+## A report that prints the price vs. pricePreference and rt vs. perfPref data
+#
+class PricePrefCorrelationReport
+    def initialize(directory, load)
+        @load=load
+        reportFileName = directory+"/preference-correlation.txt"
+        if (File.exists?("reportFileName"))
+            @reportFile = File.new(reportFileName, "a")
+        else
+            @reportFile = File.new(reportFileName, "w")
+            @reportFile.puts("load\tpricecorrelation\tperfcorrelation")
+        end
+        @pricePerSeconds=Array.new
+        @pricePrefs = Array.new
+        @queueTimes=Array.new
+        @perfPrefs = Array.new
+    end
+    
+    def addJob(job)
+        pricePerSecond = job.price.to_f / job.runTime.to_f
+        @pricePerSeconds << pricePerSecond.to_f
+        @pricePrefs << job.pricePref.to_f
+        @queueTimes << job.queueTime.to_f
+        @perfPrefs << job.perfPref.to_f
+    end
+    
+    ###
+    ## Algorithm: See http://en.wikipedia.org/wiki/Correlation
+    #
+    def calc_correlation(x, y)
+        sum_sq_x = 0
+        sum_sq_y = 0
+        sum_coproduct = 0
+        mean_x = x[0]
+        mean_y = y[0]
+        n = x.length - 1
+        for i in 1..n
+            sweep = (i - 1.0) / i
+            delta_x = x[i] - mean_x
+            delta_y = y[i] - mean_y
+            sum_sq_x += delta_x * delta_x * sweep
+            sum_sq_y += delta_y * delta_y * sweep
+            sum_coproduct += delta_x * delta_y * sweep
+            mean_x += delta_x / i
+            mean_y += delta_y / i 
+        end
+        pop_sd_x = Math.sqrt( sum_sq_x / n )
+        pop_sd_y = Math.sqrt( sum_sq_y / n )
+        cov_x_y = sum_coproduct / n
+        correlation = cov_x_y / (pop_sd_x * pop_sd_y)
+        return correlation
+    end
+    
+    def finalize()
+        priceCorrelation = calc_correlation(@pricePerSeconds, @pricePrefs)
+        perfCorrelation = calc_correlation(@queueTimes, @perfPrefs)
+        @reportFile.puts("#{@load}\t#{priceCorrelation}\t#{perfCorrelation}")
         @reportFile.close
     end
 end
@@ -172,7 +232,8 @@ class ReportCollection
         report1 = LoadARTReport.new($outDir, load);
         report2 = LoadAvgPriceReport.new($outDir, load);
         report3 = PriceRTPrefReport.new($outDir, load);
-        @reports << report1 << report2 << report3
+        report4 = PricePrefCorrelationReport.new($outDir, load);
+        @reports << report1 << report2 << report3 << report4
     end
     
     def addJob(job)
@@ -211,8 +272,6 @@ reports = ReportCollection.new($load);
 print "Reading calanasim log and converting.\n"
 inExplanation = false;
 context = 0;
-
-
 
 inFile.each_line {|line|
     # We skip the comments.
@@ -262,6 +321,7 @@ inFile.each_line {|line|
     submitTime = fields[11].strip!
     runTime = fields[14].strip!
     responseTime = fields[16].strip!
+    queueTime = responseTime.to_i - runTime.to_i
     price = fields[17].strip!
     agent = fields[6].strip!
     prefs = fields[7].strip!
@@ -281,6 +341,7 @@ inFile.each_line {|line|
     j.perfPref = perfPref
     j.responseTime = responseTime
     j.runTime = runTime
+    j.queueTime = queueTime
         
     if (context == SEQUENCE)
         puts "SEQUENCE: #{jid} #{submitTime} #{responseTime} #{price}" if $verbose
