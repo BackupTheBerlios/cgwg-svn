@@ -94,6 +94,16 @@ aggregatedWorkload.generateRandomUsers()
 print "Connecting users with jobs\n"
 aggregatedWorkload.linkUsers()
 
+# calculate the mean runtime of this workload
+aggRuntime = 0
+count = 0
+aggregatedWorkload.eachJob{|job|
+    aggRuntime += job.runTime
+    count += 1
+}
+
+puts "Mean runtime is #{aggRuntime / count}\n"
+
 ###
 ## Just to have it on the screen: Put the original workload on the screen.
 #

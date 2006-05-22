@@ -363,12 +363,23 @@ class Workload
             @tasks[i].id = i+1
         end
     end
+    # calculate the mean runtime of this workload
+    def calculateMeanRuntime
+        aggRuntime = 0
+        count = 0
+        @jobs.each {|job|
+            aggRuntime += job.runTime
+            count += 1
+        }
+        return aggRuntime / count;
+    end
     def xmlize(builder)
         @load=self.calculateLoadLevel(); 
+        meanRuntime = calculateMeanRuntime();
         builder.instruct!
-        builder.declare! :DOCTYPE, :gridworkload, :SYSTEM, "http://calana.net/schemas/gridworkload/v1/workload.dtd"
+        builder.declare! :DOCTYPE, :gridworkload, :SYSTEM, "workload.dtd"
         builder.gridworkload("timecorrection"=>"#{@@config.timeCorrection}",
-            "load"=>"#{self.calculateLoadLevel}",                  
+            "load"=>"#{self.calculateLoadLevel}", "meanRuntime" => "#{meanRuntime}",                 
             "xmlns:gridworkload" => "http://calana.net/gridworkload") {|w|
             builder.comment! "User definitions"
             w.users {|u|

@@ -91,7 +91,7 @@ class LoadARTReport
             @reportFile = File.new(reportFileName, "a")
         else
             @reportFile = File.new(reportFileName, "w")
-            @reportFile.puts("load\tART")
+            @reportFile.puts("#load\tART")
         end
         @cumulativeResponseTime = 0.0
         @jobCounter = 0
@@ -120,7 +120,7 @@ class LoadAvgPriceReport
             @reportFile = File.new(reportFileName, "a")
         else
             @reportFile = File.new(reportFileName, "w")
-            @reportFile.puts("load\tavgprice")
+            @reportFile.puts("#load\tavgprice")
         end
         @cumulativePrice = 0.0
         @jobCounter = 0
@@ -149,7 +149,7 @@ class PriceRTPrefReport
             @reportFile = File.new(reportFileName, "a")
         else
             @reportFile = File.new(reportFileName, "w")
-            @reportFile.puts("pricePerSecond\tpricePref\tqueueTime\tperfPref")
+            @reportFile.puts("#pricePerSecond\tpricePref\tqueueTime\tperfPref")
         end
     end
     
@@ -175,7 +175,7 @@ class PricePrefCorrelationReport
             @reportFile = File.new(reportFileName, "a")
         else
             @reportFile = File.new(reportFileName, "w")
-            @reportFile.puts("load\tpricecorrelation\tperfcorrelation")
+            @reportFile.puts("#load\tpricecorrelation\tperfcorrelation")
         end
         @pricePerSeconds=Array.new
         @pricePrefs = Array.new
