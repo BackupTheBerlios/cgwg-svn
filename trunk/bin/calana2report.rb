@@ -46,8 +46,11 @@ class Optparser
             opts.separator ""
             opts.separator "Specific options:"
             # Mandatory argument.
-            opts.on("-i", "--input FILE", "the input file in calanasim format") do |inFile|
-                options.infile=inFile
+            opts.on("-r", "--report FILE", "the report file in calanasim format") do |reportFile|
+                options.reportfile=reportFile
+            end
+            opts.on("-t", "--trace FILE", "the trace file in calanasim format") do |reportFile|
+                options.tracefile=reportFile
             end
             opts.on("-o", "--output directory","the output directory for the report files") do |outdir|
                 options.outdir=outdir
@@ -256,24 +259,26 @@ print "calanasim to R read.table converter\n"
    
 options = Optparser.parse(ARGV)
     
-$inFileName = options.infile
+$reportFileName = options.reportFile
+$traceFileName = options.traceFile
 $outDir = options.outdir
 $load = options.load
 $verbose = options.verbose
 
-if $inFileName == nil or $outDir == nil or $load == nil
+if $reportFileName == nil or $traceFileName == nil or
+    $outDir == nil or $load == nil
     print "please read usage note (-h)\n"
     exit
 end
 
 
-inFile=File.new($inFileName, "r")
+reportFile=File.new($reportFileName, "r")
 reports = ReportCollection.new($load);
 print "Reading calanasim log and converting.\n"
 inExplanation = false;
 context = 0;
 
-inFile.each_line {|line|
+reportFile.each_line {|line|
     # We skip the comments.
     if (line =~ /^;/)
         next 
@@ -355,4 +360,4 @@ inFile.each_line {|line|
 }
 
 reports.finalize()
-inFile.close()
+reportFile.close()

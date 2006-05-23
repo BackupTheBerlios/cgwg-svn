@@ -149,6 +149,11 @@ if (coallocationJobs > 0)
     multiJobbedWorkload.mergeWorkloadTo(aggregatedWorkload)
 end    
 
+print "Fixing job sizes -> Setting jobsize to 1\n"
+aggregatedWorkload.eachJob{|job|
+    job.numberAllocatedProcessors = 1
+}
+
 ###
 ## Next step: We generate a set of users and connect them to jobs at random.
 #
