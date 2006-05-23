@@ -42,7 +42,7 @@ class Optparser
         options.encoding = "utf8"
         options.verbose = false
         opts = OptionParser.new do |opts|
-            opts.banner = "Usage: calana2r.rb [options]"
+            opts.banner = "Usage: calana2report.rb [options]"
             opts.separator ""
             opts.separator "Specific options:"
             # Mandatory argument.
@@ -255,12 +255,12 @@ end
 ###
 ## Script begins here
 #
-print "calanasim to R read.table converter\n"
+print "calanasim to report converter\n"
    
 options = Optparser.parse(ARGV)
     
-$reportFileName = options.reportFile
-$traceFileName = options.traceFile
+$reportFileName = options.reportfile
+$traceFileName = options.tracefile
 $outDir = options.outdir
 $load = options.load
 $verbose = options.verbose
@@ -274,7 +274,7 @@ end
 
 reportFile=File.new($reportFileName, "r")
 reports = ReportCollection.new($load);
-print "Reading calanasim log and converting.\n"
+print "Reading calanasim report file and converting.\n"
 inExplanation = false;
 context = 0;
 
@@ -358,6 +358,120 @@ reportFile.each_line {|line|
     
     reports.addJob(j)
 }
-
 reports.finalize()
 reportFile.close()
+
+queueLength = Hash.new();
+utilization = Hash.new();
+
+class EventStore
+    attr_accessor :entityname
+    def initialize(entityname)
+        @entityname = entityname
+        @events=Hash.new
+    end
+    def addEvent(time, value)
+        @events[time]=value
+    end
+    def getName
+        return @entityname
+    end
+    def getValue(time)
+        return @events.fetch(time) { |time| 
+            ## We don't have the exact value, search for an slightly
+            ## older one.
+            sorted = @events.sort
+            retval = 0
+            sorted.each {|key, val|
+                if key > time
+                    break
+                end
+                retval = val
+            }
+            return retval
+        }
+    end
+end
+
+traceFile=File.new($traceFileName, "r")
+puts "Processing trace file #{$traceFileName}"
+@utilReportFile = File.new($outDir+"/utilization-"+$load+".txt", "w")
+@queueReportFile = File.new($outDir+"/queuelength-"+$load+".txt", "w")
+maxTime = 0
+traceFile.each_line {|line|
+    line.sub!(/trace./, "") # Drop the trace. prefix.
+    line.sub!(/-\ /, "") # Drop the dash.
+    line.sub!(/:/, "") # Drop the colon.
+    # Print the clean line if requested.
+    puts("#{line}") if $verbose
+    fields = line.split()
+    entity = fields[0]
+    proptime = fields[1]
+    tmp = proptime.split("@")
+    property = tmp[0]
+    time = tmp[1].to_i
+    value = fields[2]
+    puts("#{entity} says: #{property} is #{value} at time #{time}") if $verbose
+    
+    if property =~ /queuelength/
+        if not queueLength.has_key?(entity)
+            es=EventStore.new(entity)
+            queueLength[entity]=es
+        end
+        es = queueLength[entity]
+        es.addEvent(time, value)
+    elsif property =~ /utilization/
+        if not utilization.has_key?(entity)
+            es=EventStore.new(entity)
+            utilization[entity]=es
+        end
+        es = utilization[entity]
+        es.addEvent(time, value)
+    end
+    if maxTime < time
+        maxTime = time
+    end
+}
+
+srate = 1000
+puts "Sampling events with samplingrate #{srate}"
+sampler = Array.new
+current = 0
+while (current<maxTime)
+    sampler << current
+    current = current + srate
+end
+#puts "#{sampler}"
+sampler.each {|eventTime|
+    puts "Queuelength at time #{eventTime}" if $verbose
+    queueValues = Hash.new
+    queueLength.each_value{|eventStore|
+        entity = eventStore.getName
+        value = eventStore.getValue(eventTime)
+        queueValues[entity]=value
+    }
+    queueLogLine = "#{eventTime}\t"
+    sorted = queueValues.sort
+    sorted.each{|key, value|
+        puts "Entity #{key} => value #{value}" if $verbose
+        queueLogLine << "#{value}\t"
+    }
+    puts "Utilization at time #{eventTime}" if $verbose
+    utilValues = Hash.new
+    utilization.each_value{|eventStore|
+        entity = eventStore.entityname
+        value = eventStore.getValue(eventTime)
+        utilValues[entity]=value
+    }
+    utilLogLine = "#{eventTime}\t"
+    sorted = utilValues.sort
+    sorted.each{|key, value|
+        puts "Entity #{key} => value #{value}" if $verbose
+        utilLogLine << "#{value}\t"
+    }
+    #puts "#{queueLogLine}\n#{utilLogLine}\n"
+    @utilReportFile.puts(utilLogLine)
+    @queueReportFile.puts(queueLogLine)
+}
+@utilReportFile.close
+@queueReportFile.close
