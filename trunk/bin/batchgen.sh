@@ -5,10 +5,10 @@ NUMJOBS=10000
 echo "generating singeCPU workloads"
 COALLOCATION=0.0
 ruby bin/singleCPUgridwgen.rb -u $NUMUSERS -j $NUMJOBS -c $COALLOCATION
-tar cvjf singleCPU-$COALLOCATION.tar.bz var/workload\*
+tar cvjf singleCPU-$COALLOCATION.tar.bz var/workload*
 COALLOCATION=0.1
 ruby bin/singleCPUgridwgen.rb -u $NUMUSERS -j $NUMJOBS -c $COALLOCATION
-tar cvjf singleCPU-$COALLOCATION.tar.bz var/workload\*
+tar cvjf singleCPU-$COALLOCATION.tar.bz var/workload*
 COALLOCATION=0.2
 ruby bin/singleCPUgridwgen.rb -u $NUMUSERS -j $NUMJOBS -c $COALLOCATION
 tar cvjf singleCPU-$COALLOCATION.tar.bz var/workload*

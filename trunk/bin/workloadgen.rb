@@ -47,6 +47,8 @@ coallocationCluster=ClusterConfig.new("Coallocation", 128, 2, 1000)
 @@config.addCluster(clusterB)
 print "Starting up in directory #{@@config.basePath}\n"
 
+cleanVarDirectory()
+
 ###
 ## Read Configuration, start main loop. Here, we generate a workload for
 ## each cluster as given in the configuration. We merge them all in the

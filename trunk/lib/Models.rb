@@ -36,7 +36,7 @@ class Lublin
         @machineConfig = machineConfig
         # Calculate size-dependent values
         size=@machineConfig.size
-        #print "Generating #{size} jobs."
+        print "Generating #{size} jobs for cluster with #{@machineConfig.nodes} nodes."
         uhi = log2(@machineConfig.nodes).to_i
         ulow = log2(@machineConfig.smallestJobSize())
         # UMED should be in [UHI-1.5, UHI-3.5], make this a static setting.

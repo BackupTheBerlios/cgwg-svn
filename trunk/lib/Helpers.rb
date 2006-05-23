@@ -56,6 +56,12 @@ def addUserRuntimeEstimates(workload)
     return workload
 end
 
+
+def cleanVarDirectory()
+    puts "Cleaning runtime directory #{@@config.runPath}"
+    `rm #{@@config.runPath}/*`
+end
+
 ###
 ## Encapsulate the configuration of a cluster.
 #

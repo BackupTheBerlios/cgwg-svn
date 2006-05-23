@@ -107,6 +107,8 @@ print "We create #{numTotalJobs} jobs.\n"
 print "We generate #{percentCoallocation*100} % coallocationjobs:\n"
 print "CoallocationJobs: #{coallocationJobs}, numJobsPerCluster (rounded): #{numJobsPerCluster}\n"
 
+cleanVarDirectory()
+
 for i in 1..20 # single-node systems
     cluster = ClusterConfig.new("Cluster1-"+i.to_s, 1, 1, numJobsPerCluster)
     @@config.addCluster(cluster)

@@ -86,7 +86,7 @@ numTotalJobs = options.numJobs.to_i
 $verbose = options.verbose
 percentCoallocation = options.percentCoallocation.to_f
 
-if numTotalJobs == nil or @@config.numUsers == nil or percentCoallocation == nil
+if numTotalJobs == 0 or @@config.numUsers == 0 or percentCoallocation == nil
     print "please read usage note (-h)\n"
     exit
 end
@@ -108,6 +108,7 @@ print "We create #{numTotalJobs} jobs.\n"
 print "We generate #{percentCoallocation*100} % coallocationjobs:\n"
 print "CoallocationJobs: #{coallocationJobs}, numJobsPerCluster (rounded): #{numJobsPerCluster}\n"
 
+cleanVarDirectory()
 
 for i in 1..numTotalSystems # single-node systems
     cluster = ClusterConfig.new("Cluster1-"+i.to_s, 1, 1, numJobsPerCluster)
