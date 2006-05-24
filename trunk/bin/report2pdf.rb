@@ -140,12 +140,14 @@ if $inDir == nil or $outDir == nil
     exit
 end
 
-gnuPlot2Data("price-rt-preference-0.8.txt", "price-pref-3.2.eps", 
+load = 0.025
+
+gnuPlot2Data("price-rt-preference-#{load}.txt", "price-pref-#{load}.eps", 
     "Price vs. PricePreference", "pricePref", "pricePerSecond", 2, 1)
-gnuPlot2Data("price-rt-preference-0.8.txt", "perf-pref-3.2.eps", 
+gnuPlot2Data("price-rt-preference-#{load}.txt", "perf-pref-#{load}.eps", 
     "Queuetime vs. PerfPreference", "perfPref", "queuetime", 4, 3)
 names=["Agent1", "Agent2", "Agent3"]
-gnuPlotMultiData("utilization-0.8.txt", "utilization-0.8.eps", 
+gnuPlotMultiData("utilization-#{load}.txt", "utilization-#{load}.eps", 
     "Utilization per agent", "time", "utilization", names)
-gnuPlotMultiData("queuelength-0.8.txt", "queuelength-0.8.eps", 
+gnuPlotMultiData("queuelength-#{load}.txt", "queuelength-#{load}.eps", 
     "Queue length per agent", "time", "queue length", names)

@@ -331,6 +331,7 @@ reportFile.each_line {|line|
     agent = fields[6].strip!
     prefs = fields[7].strip!
     prefFields = prefs.split(";")
+    #puts "PREF for job #{jid}: #{prefFields}"
     finishtimeField = prefFields[0];
     perfPref = (finishtimeField.split("="))[1]
     pricePrefField = prefFields[1];
@@ -369,27 +370,43 @@ class EventStore
     def initialize(entityname)
         @entityname = entityname
         @events=Hash.new
+        @currentSample = 0;
+        @rate = 0;
+        @samples = Array.new
     end
     def addEvent(time, value)
-        @events[time]=value
+        @events[time.to_i]=value.to_f
+        @sorted = nil;
     end
     def getName
         return @entityname
     end
-    def getValue(time)
-        return @events.fetch(time) { |time| 
-            ## We don't have the exact value, search for an slightly
-            ## older one.
-            sorted = @events.sort
-            retval = 0
-            sorted.each {|key, val|
-                if key > time
-                    break
+    def prepare(rate)
+        @rate = rate
+        @currentSample=0;
+        currentValue = 0.0
+        upperBound = @rate
+        @sorted = @events.sort
+        @sorted.each {|time, value|
+            if (time <= upperBound)
+                if currentValue < value
+                    currentValue = value
                 end
-                retval = val
-            }
-            return retval
+            else
+                sample = [time, value]
+                @samples << sample
+                upperBound += @rate
+                currentValue = 0
+            end
         }
+        #@samples.each_pair{|key, value|
+            #    puts "Key #{key} -> value #{value}"
+            #}
+    end
+    def getNext()
+        retval = @samples[@currentSample]
+        @currentSample += 1
+        return retval
     end
 end
 
@@ -397,7 +414,6 @@ traceFile=File.new($traceFileName, "r")
 puts "Processing trace file #{$traceFileName}"
 @utilReportFile = File.new($outDir+"/utilization-"+$load+".txt", "w")
 @queueReportFile = File.new($outDir+"/queuelength-"+$load+".txt", "w")
-maxTime = 0
 traceFile.each_line {|line|
     line.sub!(/trace./, "") # Drop the trace. prefix.
     line.sub!(/-\ /, "") # Drop the dash.
@@ -428,50 +444,65 @@ traceFile.each_line {|line|
         es = utilization[entity]
         es.addEvent(time, value)
     end
-    if maxTime < time
-        maxTime = time
-    end
 }
 
-srate = 1000
-puts "Sampling events with samplingrate #{srate}"
-sampler = Array.new
-current = 0
-while (current<maxTime)
-    sampler << current
-    current = current + srate
-end
-#puts "#{sampler}"
-sampler.each {|eventTime|
-    puts "Queuelength at time #{eventTime}" if $verbose
-    queueValues = Hash.new
-    queueLength.each_value{|eventStore|
-        entity = eventStore.getName
-        value = eventStore.getValue(eventTime)
-        queueValues[entity]=value
-    }
-    queueLogLine = "#{eventTime}\t"
-    sorted = queueValues.sort
-    sorted.each{|key, value|
-        puts "Entity #{key} => value #{value}" if $verbose
-        queueLogLine << "#{value}\t"
-    }
-    puts "Utilization at time #{eventTime}" if $verbose
-    utilValues = Hash.new
-    utilization.each_value{|eventStore|
-        entity = eventStore.entityname
-        value = eventStore.getValue(eventTime)
-        utilValues[entity]=value
-    }
-    utilLogLine = "#{eventTime}\t"
-    sorted = utilValues.sort
-    sorted.each{|key, value|
-        puts "Entity #{key} => value #{value}" if $verbose
-        utilLogLine << "#{value}\t"
-    }
-    #puts "#{queueLogLine}\n#{utilLogLine}\n"
+srate = 100000
+puts "Sampling trace events with samplingrate #{srate}"
+###
+## Prepare our iterator
+#
+queueLength.each_value{|eventStore|
+    eventStore.prepare(srate)
+    puts "Initializing #{eventStore.getName()}" if $verbose
+}
+utilization.each_value{|eventStore|
+    eventStore.prepare(srate)
+    puts "Initializing #{eventStore.getName()}" if $verbose
+}
+
+###
+## Iterate as long as we don't get an Exception, which signals we're at
+## the last value
+#
+hasMoreValues = true
+while (hasMoreValues)
+    begin
+        eventTime = 0
+        queueValues = Hash.new
+        queueLength.each_value{|eventStore|
+            entity = eventStore.getName
+            eventTime, value = eventStore.getNext()
+            if (value == nil)
+                exit
+            end
+            queueValues[entity]=value
+        }
+        queueLogLine = "#{eventTime}\t"
+        sorted = queueValues.sort
+        sorted.each{|key, value|
+            puts "Entity #{key} => value #{value}" if $verbose
+            queueLogLine << "#{value}\t"
+        }
+        puts "Utilization at time #{eventTime}" if $verbose
+        utilValues = Hash.new
+        utilization.each_value{|eventStore|
+            entity = eventStore.entityname
+            eventTime, value = eventStore.getNext()
+            utilValues[entity]=value
+        }
+        utilLogLine = "#{eventTime}\t"
+        sorted = utilValues.sort
+        sorted.each{|key, value|
+            puts "Entity #{key} => value #{value}" if $verbose
+            utilLogLine << "#{value}\t"
+        }
+    rescue StandardError => bang
+        puts "No more values to sample - exiting with #{bang}...\n"
+        hasMoreValues = false;
+    end
+    puts "queuelength-log: #{queueLogLine}\nutilization-log: #{utilLogLine}\n"
     @utilReportFile.puts(utilLogLine)
     @queueReportFile.puts(queueLogLine)
-}
+end
 @utilReportFile.close
 @queueReportFile.close
