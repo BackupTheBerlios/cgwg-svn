@@ -90,7 +90,7 @@ class LoadARTReport
     def initialize(directory, load)
         reportFileName = directory+"/load-ART.txt"
         @load = load
-        if (File.exists?("reportFileName"))
+        if (File.exists?("#{reportFileName}"))
             @reportFile = File.new(reportFileName, "a")
         else
             @reportFile = File.new(reportFileName, "w")
@@ -119,7 +119,7 @@ class LoadAvgPriceReport
     def initialize(directory, load)
         reportFileName = directory+"/load-avgprice.txt"
         @load = load
-        if (File.exists?("reportFileName"))
+        if (File.exists?("#{reportFileName}"))
             @reportFile = File.new(reportFileName, "a")
         else
             @reportFile = File.new(reportFileName, "w")
@@ -148,12 +148,8 @@ class PriceRTPrefReport
     def initialize(directory, load)
         @load = load
         reportFileName = directory+"/price-rt-preference-"+load+".txt"
-        if (File.exists?("reportFileName"))
-            @reportFile = File.new(reportFileName, "a")
-        else
-            @reportFile = File.new(reportFileName, "w")
-            @reportFile.puts("#pricePerSecond\tpricePref\tqueueTime\tperfPref")
-        end
+        @reportFile = File.new(reportFileName, "w")
+        @reportFile.puts("#pricePerSecond\tpricePref\tqueueTime\tperfPref")
     end
     
     def addJob(job)
@@ -174,7 +170,7 @@ class PricePrefCorrelationReport
     def initialize(directory, load)
         @load=load
         reportFileName = directory+"/preference-correlation.txt"
-        if (File.exists?("reportFileName"))
+        if (File.exists?("#{reportFileName}"))
             @reportFile = File.new(reportFileName, "a")
         else
             @reportFile = File.new(reportFileName, "w")
@@ -252,118 +248,98 @@ class ReportCollection
     end
 end
 
-###
-## Script begins here
-#
-print "calanasim to report converter\n"
-   
-options = Optparser.parse(ARGV)
-    
-$reportFileName = options.reportfile
-$traceFileName = options.tracefile
-$outDir = options.outdir
-$load = options.load
-$verbose = options.verbose
 
-if $reportFileName == nil or $traceFileName == nil or
-    $outDir == nil or $load == nil
-    print "please read usage note (-h)\n"
-    exit
-end
+def createReport(reportFileName, loadLevel)
+    reportFile=File.new(reportFileName, "r")
+    reports = ReportCollection.new(loadLevel);
+    print "Reading calanasim report file and converting.\n"
+    inExplanation = false;
+    context = 0;
 
-
-reportFile=File.new($reportFileName, "r")
-reports = ReportCollection.new($load);
-print "Reading calanasim report file and converting.\n"
-inExplanation = false;
-context = 0;
-
-reportFile.each_line {|line|
-    # We skip the comments.
-    if (line =~ /^;/)
-        next 
-    end
-    # And empty lines.
-    if (line =~ /^$/)
-        next
-    end
-    # We need to ignore the three field explanation lines.
-    if (line =~ /^=/ and not inExplanation)
-        inExplanation=true
-        next
-    end
-    if (inExplanation and line =~ /^=/)
-        inExplanation = false
-        next
-    end
-    if (inExplanation)
-        next
-    end
-
-    ###
-    ## Now, we have only the job result lines.
-    #
-    
-    fields=line.split("|")
-    
-    tid = fields[0].strip!
-    type = fields[1].strip!
-    if (tid =~ /^task-/)
-        if (type =~ /^sequence/)
-            context = SEQUENCE 
-        elsif (type =~ /^coallocation/)
-            context = COALLOCATION
+    reportFile.each_line {|line|
+        # We skip the comments.
+        if (line =~ /^;/)
+            next 
         end
-        next
-    end
-    
-    #puts "Input line: #{line}" if $verbose    
-    ###
-    ## Read the job description fields
-    #
-    jid = fields[2].strip!
-    jid.sub!("job-", "")
-    submitTime = fields[11].strip!
-    runTime = fields[14].strip!
-    responseTime = fields[16].strip!
-    queueTime = responseTime.to_i - runTime.to_i
-    price = fields[17].strip!
-    agent = fields[6].strip!
-    prefs = fields[7].strip!
-    prefFields = prefs.split(";")
-    #puts "PREF for job #{jid}: #{prefFields}"
-    finishtimeField = prefFields[0];
-    perfPref = (finishtimeField.split("="))[1]
-    pricePrefField = prefFields[1];
-    pricePref = (pricePrefField.split("="))[1]
-    #puts "perfPref = #{perfPref}, pricePref = #{pricePref}"
-    
-    ###
-    ## Create a job instance
-    #
-    j = Job.new(jid)
-    j.price = price
-    j.pricePref = pricePref
-    j.perfPref = perfPref
-    j.responseTime = responseTime
-    j.runTime = runTime
-    j.queueTime = queueTime
-        
-    if (context == SEQUENCE)
-        puts "SEQUENCE: #{jid} #{submitTime} #{responseTime} #{price}" if $verbose
-        j.type=SEQUENCE
-    elsif (context == COALLOCATION)
-        puts "COALLOCATION: #{jid} #{submitTime} #{responseTime} #{price}" if $verbose
-        j.type=COALLOCATION
-    end
-    
-    reports.addJob(j)
-}
-reports.finalize()
-reportFile.close()
+        # And empty lines.
+        if (line =~ /^$/)
+            next
+        end
+        # We need to ignore the three field explanation lines.
+        if (line =~ /^=/ and not inExplanation)
+            inExplanation=true
+            next
+        end
+        if (inExplanation and line =~ /^=/)
+            inExplanation = false
+            next
+        end
+        if (inExplanation)
+            next
+        end
 
-queueLength = Hash.new();
-utilization = Hash.new();
+        ###
+        ## Now, we have only the job result lines.
+        #
+        
+        fields=line.split("|")
+        
+        tid = fields[0].strip!
+        type = fields[1].strip!
+        if (tid =~ /^task-/)
+            if (type =~ /^sequence/)
+                context = SEQUENCE 
+            elsif (type =~ /^coallocation/)
+                context = COALLOCATION
+            end
+            next
+        end
+        
+        #puts "Input line: #{line}" if $verbose    
+        ###
+        ## Read the job description fields
+        #
+        jid = fields[2].strip!
+        jid.sub!("job-", "")
+        submitTime = fields[11].strip!
+        runTime = fields[14].strip!
+        responseTime = fields[16].strip!
+        queueTime = responseTime.to_i - runTime.to_i
+        price = fields[17].strip!
+        agent = fields[6].strip!
+        prefs = fields[7].strip!
+        prefFields = prefs.split(";")
+        #puts "PREF for job #{jid}: #{prefFields}"
+        finishtimeField = prefFields[0];
+        perfPref = (finishtimeField.split("="))[1]
+        pricePrefField = prefFields[1];
+        pricePref = (pricePrefField.split("="))[1]
+        #puts "perfPref = #{perfPref}, pricePref = #{pricePref}"
+        
+        ###
+        ## Create a job instance
+        #
+        j = Job.new(jid)
+        j.price = price
+        j.pricePref = pricePref
+        j.perfPref = perfPref
+        j.responseTime = responseTime
+        j.runTime = runTime
+        j.queueTime = queueTime
+            
+        if (context == SEQUENCE)
+            puts "SEQUENCE: #{jid} #{submitTime} #{responseTime} #{price}" if $verbose
+            j.type=SEQUENCE
+        elsif (context == COALLOCATION)
+            puts "COALLOCATION: #{jid} #{submitTime} #{responseTime} #{price}" if $verbose
+            j.type=COALLOCATION
+        end
+        
+        reports.addJob(j)
+    }
+    reports.finalize()
+    reportFile.close()
+end
 
 class EventStore
     attr_accessor :entityname
@@ -393,7 +369,7 @@ class EventStore
                     currentValue = value
                 end
             else
-                sample = [time, value]
+                sample = [upperBound, value]
                 @samples << sample
                 upperBound += @rate
                 currentValue = 0
@@ -410,99 +386,148 @@ class EventStore
     end
 end
 
-traceFile=File.new($traceFileName, "r")
-puts "Processing trace file #{$traceFileName}"
-@utilReportFile = File.new($outDir+"/utilization-"+$load+".txt", "w")
-@queueReportFile = File.new($outDir+"/queuelength-"+$load+".txt", "w")
-traceFile.each_line {|line|
-    line.sub!(/trace./, "") # Drop the trace. prefix.
-    line.sub!(/-\ /, "") # Drop the dash.
-    line.sub!(/:/, "") # Drop the colon.
-    # Print the clean line if requested.
-    puts("#{line}") if $verbose
-    fields = line.split()
-    entity = fields[0]
-    proptime = fields[1]
-    tmp = proptime.split("@")
-    property = tmp[0]
-    time = tmp[1].to_i
-    value = fields[2]
-    puts("#{entity} says: #{property} is #{value} at time #{time}") if $verbose
-    
-    if property =~ /queuelength/
-        if not queueLength.has_key?(entity)
-            es=EventStore.new(entity)
-            queueLength[entity]=es
-        end
-        es = queueLength[entity]
-        es.addEvent(time, value)
-    elsif property =~ /utilization/
-        if not utilization.has_key?(entity)
-            es=EventStore.new(entity)
-            utilization[entity]=es
-        end
-        es = utilization[entity]
-        es.addEvent(time, value)
-    end
-}
 
-srate = 100000
-puts "Sampling trace events with samplingrate #{srate}"
-###
-## Prepare our iterator
-#
-queueLength.each_value{|eventStore|
-    eventStore.prepare(srate)
-    puts "Initializing #{eventStore.getName()}" if $verbose
-}
-utilization.each_value{|eventStore|
-    eventStore.prepare(srate)
-    puts "Initializing #{eventStore.getName()}" if $verbose
-}
+def processTrace(traceFileName, loadLevel)
+    queueLength = Hash.new();
+    utilization = Hash.new();
 
-###
-## Iterate as long as we don't get an Exception, which signals we're at
-## the last value
-#
-hasMoreValues = true
-while (hasMoreValues)
-    begin
-        eventTime = 0
-        queueValues = Hash.new
-        queueLength.each_value{|eventStore|
-            entity = eventStore.getName
-            eventTime, value = eventStore.getNext()
-            if (value == nil)
-                exit
+    traceFile=File.new(traceFileName, "r")
+    puts "Processing trace file #{traceFileName}"
+    @utilReportFile = File.new($outDir+"/utilization-"+loadLevel+".txt", "w")
+    @queueReportFile = File.new($outDir+"/queuelength-"+loadLevel+".txt", "w")
+    traceFile.each_line {|line|
+        line.sub!(/trace./, "") # Drop the trace. prefix.
+        line.sub!(/-\ /, "") # Drop the dash.
+        line.sub!(/:/, "") # Drop the colon.
+        # Print the clean line if requested.
+        puts("#{line}") if $verbose
+        fields = line.split()
+        entity = fields[0]
+        proptime = fields[1]
+        tmp = proptime.split("@")
+        property = tmp[0]
+        time = tmp[1].to_i
+        value = fields[2]
+        puts("#{entity} says: #{property} is #{value} at time #{time}") if $verbose
+        
+        if property =~ /queuelength/
+            if not queueLength.has_key?(entity)
+                es=EventStore.new(entity)
+                queueLength[entity]=es
             end
-            queueValues[entity]=value
-        }
-        queueLogLine = "#{eventTime}\t"
-        sorted = queueValues.sort
-        sorted.each{|key, value|
-            puts "Entity #{key} => value #{value}" if $verbose
-            queueLogLine << "#{value}\t"
-        }
-        puts "Utilization at time #{eventTime}" if $verbose
-        utilValues = Hash.new
-        utilization.each_value{|eventStore|
-            entity = eventStore.entityname
-            eventTime, value = eventStore.getNext()
-            utilValues[entity]=value
-        }
-        utilLogLine = "#{eventTime}\t"
-        sorted = utilValues.sort
-        sorted.each{|key, value|
-            puts "Entity #{key} => value #{value}" if $verbose
-            utilLogLine << "#{value}\t"
-        }
-    rescue StandardError => bang
-        puts "No more values to sample - exiting with #{bang}...\n"
-        hasMoreValues = false;
+            es = queueLength[entity]
+            es.addEvent(time, value)
+        elsif property =~ /utilization/
+            if not utilization.has_key?(entity)
+                es=EventStore.new(entity)
+                utilization[entity]=es
+            end
+            es = utilization[entity]
+            es.addEvent(time, value)
+        end
+    }
+
+    srate = 100000
+    puts "Sampling trace events with samplingrate #{srate}"
+    
+    ###
+    ## Prepare our iterator and put the name of the entities in a
+    ## header.
+    #
+    entities = Array.new
+    queueLength.each_value{|eventStore|
+        eventStore.prepare(srate)
+        puts "Initializing #{eventStore.getName()}" if $verbose
+        entities << eventStore.getName()
+    }
+    entities.sort!
+    entityHeader = "#entities: "
+    entities.each{|e|
+        entityHeader << "#{e};"
+    }
+    @queueReportFile.puts(entityHeader)
+    entities = Array.new
+    utilization.each_value{|eventStore|
+        eventStore.prepare(srate)
+        puts "Initializing #{eventStore.getName()}" if $verbose
+        entities << eventStore.getName()
+    }
+    entities.sort!
+    entityHeader = "#entities: "
+    entities.each{|e|
+        entityHeader << "#{e};"
+    }
+    @utilReportFile.puts(entityHeader)
+    
+    ###
+    ## Iterate as long as we don't get an Exception, which signals we're at
+    ## the last value
+    #
+    hasMoreValues = true
+    while (hasMoreValues)
+        begin
+            eventTime = 0
+            queueValues = Hash.new
+            queueLength.each_value{|eventStore|
+                entity = eventStore.getName
+                eventTime, value = eventStore.getNext()
+                if (value == nil)
+                    exit
+                end
+                queueValues[entity]=value
+            }
+            queueLogLine = "#{eventTime}\t"
+            sorted = queueValues.sort
+            sorted.each{|key, value|
+                puts "Entity #{key} => value #{value}" if $verbose
+                queueLogLine << "#{value}\t"
+            }
+            puts "Utilization at time #{eventTime}" if $verbose
+            utilValues = Hash.new
+            utilization.each_value{|eventStore|
+                entity = eventStore.entityname
+                eventTime, value = eventStore.getNext()
+                utilValues[entity]=value
+            }
+            utilLogLine = "#{eventTime}\t"
+            sorted = utilValues.sort
+            sorted.each{|key, value|
+                puts "Entity #{key} => value #{value}" if $verbose
+                utilLogLine << "#{value}\t"
+            }
+        rescue StandardError => bang
+            puts "No more values to sample - exiting with #{bang}...\n"
+            hasMoreValues = false;
+        end
+        #puts "queuelength-log: #{queueLogLine}\nutilization-log: #{utilLogLine}\n"
+        @utilReportFile.puts(utilLogLine)
+        @queueReportFile.puts(queueLogLine)
     end
-    puts "queuelength-log: #{queueLogLine}\nutilization-log: #{utilLogLine}\n"
-    @utilReportFile.puts(utilLogLine)
-    @queueReportFile.puts(queueLogLine)
+    @utilReportFile.close
+    @queueReportFile.close
 end
-@utilReportFile.close
-@queueReportFile.close
+
+###
+## Script begins here
+#
+print "calanasim to report converter\n"
+   
+options = Optparser.parse(ARGV)
+    
+$reportFileName = options.reportfile
+$traceFileName = options.tracefile
+$outDir = options.outdir
+$load = options.load
+$verbose = options.verbose
+
+if $reportFileName == nil or $traceFileName == nil or
+    $outDir == nil or $load == nil
+    print "please read usage note (-h)\n"
+    exit
+end
+
+createReport($reportFileName, $load)
+processTrace($traceFileName, $load)
+
+
+

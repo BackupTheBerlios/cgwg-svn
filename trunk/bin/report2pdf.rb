@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
-# This file is part of the calana grid workload generator.
+# This file is part of the calana grid work$load generator.
 # (c) 2006 Mathias Dalheimer, md@gonium.net
 #
-# The calana grid workload generator (CGWG) is free software; you can 
+# The calana grid work$load generator (CGWG) is free software; you can 
 # redistribute it and/or modify it under the terms of the GNU General Public 
 # License as published by the Free Software Foundation; either version 2 of 
 # the License, or any later version.
@@ -45,6 +45,10 @@ class Optparser
             end
             opts.on("-o", "--output directory","the output directory for the report files") do |outdir|
                 options.outdir=outdir
+            end
+            opts.on("-l", "--load FLOAT", "the load level of the input
+            file, e.g. 0.25") do |load|
+                options.load=load
             end
             # Boolean switch.
             opts.on("-v", "--verbose", "Run verbosely") do |v|
@@ -124,6 +128,27 @@ EOC
     runGnuPlot(gnuplotCmd<<plotCmd, inFile, outFile)    
 end
 
+def discoverEntities(inFile)
+    file = File.new($inDir+"/"+inFile, "r")
+    entityLine = ""
+    file.each_line {|line|
+        if line =~ /#entities:/
+            entityLine = line.sub(/#entities:/, "")
+            entityLine.strip!
+            break
+        end
+    }
+    file.close()
+    entities = entityLine.split(";")
+    entities.compact!
+    if $verbose
+        entities.each{|entity|
+            puts "#{entity}\n" 
+        }
+    end
+    return entities
+end
+
 ###
 ## Script begins here
 #
@@ -133,21 +158,29 @@ options = Optparser.parse(ARGV)
     
 $inDir = options.indir
 $outDir = options.outdir
+$load = options.load
 $verbose = options.verbose
 
-if $inDir == nil or $outDir == nil 
+if $inDir == nil or $outDir == nil or $load == nil
     print "please read usage note (-h)\n"
     exit
 end
 
-load = 0.025
-
-gnuPlot2Data("price-rt-preference-#{load}.txt", "price-pref-#{load}.eps", 
+gnuPlot2Data("price-rt-preference-#{$load}.txt", "price-pref-#{$load}.eps", 
     "Price vs. PricePreference", "pricePref", "pricePerSecond", 2, 1)
-gnuPlot2Data("price-rt-preference-#{load}.txt", "perf-pref-#{load}.eps", 
+gnuPlot2Data("price-rt-preference-#{$load}.txt", "perf-pref-#{$load}.eps", 
     "Queuetime vs. PerfPreference", "perfPref", "queuetime", 4, 3)
-names=["Agent1", "Agent2", "Agent3"]
-gnuPlotMultiData("utilization-#{load}.txt", "utilization-#{load}.eps", 
+
+    #names = []
+    #for i in 1..50
+    #names << "agent"+i.to_s
+    #end
+    #puts "#{names}"
+    #names=["Agent1", "Agent2", "Agent3"]
+
+names = discoverEntities("utilization-#{$load}.txt")
+gnuPlotMultiData("utilization-#{$load}.txt", "utilization-#{$load}.eps", 
     "Utilization per agent", "time", "utilization", names)
-gnuPlotMultiData("queuelength-#{load}.txt", "queuelength-#{load}.eps", 
+names = discoverEntities("queuelength-#{$load}.txt")
+gnuPlotMultiData("queuelength-#{$load}.txt", "queuelength-#{$load}.eps", 
     "Queue length per agent", "time", "queue length", names)
