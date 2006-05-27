@@ -50,6 +50,10 @@ class Optparser
             opts.on("-v", "--verbose", "Run verbosely") do |v|
                 options.verbose = v
             end
+            opts.on("-s", "--short", "Run only the report section and ignore the traces -> much faster") do |v|
+                options.short = v
+            end
+    
             opts.on_tail("-h", "--help", "Show this message") do
                 puts opts
                 exit
@@ -70,6 +74,7 @@ options = Optparser.parse(ARGV)
 $inDir = options.indir
 $outDir = options.outdir
 $verbose = options.verbose
+$short = options.short
 
 if $inDir == nil or $outDir == nil
     print "please read usage note (-h)\n"
@@ -117,7 +122,10 @@ logDirs.each_pair {| load, path |
     puts "###\n## Processing load: #{load}\n#\n"
     report = "#{path}/report.log"
     trace = "#{path}/trace.log"
-    cmd = "ruby bin/calana2report.rb -r #{report} -t #{trace} -l #{load} -o #{$outDir}"
+    cmd = "ruby bin/calana2report.rb -r #{report} -l #{load} -o #{$outDir}"
+    if (not $short)
+        cmd << " -t #{trace}" 
+    end
     if $verbose
         cmd << " -v"
     end

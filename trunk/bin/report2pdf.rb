@@ -97,6 +97,26 @@ EOC
     runGnuPlot(gnuplotCmd, inFile, outFile)
 end
 
+# =============================================================
+# = Prints a 2-dimensional dataset , connects data with lines =
+# =============================================================
+def gnuPlot2Lines(inFile, outFile, title, xlabel, ylabel, xcolumn, ycolumn)
+    inputFile = $inDir+"/"+inFile
+    sortedInput = "#{inputFile}.sorted"
+    # Hack: Sort the values accending..."
+    msg = `cat #{inputFile} | sort -n > #{sortedInput}`
+    outputFile = $outDir+"/"+outFile
+    gnuplotCmd = <<-EOC
+set terminal postscript eps enhanced
+set output \\"#{outputFile}\\"
+set xlabel \\"#{xlabel}\\"
+set ylabel \\"#{ylabel}\\"
+plot \\"#{sortedInput}\\" using #{xcolumn}:#{ycolumn} axis x1y1 title \\"#{title}\\" with lines
+EOC
+    runGnuPlot(gnuplotCmd, inFile, outFile)
+end
+
+
 
 # ======================================
 # = Prints a multi-dimensional dataset =
@@ -128,6 +148,41 @@ EOC
     runGnuPlot(gnuplotCmd<<plotCmd, inFile, outFile)    
 end
 
+
+# ======================================
+# = Prints a multi-dimensional dataset with lines =
+# ======================================
+def gnuPlotMultiLines(inFile, outFile, title, xlabel, ylabel, columns)
+    inputFile = $inDir+"/"+inFile
+    sortedInput = "#{inputFile}.sorted"
+    # Hack: Sort the values accending..."
+    msg = `cat #{inputFile} | sort -n > #{sortedInput}`
+    outputFile = $outDir+"/"+outFile
+    gnuplotCmd = <<-EOC
+set terminal postscript eps enhanced
+set output \\"#{outputFile}\\"
+set xlabel \\"#{xlabel}\\"
+set ylabel \\"#{ylabel}\\"
+EOC
+    plotCmd="\nplot "
+    maxIndex = columns.length()
+    columns.each_index{|index|
+        column = index+2
+        if (index < maxIndex-1)
+            tmp = <<-EOC
+\\"#{sortedInput}\\" using 1:#{column} title \\"#{columns[index]}\\" with lines, \\
+EOC
+        else
+            tmp = <<-EOC
+\\"#{sortedInput}\\" using 1:#{column} title \\"#{columns[index]}\\" with lines
+EOC
+        end
+        plotCmd << tmp
+    }
+    runGnuPlot(gnuplotCmd<<plotCmd, inFile, outFile)    
+end
+
+
 def discoverEntities(inFile)
     file = File.new($inDir+"/"+inFile, "r")
     entityLine = ""
@@ -149,6 +204,46 @@ def discoverEntities(inFile)
     return entities
 end
 
+
+# Runs the load-dependent scripts.
+def runLoadDepScripts()
+    gnuPlot2Data("price-rt-preference-#{$load}.txt", "price-pref-#{$load}.eps", 
+        "Price vs. PricePreference", "pricePref", "pricePerSecond", 2, 1)
+    gnuPlot2Data("price-rt-preference-#{$load}.txt", "perf-pref-#{$load}.eps", 
+        "Queuetime vs. PerfPreference", "perfPref", "queuetime", 4, 3)
+    names = discoverEntities("utilization-#{$load}.txt")
+    gnuPlotMultiData("utilization-#{$load}.txt", "utilization-#{$load}.eps", 
+        "Utilization per agent", "time", "utilization", names)
+    names = discoverEntities("queuelength-#{$load}.txt")
+    gnuPlotMultiData("queuelength-#{$load}.txt", "queuelength-#{$load}.eps", 
+        "Queue length per agent", "time", "queue length", names)
+end
+
+# Runs the load-independent plot scripts.
+def runGeneralScripts()
+    gnuPlot2Lines("load-ART.txt", "load-ART.eps", 
+        "Average Response Time vs. Load", "Load", "ART", 1,2)
+    names = Array.new
+    names << "ART" << "ART (perfPref <= 0.25)" 
+    names << "ART (perfPref >= 0.75)"
+    gnuPlotMultiLines("load-ART.txt", "load-ART-all.eps", 
+        "Average Response Time vs. Load (with perfPref settings)",
+        "Load", "ART", names)
+    gnuPlot2Lines("load-avgprice.txt", "load-avgprice.eps", 
+        "Average Price vs. Load", "Load", "Average Price", 1,2)
+    names = Array.new
+    names << "Price" << "Price (pricePref <= 0.25)" 
+    names << "Price (pricePref >= 0.75)"
+    gnuPlotMultiLines("load-avgprice.txt", "load-avgprice-all.eps", 
+        "Average Price vs. Load", "Load", "Average Price", names)
+    gnuPlot2Lines("preference-correlation.txt", "priceCorrelation.eps", 
+        "Price-PricePreference-Correlation vs. Load", "Load",
+        "Correlation of Price and PricePreference", 1,2)
+    gnuPlot2Lines("preference-correlation.txt", "perfCorrelation.eps", 
+        "Queuetime-PerfPreference-Correlation vs. Load", "Load",
+        "Correlation of Queuetime and Performance Preference", 1,3)
+end
+
 ###
 ## Script begins here
 #
@@ -161,26 +256,17 @@ $outDir = options.outdir
 $load = options.load
 $verbose = options.verbose
 
-if $inDir == nil or $outDir == nil or $load == nil
+if $inDir == nil or $outDir == nil 
     print "please read usage note (-h)\n"
     exit
 end
 
-gnuPlot2Data("price-rt-preference-#{$load}.txt", "price-pref-#{$load}.eps", 
-    "Price vs. PricePreference", "pricePref", "pricePerSecond", 2, 1)
-gnuPlot2Data("price-rt-preference-#{$load}.txt", "perf-pref-#{$load}.eps", 
-    "Queuetime vs. PerfPreference", "perfPref", "queuetime", 4, 3)
+if $load == nil
+    puts "No load specified, running load-independent scripts"
+    runGeneralScripts()
+else
+    puts "Running load-dependent scripts only"
+    runLoadDepScripts()
+end
 
-    #names = []
-    #for i in 1..50
-    #names << "agent"+i.to_s
-    #end
-    #puts "#{names}"
-    #names=["Agent1", "Agent2", "Agent3"]
 
-names = discoverEntities("utilization-#{$load}.txt")
-gnuPlotMultiData("utilization-#{$load}.txt", "utilization-#{$load}.eps", 
-    "Utilization per agent", "time", "utilization", names)
-names = discoverEntities("queuelength-#{$load}.txt")
-gnuPlotMultiData("queuelength-#{$load}.txt", "queuelength-#{$load}.eps", 
-    "Queue length per agent", "time", "queue length", names)

@@ -94,20 +94,35 @@ class LoadARTReport
             @reportFile = File.new(reportFileName, "a")
         else
             @reportFile = File.new(reportFileName, "w")
-            @reportFile.puts("#load\tART")
+            @reportFile.puts("#load\tART\tlowPerfPref\thighPerfPref")
         end
         @cumulativeResponseTime = 0.0
+        @lowResponseTime = 0.0
+        @highResponseTime = 0.0
+        @lowCounter = 0
+        @highCounter = 0
         @jobCounter = 0
     end
     
     def addJob(job)
         @cumulativeResponseTime += job.responseTime.to_f 
+        if job.perfPref.to_f <= 0.25
+            puts "LowPref: #{job.responseTime.to_f}\t#{@lowResponseTime}"
+            @lowResponseTime += job.responseTime.to_f
+            @lowCounter += 1
+        end
+        if job.perfPref.to_f >= 0.75
+            @highResponseTime += job.responseTime.to_f
+            @highCounter += 1
+        end
         @jobCounter += 1
     end
     
     def finalize()
         art = (@cumulativeResponseTime.to_f / @jobCounter.to_f)
-        @reportFile.puts("#{@load}\t#{art}")
+        lowPerfPref = (@lowResponseTime.to_f / @lowCounter.to_f)
+        highPerfPref = (@highResponseTime.to_f / @highCounter.to_f)
+        @reportFile.puts("#{@load}\t#{art}\t#{lowPerfPref}\t#{highPerfPref}")
         @reportFile.close
     end
 end
@@ -123,23 +138,38 @@ class LoadAvgPriceReport
             @reportFile = File.new(reportFileName, "a")
         else
             @reportFile = File.new(reportFileName, "w")
-            @reportFile.puts("#load\tavgprice")
+            @reportFile.puts("#load\tavgprice\tlowPricePref\thighPricePref")
         end
         @cumulativePrice = 0.0
+        @lowPrice = 0.0
+        @highPrice = 0.0
+        @lowCounter = 0
+        @highCounter = 0
         @jobCounter = 0
     end
     
     def addJob(job)
         @cumulativePrice += job.price.to_f 
         @jobCounter += 1
+        if job.pricePref.to_f <= 0.25
+            @lowPrice += job.price.to_f
+            @lowCounter += 1
+        end
+        if job.pricePref.to_f >= 0.75
+            @highPrice += job.price.to_f
+            @highCounter += 1
+        end
     end
     
     def finalize()
         avgprice = (@cumulativePrice.to_f / @jobCounter.to_f)
-        @reportFile.puts("#{@load}\t#{avgprice}")
+        lowPricePref = (@lowPrice.to_f / @lowCounter.to_f)
+        highPricePref = (@highPrice.to_f / @highCounter.to_f)
+        @reportFile.puts("#{@load}\t#{avgprice}\t#{lowPricePref}\t#{highPricePref}")
         @reportFile.close
     end
 end
+
 
 ###
 ## A report that prints the price vs. pricePreference and rt vs. perfPref data
@@ -232,7 +262,7 @@ class ReportCollection
         report2 = LoadAvgPriceReport.new($outDir, load);
         report3 = PriceRTPrefReport.new($outDir, load);
         report4 = PricePrefCorrelationReport.new($outDir, load);
-        @reports << report1 << report2 << report3 << report4
+        @reports << report1 << report2 << report3 << report4 
     end
     
     def addJob(job)
@@ -386,6 +416,51 @@ class EventStore
     end
 end
 
+class UtilizationReport
+    def initialize(directory, load, entities)
+        @load=load
+        reportFileName = directory+"/utilization-all.txt"
+        if (File.exists?("#{reportFileName}"))
+            @reportFile = File.new(reportFileName, "a")
+        else
+            entityHeader = "#entities: "
+            @reportFile = File.new(reportFileName, "w")
+            entities.each{|e|
+                entityHeader << "#{e};"
+            }
+            @reportFile.puts("#load\ttotalUtilization\tentityUtilizations...")
+            @reportFile.puts(entityHeader)
+        end
+        @samples = Hash.new
+        @samples.default = 0.0
+        @countSamples = Hash.new
+        @countSamples.default=0
+        @countEntities = entities.length
+    end
+
+    def addSample(entity, value)
+        puts "Adding sample: Entity #{entity}, value #{value}"
+        @samples[entity] += value.to_f
+        @countSamples[entity] += 1
+    end
+
+    def finalize
+        tmpLine = "" 
+        totalUtilization = 0.0
+        entityNames = @samples.keys
+        entityNames.sort!
+        entityNames.each {|entity|
+            avgUtilization = (@samples[entity].to_f/ @countSamples[entity])
+            totalUtilization += (avgUtilization.to_f / @countEntities) 
+            tmpLine << "#{avgUtilization}\t"
+        }   
+        logLine = "#{@load}\t#{totalUtilization}\t#{tmpLine}"
+        puts "Writing logline: #{logLine}"
+        @reportFile.puts(logLine)
+        @reportFile.close()
+    end
+end
+
 
 def processTrace(traceFileName, loadLevel)
     queueLength = Hash.new();
@@ -459,6 +534,8 @@ def processTrace(traceFileName, loadLevel)
     }
     @utilReportFile.puts(entityHeader)
     
+    utilReporter = UtilizationReport.new($outDir, $load, entities)
+    
     ###
     ## Iterate as long as we don't get an Exception, which signals we're at
     ## the last value
@@ -488,23 +565,32 @@ def processTrace(traceFileName, loadLevel)
                 entity = eventStore.entityname
                 eventTime, value = eventStore.getNext()
                 utilValues[entity]=value
+                utilReporter.addSample(entity, value)
             }
             utilLogLine = "#{eventTime}\t"
+            tmpLine = ""
+            aggregatedUtilization = 0.0
             sorted = utilValues.sort
             sorted.each{|key, value|
                 puts "Entity #{key} => value #{value}" if $verbose
-                utilLogLine << "#{value}\t"
+                tmpLine << "#{value}\t"
+                aggregatedUtilization += value.to_f
             }
+            utilLogLine << "#{tmpLine}"
+            
         rescue StandardError => bang
             puts "No more values to sample - exiting with #{bang}...\n"
             hasMoreValues = false;
         end
-        #puts "queuelength-log: #{queueLogLine}\nutilization-log: #{utilLogLine}\n"
+        puts "queuelength-log: #{queueLogLine}\nutilization-log: #{utilLogLine}\n"
         @utilReportFile.puts(utilLogLine)
         @queueReportFile.puts(queueLogLine)
     end
+    utilReporter.finalize
+    puts "ending..."
     @utilReportFile.close
     @queueReportFile.close
+    puts "Calling finalize"
 end
 
 ###
@@ -520,14 +606,18 @@ $outDir = options.outdir
 $load = options.load
 $verbose = options.verbose
 
-if $reportFileName == nil or $traceFileName == nil or
+if ($reportFileName == nil and $traceFileName == nil) or
     $outDir == nil or $load == nil
     print "please read usage note (-h)\n"
     exit
 end
 
-createReport($reportFileName, $load)
-processTrace($traceFileName, $load)
+if ($reportFileName != nil)
+    createReport($reportFileName, $load)
+end
+if ($traceFileName != nil)
+    processTrace($traceFileName, $load)
+end
 
 
 
