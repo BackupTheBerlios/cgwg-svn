@@ -50,6 +50,10 @@ class Optparser
             file, e.g. 0.25") do |load|
                 options.load=load
             end
+            opts.on("-e", "--entity String", "The entity to plot when
+            doing load-dependent plots, e.g. bidder-43") do |entity|
+                options.entity=entity
+            end
             # Boolean switch.
             opts.on("-v", "--verbose", "Run verbosely") do |v|
                 options.verbose = v
@@ -111,7 +115,7 @@ set terminal postscript eps enhanced
 set output \\"#{outputFile}\\"
 set xlabel \\"#{xlabel}\\"
 set ylabel \\"#{ylabel}\\"
-plot \\"#{sortedInput}\\" using #{xcolumn}:#{ycolumn} axis x1y1 title \\"#{title}\\" with lines
+plot \\"#{sortedInput}\\" using #{xcolumn}:#{ycolumn} axis x1y1 title \\"#{title}\\" with linespoints
 EOC
     runGnuPlot(gnuplotCmd, inFile, outFile)
 end
@@ -207,6 +211,7 @@ end
 def plotNumberUnusedResources()
     values = Hash.new
     File.open("#{$inDir}/utilization-all.txt") { |file|
+        # for each loadlevel (line), count the number of used resources.
         file.each_line {|line|
             if line =~ /^#/
                 next
@@ -217,15 +222,16 @@ def plotNumberUnusedResources()
             loadLevel = entities[0].to_f
             # The second contains the aggregated load, ignore it
             for i in 2..entities.length
-                if (entities[i].to_f == 0.0)
+                if (entities[i].to_f > 0.0)
                     counter += 1
                 end
             end
-            values[loadLevel] = counter
+            numAgents = entities.length - 2
+            values[loadLevel] = numAgents - counter
             #puts "Discovered loadLevel=#{loadLevel}, counter=#{counter}"
         }
     }
-    sortedLoads= values.sort()
+    sortedLoads=values.sort()
     outFile = File.open("#{$inDir}/utilization-unused-resources.txt", "w")
     sortedLoads.each {|loadLevel, value|
         puts "Writing line: LoadLevel=#{loadLevel}; value = #{value}" if $verbose
@@ -251,6 +257,30 @@ def runLoadDepScripts()
     gnuPlotMultiData("queuelength-#{$load}.txt", "queuelength-#{$load}.eps", 
         "Queue length per agent", "time", "queue length", names)
 end
+
+def runLoadDepScripts(entity)
+    names = discoverEntities("utilization-#{$load}.txt")
+    position = names.index(entity)
+    if position == nil
+        puts "This entity is not defined in utilization-#{$load}.txt"
+    else
+        gnuPlot2Lines("utilization-#{$load}.txt",
+        "utilization-#{$load}-#{entity}.eps", 
+            "Utilization for agent #{entity}", "time", "utilization",
+            1,position)
+    end
+    names = discoverEntities("queuelength-#{$load}.txt")
+    position = names.index(entity)
+    if position == nil
+        puts "This entity is not defined in queuelength-#{$load}.txt"
+    else
+        gnuPlot2Lines("queuelength-#{$load}.txt",
+        "queuelength-#{$load}-#{entity}.eps", 
+        "Queue length for agent #{entity}", "time", "queue length", 1,
+        position)
+    end
+end
+
 
 # Runs the load-independent plot scripts.
 def runGeneralScripts()
@@ -292,6 +322,7 @@ $inDir = options.indir
 $outDir = options.outdir
 $load = options.load
 $verbose = options.verbose
+$entity = options.entity
 
 if $inDir == nil or $outDir == nil 
     print "please read usage note (-h)\n"
@@ -302,8 +333,13 @@ if $load == nil
     puts "No load specified, running load-independent scripts"
     runGeneralScripts()
 else
-    puts "Running load-dependent scripts only"
-    runLoadDepScripts()
+    if $entity == nil
+        puts "Running load-dependent scripts only, for all entities"
+        runLoadDepScripts()
+    else
+        puts "Running load-dependent scripts only, for entity #{$entity}"
+        runLoadDepScripts($entity)
+    end
 end
 
 
