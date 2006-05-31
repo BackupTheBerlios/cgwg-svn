@@ -92,7 +92,7 @@ def gnuPlot2Data(inFile, outFile, title, xlabel, ylabel, xcolumn, ycolumn)
     inputFile = $inDir+"/"+inFile
     outputFile = $outDir+"/"+outFile
     gnuplotCmd = <<-EOC
-set terminal postscript eps enhanced
+set terminal postscript eps color
 set output \\"#{outputFile}\\"
 set xlabel \\"#{xlabel}\\"
 set ylabel \\"#{ylabel}\\"
@@ -111,7 +111,7 @@ def gnuPlot2Lines(inFile, outFile, title, xlabel, ylabel, xcolumn, ycolumn)
     msg = `cat #{inputFile} | sort -n > #{sortedInput}`
     outputFile = $outDir+"/"+outFile
     gnuplotCmd = <<-EOC
-set terminal postscript eps enhanced
+set terminal postscript eps color
 set output \\"#{outputFile}\\"
 set xlabel \\"#{xlabel}\\"
 set ylabel \\"#{ylabel}\\"
@@ -129,7 +129,7 @@ def gnuPlotMultiData(inFile, outFile, title, xlabel, ylabel, columns)
     inputFile = $inDir+"/"+inFile
     outputFile = $outDir+"/"+outFile
     gnuplotCmd = <<-EOC
-set terminal postscript eps enhanced
+set terminal postscript eps color
 set output \\"#{outputFile}\\"
 set xlabel \\"#{xlabel}\\"
 set ylabel \\"#{ylabel}\\"
@@ -152,7 +152,6 @@ EOC
     runGnuPlot(gnuplotCmd<<plotCmd, inFile, outFile)    
 end
 
-
 # ======================================
 # = Prints a multi-dimensional dataset with lines =
 # ======================================
@@ -163,7 +162,7 @@ def gnuPlotMultiLines(inFile, outFile, title, xlabel, ylabel, columns)
     msg = `cat #{inputFile} | sort -n > #{sortedInput}`
     outputFile = $outDir+"/"+outFile
     gnuplotCmd = <<-EOC
-set terminal postscript eps enhanced
+set terminal postscript eps color
 set output \\"#{outputFile}\\"
 set xlabel \\"#{xlabel}\\"
 set ylabel \\"#{ylabel}\\"
@@ -258,7 +257,7 @@ def runLoadDepScripts()
         "Queue length per agent", "time", "queue length", names)
 end
 
-def runLoadDepScripts(entity)
+def runLoadDepScriptsEntity(entity)
     names = discoverEntities("utilization-#{$load}.txt")
     position = names.index(entity)
     if position == nil
@@ -338,7 +337,7 @@ else
         runLoadDepScripts()
     else
         puts "Running load-dependent scripts only, for entity #{$entity}"
-        runLoadDepScripts($entity)
+        runLoadDepScriptsEntity($entity)
     end
 end
 
