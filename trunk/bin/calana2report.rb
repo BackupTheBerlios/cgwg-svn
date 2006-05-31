@@ -552,18 +552,21 @@ def processTrace(traceFileName, loadLevel)
     #
     hasMoreValues = true
     while (hasMoreValues)
+        hasMoreQueueValues = true;
         eventTime = 0
         queueValues = Hash.new
+        dequeuedValues = 0
         queueLength.each_value{|eventStore|
             entity = eventStore.getName
             if (eventStore.hasNext())
                 eventTime, value = eventStore.getNext()
-            else
-                hasMoreValues = false;
-                break
+                dequeuedValues += 1
             end
             queueValues[entity]=value
         }
+        if dequeuedValues == 0
+            hasMoreQueueValues = false;
+        end
         queueLogLine = "#{eventTime}\t"
         sorted = queueValues.sort
         sorted.each{|key, value|
@@ -571,18 +574,21 @@ def processTrace(traceFileName, loadLevel)
             queueLogLine << "#{value}\t"
         }
         puts "Utilization at time #{eventTime}" if $verbose
+        hasMoreUtilValues = true;
+        dequeuedValues = 0
         utilValues = Hash.new
         utilization.each_value{|eventStore|
             entity = eventStore.entityname
             if (eventStore.hasNext())
                 eventTime, value = eventStore.getNext()
-            else
-                hasMoreValues = false;
-                break
+                dequeuedValues += 1
             end
             utilValues[entity]=value
             utilReporter.addSample(entity, value)
         }
+        if dequeuedValues == 0
+            hasMoreUtilValues = false;
+        end
         utilLogLine = "#{eventTime}\t"
         tmpLine = ""
         aggregatedUtilization = 0.0
@@ -594,6 +600,9 @@ def processTrace(traceFileName, loadLevel)
         }
         utilLogLine << "#{tmpLine}"
         puts "queuelength-log: #{queueLogLine}\nutilization-log: #{utilLogLine}\n"
+        if (not hasMoreUtilValues) and (not hasMoreQueueValues)
+            hasMoreValues = false
+        end
         @utilReportFile.puts(utilLogLine)
         @queueReportFile.puts(queueLogLine)
     end
