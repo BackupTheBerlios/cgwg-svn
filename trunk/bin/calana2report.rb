@@ -409,6 +409,13 @@ class EventStore
             #    puts "Key #{key} -> value #{value}"
             #}
     end
+    def hasNext()
+        if (@currentSample > @samples.length)
+            return false
+        else
+            return true
+        end
+    end
     def getNext()
         retval = @samples[@currentSample]
         @currentSample += 1
@@ -436,24 +443,27 @@ class UtilizationReport
         @countSamples = Hash.new
         @countSamples.default=0
         @countEntities = entities.length
+        @totalUtilization = 0.0
+        @totalSampleCount = 0
     end
 
     def addSample(entity, value)
-        puts "Adding sample: Entity #{entity}, value #{value}"
+        #puts "Adding sample: Entity #{entity}, value #{value}"
         @samples[entity] += value.to_f
         @countSamples[entity] += 1
+        @totalUtilization += value.to_f
+        @totalSampleCount += 1
     end
 
     def finalize
         tmpLine = "" 
-        totalUtilization = 0.0
         entityNames = @samples.keys
         entityNames.sort!
         entityNames.each {|entity|
             avgUtilization = (@samples[entity].to_f/ @countSamples[entity])
-            totalUtilization += (avgUtilization.to_f / @countEntities) 
             tmpLine << "#{avgUtilization}\t"
-        }   
+        }
+        totalUtilization = (@totalUtilization.to_f / @totalSampleCount)
         logLine = "#{@load}\t#{totalUtilization}\t#{tmpLine}"
         puts "Writing logline: #{logLine}"
         @reportFile.puts(logLine)
@@ -542,55 +552,54 @@ def processTrace(traceFileName, loadLevel)
     #
     hasMoreValues = true
     while (hasMoreValues)
-        begin
-            eventTime = 0
-            queueValues = Hash.new
-            queueLength.each_value{|eventStore|
-                entity = eventStore.getName
+        eventTime = 0
+        queueValues = Hash.new
+        queueLength.each_value{|eventStore|
+            entity = eventStore.getName
+            if (eventStore.hasNext())
                 eventTime, value = eventStore.getNext()
-                if (value == nil)
-                    exit
-                end
-                queueValues[entity]=value
-            }
-            queueLogLine = "#{eventTime}\t"
-            sorted = queueValues.sort
-            sorted.each{|key, value|
-                puts "Entity #{key} => value #{value}" if $verbose
-                queueLogLine << "#{value}\t"
-            }
-            puts "Utilization at time #{eventTime}" if $verbose
-            utilValues = Hash.new
-            utilization.each_value{|eventStore|
-                entity = eventStore.entityname
+            else
+                hasMoreValues = false;
+                break
+            end
+            queueValues[entity]=value
+        }
+        queueLogLine = "#{eventTime}\t"
+        sorted = queueValues.sort
+        sorted.each{|key, value|
+            puts "Entity #{key} => value #{value}" if $verbose
+            queueLogLine << "#{value}\t"
+        }
+        puts "Utilization at time #{eventTime}" if $verbose
+        utilValues = Hash.new
+        utilization.each_value{|eventStore|
+            entity = eventStore.entityname
+            if (eventStore.hasNext())
                 eventTime, value = eventStore.getNext()
-                utilValues[entity]=value
-                utilReporter.addSample(entity, value)
-            }
-            utilLogLine = "#{eventTime}\t"
-            tmpLine = ""
-            aggregatedUtilization = 0.0
-            sorted = utilValues.sort
-            sorted.each{|key, value|
-                puts "Entity #{key} => value #{value}" if $verbose
-                tmpLine << "#{value}\t"
-                aggregatedUtilization += value.to_f
-            }
-            utilLogLine << "#{tmpLine}"
-            
-        rescue StandardError => bang
-            puts "No more values to sample - exiting with #{bang}...\n"
-            hasMoreValues = false;
-        end
+            else
+                hasMoreValues = false;
+                break
+            end
+            utilValues[entity]=value
+            utilReporter.addSample(entity, value)
+        }
+        utilLogLine = "#{eventTime}\t"
+        tmpLine = ""
+        aggregatedUtilization = 0.0
+        sorted = utilValues.sort
+        sorted.each{|key, value|
+            puts "Entity #{key} => value #{value}" if $verbose
+            tmpLine << "#{value}\t"
+            aggregatedUtilization += value.to_f
+        }
+        utilLogLine << "#{tmpLine}"
         puts "queuelength-log: #{queueLogLine}\nutilization-log: #{utilLogLine}\n"
         @utilReportFile.puts(utilLogLine)
         @queueReportFile.puts(queueLogLine)
     end
     utilReporter.finalize
-    puts "ending..."
     @utilReportFile.close
     @queueReportFile.close
-    puts "Calling finalize"
 end
 
 ###

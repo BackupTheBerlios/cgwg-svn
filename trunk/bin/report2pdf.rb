@@ -204,6 +204,39 @@ def discoverEntities(inFile)
     return entities
 end
 
+def plotNumberUnusedResources()
+    values = Hash.new
+    File.open("#{$inDir}/utilization-all.txt") { |file|
+        file.each_line {|line|
+            if line =~ /^#/
+                next
+            end
+            counter = 0
+            entities = line.split()
+            # The first field contains the load level of the workload
+            loadLevel = entities[0].to_f
+            # The second contains the aggregated load, ignore it
+            for i in 2..entities.length
+                if (entities[i].to_f == 0.0)
+                    counter += 1
+                end
+            end
+            values[loadLevel] = counter
+            #puts "Discovered loadLevel=#{loadLevel}, counter=#{counter}"
+        }
+    }
+    sortedLoads= values.sort()
+    outFile = File.open("#{$inDir}/utilization-unused-resources.txt", "w")
+    sortedLoads.each {|loadLevel, value|
+        puts "Writing line: LoadLevel=#{loadLevel}; value = #{value}" if $verbose
+        outFile.puts "#{loadLevel}\t#{value}"
+    }
+    outFile.close
+    gnuPlot2Lines("utilization-unused-resources.txt",
+        "utilization-unused-resources.eps", 
+        "Number of unused Resources vs. Load", "Load", "Unused Resources", 1,2)
+        
+end
 
 # Runs the load-dependent scripts.
 def runLoadDepScripts()
@@ -242,6 +275,10 @@ def runGeneralScripts()
     gnuPlot2Lines("preference-correlation.txt", "perfCorrelation.eps", 
         "Queuetime-PerfPreference-Correlation vs. Load", "Load",
         "Correlation of Queuetime and Performance Preference", 1,3)
+    gnuPlot2Lines("utilization-all.txt", "utilization-all.eps", 
+        "Average Utilization vs. Load", "Load", "Average Utilization",
+        1, 2)
+    plotNumberUnusedResources()
 end
 
 ###
