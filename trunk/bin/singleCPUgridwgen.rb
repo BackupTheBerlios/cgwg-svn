@@ -47,7 +47,7 @@ class Optparser
         options.encoding = "utf8"
         options.verbose = false
         opts = OptionParser.new do |opts|
-            opts.banner = "Usage: swf2r.rb [options]"
+            opts.banner = "Usage: singleCPUgridwgen.rb [options]"
             opts.separator ""
             opts.separator "Specific options:"
             # Mandatory argument.
@@ -182,6 +182,14 @@ collection.generateEachSlot {|load|
 ###
 ## If we want to check which slot has what level of load, we can print it.
 #collection.printWorkloadOverview()
+
+###
+## Put the workload collection on disk for analysis later on...
+#
+storeFileName=@@config.runPath+"/"+@@config.outFile+"-wcollection.bin"
+store=File.new(storeFileName, "w")
+Marshal.dump(collection, store)
+store.close
 
 ###
 ## Finally: Put the generated workloads on the disk.
