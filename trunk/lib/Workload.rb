@@ -194,9 +194,65 @@ class Task
 end
 
 ###
+## Represents a sample which can be added or subtracted from an
+## accumulator variable. Usage:
+## accumulator = 0
+## sample = AccumulatorSampleEvent(time)
+## sample.addAmount(4) // or: sample.subAmount(4)
+## accumulator = sample.accumulate(accumulator)
+## => 4
+#
+class AccumulatorSampleEvent 
+    include Comparable
+    attr_accessor :time
+    def initialize(time)
+        @time=time
+        @amount = 0
+        @add=false
+        @sub=false
+    end
+    def addAmount(a)
+        if (a < 0 )
+            raise "Invalid amount!"
+        end
+        @amount = a
+        @add=true
+    end
+    def subAmount(a)
+        if (a < 0)
+            raise "Invalid amount!"
+        end
+        @amount = a
+        @sub=true
+    end
+    def <=>(other)
+        @time <=> other.time
+    end
+    def accumulate(accumulator)
+        if @add
+            accumulator=accumulator + @amount
+        end
+        if @sub
+            accumulator=accumulator - @amount
+        end
+        return accumulator, @time
+    end
+    def to_s
+        retval = "#{@time}: "
+        if @add
+            retval << "+#{@amount}"
+        end
+        if @sub
+            retval << "-#{@amount}"
+        end
+        return retval
+    end
+end
+
+
+
+###
 ## This class defines the workload as a collection of jobs.
-## TODO: Refactor so that we have two workload classes: One containing
-## only jobs, and another adding users and tasks.
 #
 class Workload
     include DeepClone
@@ -209,7 +265,7 @@ class Workload
         @swf=nil
     end
     def to_s
-        return "Workload"
+        return "Workload with #{@clusterConfig.nodes} nodes"
     end
     def eachJob
         @jobs.each { |p| yield p }
@@ -275,10 +331,14 @@ class Workload
         scaledJobs=self.deep_clone()
         currentLoad=self.calculateLoadLevel()
         scalingFactor=destinationLoad/currentLoad;
+        puts "Will scale current load #{currentLoad} to #{destinationLoad} using factor #{scalingFactor}"
         scaledJobs.eachJob{|j|
-            j.submitTime = j.submitTime / scalingFactor;
+            #j.submitTime = j.submitTime * scalingFactor;
+            #j.submitTime = j.submitTime / scalingFactor;
+            j.runTime = j.runTime * scalingFactor;
+            j.wallTime = j.wallTime * scalingFactor;
         }
-        #print "Scaled new workload to load = #{scaledJobs.calculateLoadLevel}\n"
+        print "Scaled workload (load = #{currentLoad}) to load = #{scaledJobs.calculateLoadLevel}\n"
         return scaledJobs;
     end
     ###
@@ -407,11 +467,11 @@ class Workload
     ##                     P * a        P: nodes in system, a: mean 
     ##                                                  inter-arrival time
     #
-    def calculateLoadLevel()
+    def estimateLoadLevel()
         lastArrival = 0
         aggRuntime = aggNodes = aggInterarrivalTime = 0
         @jobs.each {|job|
-            aggRuntime += job.runTime
+                aggRuntime += job.runTime
             aggNodes += job.numberAllocatedProcessors
             aggInterarrivalTime += (job.submitTime - lastArrival)
             lastArrival = job.submitTime
@@ -421,6 +481,44 @@ class Workload
         @meanInterArrival = aggInterarrivalTime / @clusterConfig.size.to_f
         #print "Mean Runtime: #{meanRuntime}, Mean Interarrival Time: #{meanInterArrival}\n"
         @load=(@meanRuntime * @meanNodes) / (@clusterConfig.nodes * @meanInterArrival)
+        return @load
+    end
+
+
+    ###
+    ## Calculate load level of this workload using the sample method
+    # 
+    def calculateLoadLevel()
+        puts "calculating load level for #{self}"
+        capacity = @clusterConfig.nodes
+        @events=Array.new
+        @jobs.each{|job|
+            ###
+            ## Todo: Think about the timing!
+            #
+            startTime=job.submitTime
+            endTime=startTime + job.runTime
+            size=job.numberAllocatedProcessors
+            startEvent=AccumulatorSampleEvent.new(startTime)
+            startEvent.addAmount(size)
+            endEvent=AccumulatorSampleEvent.new(endTime)
+            endEvent.subAmount(size)
+            @events.push(startEvent) 
+            @events.push(endEvent)
+        }
+        @events.sort!
+        maxTime = 0
+        accumulator = 0
+        lastEventTime=0
+        sumLoadSamples = 0.0
+        @events.each{|event|
+            accumulator, eventTime=event.accumulate(accumulator)
+            # Update max values
+            maxTime = event.time if eventTime > maxTime
+            sumLoadSamples += (accumulator.to_f * (eventTime - lastEventTime))
+            lastEventTime = eventTime
+        }
+        @load = sumLoadSamples / (capacity * maxTime)
         return @load
     end
     def maxRuntime()

@@ -20,6 +20,7 @@ require 'rubygems'
 require 'lib/Models'
 require 'lib/Workload'
 require 'lib/Helpers'
+require 'lib/Gnuplot'
 require 'optparse'
 require 'ostruct'
 
@@ -69,93 +70,11 @@ class Optparser
         options
     end
 end
-
-class Event 
-    include Comparable
-    attr_accessor :time
-    def initialize(time)
-        @time=time
-        @amount = 0
-        @add=false
-        @sub=false
-    end
-    def addAmount(a)
-        if (a == -1)
-            raise "Invalid amount!"
-        end
-        @amount = a
-        @add=true
-    end
-    def subAmount(a)
-        if (a == -1)
-            raise "Invalid amount!"
-        end
-        @amount = a
-        @sub=true
-    end
-    def <=>(other)
-        @time <=> other.time
-    end
-    def accumulate(accumulator)
-        if @add
-            accumulator=accumulator + @amount
-        end
-        if @sub
-            accumulator=accumulator - @amount
-        end
-        return accumulator
-    end
-    def to_s
-        retval = "#{@time}: "
-        if @add
-            retval << "+#{@amount}"
-        end
-        if @sub
-            retval << "-#{@amount}"
-        end
-        return retval
-    end
-end
-
-# =============================================================
-# = Prints a 2-dimensional dataset , connects data with lines =
-# =============================================================
-def gnuPlot2Lines(inFile, outFile, title, xlabel, ylabel, xcolumn, ycolumn, xmaxrange, ymaxrange)
-    inputFile = inFile
-    outputFile = outFile
-    gnuplotCmd = <<-EOC
-set terminal postscript eps color
-set output \\"#{outputFile}\\"
-set xlabel \\"#{xlabel}\\"
-set ylabel \\"#{ylabel}\\"
-set xrange [0:#{xmaxrange}]
-set yrange [0:#{ymaxrange}]
-set size 2,2
-plot \\"#{inputFile}\\" using #{xcolumn}:#{ycolumn} axis x1y1 title \\"#{title}\\" with linespoints
-EOC
-    runGnuPlot(gnuplotCmd, inFile, outFile)
-end
-
-# ========================================================
-# = Runs gnuplot with the given config, then runs ps2pdf =
-# ========================================================
-def runGnuPlot (gnuplotCmd, inputFile, outputFile)
-    outPDFFile = outputFile.sub(/eps/, "pdf")
-    outPNGFile = outputFile.sub(/eps/, "png")
-    puts "Using gnuplot command: \n#{gnuplotCmd}\n" if $verbose
-    puts "running gnuplot to create #{outputFile}"
-    cmd = `echo -n "#{gnuplotCmd}" | gnuplot`
-    print "Gnuplot said: \n#{cmd}\n" if $verbose
-    print "converting to PDF\n" if $verbose
-    cmd = `ps2pdf #{outputFile} #{outPDFFile}`
-    print "ps2pdf said: #{cmd}\n" if $verbose
-    cmd = `convert #{outputFile} -scale 800x600 #{outPNGFile}`
-end
-                                                        
-
+                                                       
 ###
-## You may also want to check out the ConfigManager class in lib/Helpers.rb.
+## Script startup
 #
+
 options = Optparser.parse(ARGV)
 outdir = options.outdir    
 storePath = options.store
@@ -167,9 +86,6 @@ if storePath == nil or outdir == nil
     exit
 end
 
-###
-## Script startup
-#
 print "Workload Collection analysis script\n"
 
 puts "Unmarshalling the store #{storePath}"
@@ -189,11 +105,12 @@ levels = Array.new
 puts ("Sampling load data for each loadlevel")
 collection.eachWorkload{|w|
     @events=Array.new
+    capacity = w.clusterConfig.nodes
     loadlevel=w.calculateLoadLevel()
-    levels << loadlevel
     levelString = sprintf("%1.3f", loadlevel)
-    datafilepath=outdir+"/allocation-#{levelString}.txt"
-    picfilepath=outdir+"/allocation-#{levelString}.eps"
+    levels << levelString
+    datafilepath=outdir+"/allocationsamples-#{levelString}.txt"
+    picfilepath=outdir+"/allocationsamples-#{levelString}.eps"
     puts("Working on load level #{loadlevel}, sampling to #{datafilepath}")
     datafile=File.new(datafilepath, "w")
     datafile.print("time\trequested nodes\n")
@@ -204,40 +121,47 @@ collection.eachWorkload{|w|
         startTime=job.submitTime
         endTime=startTime + job.runTime
         size=job.numberAllocatedProcessors
-        startEvent=Event.new(startTime)
+        startEvent=AccumulatorSampleEvent.new(startTime)
         startEvent.addAmount(size)
-        endEvent=Event.new(endTime)
+        endEvent=AccumulatorSampleEvent.new(endTime)
         endEvent.subAmount(size)
         @events.push(startEvent) 
         @events.push(endEvent)
     }
     @events.sort!
     accumulator = 0
+    lastEventTime=0
+    sumLoadSamples = 0.0
     @events.each{|event|
         #puts "Processing: #{event}"
         #puts "before: #{accumulator}"
-        accumulator=event.accumulate(accumulator)
+        accumulator, eventTime=event.accumulate(accumulator)
+        #puts "got: acc=#{accumulator}, time=#{eventTime}"
         #puts "after: #{accumulator}"
         datafile.print("#{event.time}\t#{accumulator}\n")
         puts "#{event.time}\t#{accumulator}" if $verbose
         # Update max values
-        maxTime = event.time if event.time > maxTime
+        maxTime = event.time if eventTime > maxTime
         maxNodes = accumulator if accumulator > maxNodes
+        sumLoadSamples += (accumulator.to_f * (eventTime - lastEventTime))
+        lastEventTime = eventTime
+        #puts "Load info: sum=#{sumLoadSamples}, numLoadSamples=#{numLoadSamples}, lastEventTime=#{lastEventTime}"
     }
     datafile.close
+    avgLoad = sumLoadSamples / (capacity * maxTime)
+    puts "The average load for loadlevel #{loadlevel} is #{avgLoad}, maxNodes = #{maxNodes}"
 }
 
 puts "Maximum nodes: #{maxNodes}, maximum time: #{maxTime}"
 puts "Plotting..."
-levels.each{|loadlevel|
-    levelString = sprintf("%1.3f", loadlevel)
-    datafilepath=outdir+"/allocation-#{levelString}.txt"
-    picfilepath=outdir+"/allocation-#{levelString}.eps"
+levels.each{|levelString|
+    datafilepath=outdir+"/allocationsamples-#{levelString}.txt"
+    picfilepath=outdir+"/allocationsamples-#{levelString}.eps"
     puts "Plotting workload..." if $verbose
-    gnuPlot2Lines(datafilepath, picfilepath, "Accumulated allocation (load = #{loadlevel})", "time", "requested nodes", 1, 2, maxTime, maxNodes)
+    gnuPlot2Lines(datafilepath, picfilepath, "Accumulated allocation (load = #{levelString})", "time", "requested nodes", 1, 2, maxTime, maxNodes)
 }
 
-puts "Hint: Create a movie with mencoder \"mf://*.png\" -mf fps=3 -o output.avi -ovc lavc"
+puts "Hint: Create a movie with\nmencoder \"mf://*.png\" -mf fps=3 -o output.avi -ovc lavc"
 
 
 exit
