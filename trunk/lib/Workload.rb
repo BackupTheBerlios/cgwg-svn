@@ -336,7 +336,9 @@ class Workload
             #j.submitTime = j.submitTime * scalingFactor;
             #j.submitTime = j.submitTime / scalingFactor;
             j.runTime = j.runTime * scalingFactor;
+            j.runTime = 1 if j.runTime < 1;
             j.wallTime = j.wallTime * scalingFactor;
+            j.wallTime = 1 if j.wallTime < 1;
         }
         print "Scaled workload (load = #{currentLoad}) to load = #{scaledJobs.calculateLoadLevel}\n"
         return scaledJobs;

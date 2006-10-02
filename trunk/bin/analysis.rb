@@ -53,6 +53,9 @@ class Optparser
             opts.on("-s", "--short", "Run only the report section and ignore the traces -> much faster") do |v|
                 options.short = v
             end
+            opts.on("-f", "--force", "Do not check whether the output directory is empty") do |v|
+                options.force = v
+            end
     
             opts.on_tail("-h", "--help", "Show this message") do
                 puts opts
@@ -75,6 +78,7 @@ $inDir = options.indir
 $outDir = options.outdir
 $verbose = options.verbose
 $short = options.short
+$force = options.force
 
 if $inDir == nil or $outDir == nil
     print "please read usage note (-h)\n"
@@ -90,8 +94,12 @@ Find.find($outDir) {|path|
     end
 }
 if (! empty)
-    puts "Output directory is not empty - please purge it..."
-    exit(10)
+    if not $force
+        puts "Output directory is not empty - please purge it..."
+        exit(10)
+    else
+        puts "Output directory not empty - forced to ignore..."
+    end
 end
 
 # Create a list of load levels, from the subdirectories in the input
