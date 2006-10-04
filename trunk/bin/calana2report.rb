@@ -331,13 +331,13 @@ def createReport(reportFileName, loadLevel)
         #
         jid = fields[2].strip!
         jid.sub!("job-", "")
-        submitTime = fields[11].strip!
-        runTime = fields[14].strip!
-        responseTime = fields[16].strip!
+        submitTime = fields[12].strip!
+        runTime = fields[13].strip!
+        responseTime = fields[17].strip!
         queueTime = responseTime.to_i - runTime.to_i
-        price = fields[17].strip!
-        agent = fields[6].strip!
-        prefs = fields[7].strip!
+        price = fields[18].strip!
+        agent = fields[7].strip!
+        prefs = fields[8].strip!
         prefFields = prefs.split(";")
         #puts "PREF for job #{jid}: #{prefFields}"
         finishtimeField = prefFields[0];
