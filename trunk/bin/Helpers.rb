@@ -48,6 +48,14 @@ def genLublinCluster(clusterConfig)
     return workload
 end
 
+def genSteadyCluster(clusterConfig, runTime)
+    print "Generating workload using the steady arrival model."
+    print "ClusterConfig is: \n#{clusterConfig}"
+    steadyModel=SteadyWorkloadModel.new(clusterConfig,runTime);
+	workload=steadyModel.execute();
+	return workload;
+end
+
 def addUserRuntimeEstimates(workload)
     print "Adding user estimates using Dan Tsafrir's model\n"
     runtimeModel=TsafrirRuntime.new(workload)

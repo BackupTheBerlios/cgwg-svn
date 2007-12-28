@@ -109,6 +109,17 @@ class Lublin
     end
 end
 
+class SteadyWorkloadModel
+    def initialize(clusterConfig, runTime)
+        @clusterConfig=clusterConfig
+		@defaultRunTime=runTime
+	end
+	def execute()
+		AtomicJob job=AtomicJob.new();
+		job
+	end
+end
+
 ###
 ## Encapsulates Dan Tsafrir's runtime estimation tool.
 #

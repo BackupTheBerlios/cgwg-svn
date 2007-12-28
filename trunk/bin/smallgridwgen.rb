@@ -19,9 +19,9 @@
 require 'yaml'
 require 'rubygems'
 require_gem 'builder' #we need xml builder
-require 'lib/Models'
-require 'lib/Workload'
-require 'lib/Helpers'
+require 'Models'
+require 'Workload'
+require 'Helpers'
 require 'optparse'
 require 'ostruct'
 

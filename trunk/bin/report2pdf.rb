@@ -285,14 +285,24 @@ end
 def runGeneralScripts()
     gnuPlot2Lines("load-ART.txt", "load-ART.eps", 
         "Average Response Time vs. Load", "Load", "ART", 1,2)
+
     names = Array.new
     names << "ART" << "ART (perfPref <= 0.25)" 
     names << "ART (perfPref >= 0.75)"
     gnuPlotMultiLines("load-ART.txt", "load-ART-all.eps", 
         "Average Response Time vs. Load (with perfPref settings)",
         "Load", "ART", names)
+        
+    names = Array.new
+    names << "Queuetime" << "Queuetime (perfPref <= 0.25)" 
+    names << "Queuetime (perfPref >= 0.75)"
+    gnuPlotMultiLines("load-QT.txt", "load-QT-all.eps", 
+        "Average Queue Time vs. Load (with perfPref settings)",
+        "Load", "Queuetime", names)
+
     gnuPlot2Lines("load-avgprice.txt", "load-avgprice.eps", 
         "Average Price vs. Load", "Load", "Average Price", 1,2)
+        
     names = Array.new
     names << "Price" << "Price (pricePref <= 0.25)" 
     names << "Price (pricePref >= 0.75)"

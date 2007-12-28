@@ -57,14 +57,11 @@ class Optparser
             opts.on("-j", "--numJobs INT","the number of jobs to generate") do |numJobs|
                 options.numJobs=numJobs
             end
-            opts.on("-c", "--percentCoallocation FLOAT","the number of jobs to generate") do |percentCoallocation|
-                options.percentCoallocation = percentCoallocation
-            end
+#            opts.on("-c", "--percentCoallocation FLOAT","the number of jobs to generate") do |percentCoallocation|
+#                options.percentCoallocation = percentCoallocation
+#            end
             # Boolean switch.
             opts.on("-v", "--verbose", "Run verbosely") do |v|
-                options.verbose = v
-            end
-            opts.on("-s", "--steady", "Do not use a natural job distribution, but create steadily incoming jobs") do |v|
                 options.verbose = v
             end
             opts.on_tail("-h", "--help", "Show this message") do
@@ -87,17 +84,16 @@ options = Optparser.parse(ARGV)
 numTotalJobs = options.numJobs.to_i
 @@config.numUsers = options.numUsers.to_i
 $verbose = options.verbose
-$steady = options.steady
-percentCoallocation = options.percentCoallocation.to_f
+#percentCoallocation = options.percentCoallocation.to_f
 
-if numTotalJobs == 0 or @@config.numUsers == 0 or percentCoallocation == nil
+if numTotalJobs == 0 or @@config.numUsers == 0 #or percentCoallocation == nil
     print "please read usage note (-h)\n"
     exit
 end
 
 numTotalSystems = 50
 # First, take the number of coallocationJobs off...
-coallocationJobs = numTotalJobs * percentCoallocation
+#coallocationJobs = numTotalJobs * percentCoallocation
 # Then, calculate how many jobs each resource must have
 # to add up to numTotalJobs
 numJobsPerCluster = ((numTotalJobs - coallocationJobs) / numTotalSystems).to_i
@@ -109,8 +105,8 @@ print "Calana Workload Generator\n"
 print "We generate a single-CPU grid workload: Consists of \n"
 print "#{numTotalSystems} single-node machines.\n"
 print "We create #{numTotalJobs} jobs.\n"
-print "We generate #{percentCoallocation*100} % coallocationjobs:\n"
-print "CoallocationJobs: #{coallocationJobs}, numJobsPerCluster (rounded): #{numJobsPerCluster}\n"
+#print "We generate #{percentCoallocation*100} % coallocationjobs:\n"
+#print "CoallocationJobs: #{coallocationJobs}, numJobsPerCluster (rounded): #{numJobsPerCluster}\n"
 
 cleanVarDirectory()
 
@@ -119,9 +115,9 @@ for i in 1..numTotalSystems # single-node systems
     @@config.addCluster(cluster)
 end
 
-if coallocationJobs > 0
-    coallocationCluster=ClusterConfig.new("Coallocation", 2, 2, coallocationJobs)
-end
+#if coallocationJobs > 0
+#    coallocationCluster=ClusterConfig.new("Coallocation", 2, 2, coallocationJobs)
+#end
 print "Starting up in directory #{@@config.basePath}\n"
 
 ###
@@ -134,23 +130,24 @@ aggregatedWorkload = nil
     #print clusterConfig
     print "### Working on cluster #{clusterConfig.name}\n"
     if aggregatedWorkload == nil
-		aggregatedWorkload = genLublinCluster(clusterConfig)
-    else
-        tempWorkload = genLublinCluster(clusterConfig)
-        tempWorkload.mergeWorkloadTo(aggregatedWorkload)
+        aggregatedWorkload = genSteadyCluster(clusterConfig, 1000)
+	else
+		tempWorkload = genSteadyCluster(clusterConfig, 1000)
+		tempWorkload.mergeWorkloadTo(aggregatedWorkload)
     end
 }
 
 aggregatedWorkload=aggregatedWorkload.createSequentialJobWorkload()
 
-if (coallocationJobs > 0)
-    coallocationWorkload = genLublinCluster(coallocationCluster)
-    multiJobbedWorkload = coallocationWorkload.createCoallocationJobWorkload()
-    #print "The modified workload\n"
-    #builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
-    #multiJobbedWorkload.xmlize(builder)
-    multiJobbedWorkload.mergeWorkloadTo(aggregatedWorkload)
-end    
+#
+#if (coallocationJobs > 0)
+#    coallocationWorkload = genLublinCluster(coallocationCluster)
+#    multiJobbedWorkload = coallocationWorkload.createCoallocationJobWorkload()
+#    #print "The modified workload\n"
+#    #builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
+#    #multiJobbedWorkload.xmlize(builder)
+#    multiJobbedWorkload.mergeWorkloadTo(aggregatedWorkload)
+#end
 
 print "Fixing job sizes -> Setting jobsize to 1\n"
 aggregatedWorkload.eachJob{|job|

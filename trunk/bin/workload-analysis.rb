@@ -17,10 +17,10 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 require 'rubygems'
-require 'lib/Models'
-require 'lib/Workload'
-require 'lib/Helpers'
-require 'lib/Gnuplot'
+require 'Models'
+require 'Workload'
+require 'Helpers'
+require 'Gnuplot'
 require 'optparse'
 require 'ostruct'
 

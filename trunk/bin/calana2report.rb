@@ -16,8 +16,8 @@
 # along with CGWG; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-require 'lib/Workload'
-require 'lib/Helpers'
+require 'Workload'
+require 'Helpers'
 require 'optparse'
 require 'ostruct'
 
@@ -82,6 +82,51 @@ class Job
         @jid=jid
     end
 end
+
+###
+## A report that prints the Load vs. Queuetime (QT) table
+#
+class LoadQTReport
+    def initialize(directory, load)
+        reportFileName = directory+"/load-QT.txt"
+        @load = load
+        if (File.exists?("#{reportFileName}"))
+            @reportFile = File.new(reportFileName, "a")
+        else
+            @reportFile = File.new(reportFileName, "w")
+            @reportFile.puts("#load\tQT\tlowPerfPref\thighPerfPref")
+        end
+        @cumulativeQueueTime = 0.0
+        @lowQueueTime = 0.0
+        @highQueueTime = 0.0
+        @lowCounter = 0
+        @highCounter = 0
+        @jobCounter = 0
+    end
+    
+    def addJob(job)
+        @cumulativeQueueTime += job.queueTime.to_f 
+        if job.perfPref.to_f <= 0.25
+            puts "LowPref: #{job.queueTime.to_f}\t#{@lowQueueTime}"
+            @lowQueueTime += job.queueTime.to_f
+            @lowCounter += 1
+        end
+        if job.perfPref.to_f >= 0.75
+            @highQueueTime += job.queueTime.to_f
+            @highCounter += 1
+        end
+        @jobCounter += 1
+    end
+    
+    def finalize()
+        aqt = (@cumulativeQueueTime.to_f / @jobCounter.to_f)
+        lowPerfPref = (@lowQueueTime.to_f / @lowCounter.to_f)
+        highPerfPref = (@highQueueTime.to_f / @highCounter.to_f)
+        @reportFile.puts("#{@load}\t#{aqt}\t#{lowPerfPref}\t#{highPerfPref}")
+        @reportFile.close
+    end
+end
+
 
 ###
 ## A report that prints the Load vs. ART table
@@ -262,7 +307,9 @@ class ReportCollection
         report2 = LoadAvgPriceReport.new($outDir, load);
         report3 = PriceRTPrefReport.new($outDir, load);
         report4 = PricePrefCorrelationReport.new($outDir, load);
-        @reports << report1 << report2 << report3 << report4 
+        report5 = LoadQTReport.new($outDir, load);
+        @reports << report1 << report2 << report3 
+        @reports << report4 << report5
     end
     
     def addJob(job)

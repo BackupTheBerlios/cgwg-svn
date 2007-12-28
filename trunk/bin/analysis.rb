@@ -137,9 +137,16 @@ logDirs.each_pair {| load, path |
     if $verbose
         cmd << " -v"
     end
-    output = `#{cmd}`
+    output = `cd /homes/hpc/b24/md/cgwg/trunk; #{cmd}`
     #puts "#{cmd}\n"
     puts "output" if $verbose
 }
 
 # Run the report2pdf script
+cmd = "ruby bin/report2pdf.rb -i #{$outdir} -o #{$outdir}"
+if $verbose
+    cmd << " -v"
+end
+output = `cd /homes/hpc/b24/md/cgwg/trunk; #{cmd}`
+puts "output" if $verbose
+
