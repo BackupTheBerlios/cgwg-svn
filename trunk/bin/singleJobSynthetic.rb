@@ -19,6 +19,9 @@
 require 'yaml'
 require 'rubygems'
 require_gem 'builder' #we need xml builder
+
+$LOAD_PATH << File.expand_path(File.dirname(__FILE__))
+
 require 'Models'
 require 'Workload'
 require 'Helpers'
@@ -34,44 +37,50 @@ require 'ostruct'
 ## Commandline parser
 #
 class Optparser
-    CODES = %w[iso-2022-jp shift_jis euc-jp utf8 binary]
-    CODE_ALIASES = { "jis" => "iso-2022-jp", "sjis" => "shift_jis" }
-    #
-    # Return a structure describing the options.
-    #
-    def self.parse(args)
-        # The options specified on the command line will be collected in *options*.
-        # We set default values here.
-        options = OpenStruct.new
-        options.inplace = false
-        options.encoding = "utf8"
-        options.verbose = false
-        opts = OptionParser.new do |opts|
-            opts.banner = "Usage: singleCPUgridwgen.rb [options]"
-            opts.separator ""
-            opts.separator "Specific options:"
-            # Mandatory argument.
-            opts.on("-u", "--numUsers INT", "the number of users to generate") do |numUsers|
-                options.numUsers=numUsers
-            end
-            opts.on("-j", "--numJobs INT","the number of jobs to generate") do |numJobs|
-                options.numJobs=numJobs
-            end
-#            opts.on("-c", "--percentCoallocation FLOAT","the number of jobs to generate") do |percentCoallocation|
-#                options.percentCoallocation = percentCoallocation
-#            end
-            # Boolean switch.
-            opts.on("-v", "--verbose", "Run verbosely") do |v|
-                options.verbose = v
-            end
-            opts.on_tail("-h", "--help", "Show this message") do
-                puts opts
-                exit
-            end
-        end
-        opts.parse!(args)
-        options
+  CODES = %w[iso-2022-jp shift_jis euc-jp utf8 binary]
+  CODE_ALIASES = { "jis" => "iso-2022-jp", "sjis" => "shift_jis" }
+  #
+  # Return a structure describing the options.
+  #
+  def self.parse(args)
+    # The options specified on the command line will be collected in *options*.
+    # We set default values here.
+    options = OpenStruct.new
+    options.inplace = false
+    options.encoding = "utf8"
+    options.verbose = false
+    opts = OptionParser.new do |opts|
+      opts.banner = "Usage: singleCPUgridwgen.rb [options]"
+      opts.separator ""
+      opts.separator "Specific options:"
+      # Mandatory argument.
+      opts.on("-u", "--numUsers INT", "the number of users to generate") do |numUsers|
+        options.numUsers=numUsers
+      end
+      opts.on("-j", "--numJobs INT","the number of jobs to generate") do |numJobs|
+        options.numJobs=numJobs
+      end
+      opts.on("-l", "--joblength INT","the duration of a job in seconds") do |joblength|
+        options.joblength=joblength
+      end
+      opts.on("-r", "--numTotalResources INT","the number of resources in the grid") do |numtotalresources|
+        options.numTotalResources=numtotalresources
+      end
+      #            opts.on("-c", "--percentCoallocation FLOAT","the number of jobs to generate") do |percentCoallocation|
+      #                options.percentCoallocation = percentCoallocation
+      #            end
+      # Boolean switch.
+      opts.on("-v", "--verbose", "Run verbosely") do |v|
+        options.verbose = v
+      end
+      opts.on_tail("-h", "--help", "Show this message") do
+        puts opts
+        exit
+      end
     end
+    opts.parse!(args)
+    options
+  end
 end
 
 
@@ -80,23 +89,22 @@ end
 #
 @@config = ConfigManager.new
 options = Optparser.parse(ARGV)
-    
+
 numTotalJobs = options.numJobs.to_i
 @@config.numUsers = options.numUsers.to_i
 $verbose = options.verbose
+joblength=options.joblength.to_i
+numTotalSystems = options.numTotalResources.to_i
 #percentCoallocation = options.percentCoallocation.to_f
 
-if numTotalJobs == 0 or @@config.numUsers == 0 #or percentCoallocation == nil
-    print "please read usage note (-h)\n"
-    exit
+if numTotalJobs == 0 or @@config.numUsers == 0 or joblength == 0 or numTotalSystems == 0
+  print "please read usage note (-h)\n"
+  exit
 end
 
-numTotalSystems = 50
-# First, take the number of coallocationJobs off...
-#coallocationJobs = numTotalJobs * percentCoallocation
-# Then, calculate how many jobs each resource must have
+# calculate how many jobs each resource must have
 # to add up to numTotalJobs
-numJobsPerCluster = ((numTotalJobs - coallocationJobs) / numTotalSystems).to_i
+numJobsPerCluster = ((numTotalJobs) / numTotalSystems).to_i
 
 ###
 ## Script startup
@@ -105,14 +113,12 @@ print "Calana Workload Generator\n"
 print "We generate a single-CPU grid workload: Consists of \n"
 print "#{numTotalSystems} single-node machines.\n"
 print "We create #{numTotalJobs} jobs.\n"
-#print "We generate #{percentCoallocation*100} % coallocationjobs:\n"
-#print "CoallocationJobs: #{coallocationJobs}, numJobsPerCluster (rounded): #{numJobsPerCluster}\n"
 
 cleanVarDirectory()
 
 for i in 1..numTotalSystems # single-node systems
-    cluster = ClusterConfig.new("Cluster1-"+i.to_s, 1, 1, numJobsPerCluster)
-    @@config.addCluster(cluster)
+  cluster = ClusterConfig.new("Cluster1-"+i.to_s, 1, 1, numJobsPerCluster)
+  @@config.addCluster(cluster)
 end
 
 #if coallocationJobs > 0
@@ -127,31 +133,21 @@ print "Starting up in directory #{@@config.basePath}\n"
 #
 aggregatedWorkload = nil
 @@config.clusters.each{|clusterConfig|
-    #print clusterConfig
-    print "### Working on cluster #{clusterConfig.name}\n"
-    if aggregatedWorkload == nil
-        aggregatedWorkload = genSteadyCluster(clusterConfig, 1000)
-	else
-		tempWorkload = genSteadyCluster(clusterConfig, 1000)
-		tempWorkload.mergeWorkloadTo(aggregatedWorkload)
-    end
+  #print clusterConfig
+  print "### Working on cluster #{clusterConfig.name}\n"
+  if aggregatedWorkload == nil
+    aggregatedWorkload = genSteadyCluster(clusterConfig, joblength)
+  else
+    tempWorkload = genSteadyCluster(clusterConfig, joblength)
+    tempWorkload.mergeWorkloadTo(aggregatedWorkload)
+  end
 }
 
 aggregatedWorkload=aggregatedWorkload.createSequentialJobWorkload()
 
-#
-#if (coallocationJobs > 0)
-#    coallocationWorkload = genLublinCluster(coallocationCluster)
-#    multiJobbedWorkload = coallocationWorkload.createCoallocationJobWorkload()
-#    #print "The modified workload\n"
-#    #builder = Builder::XmlMarkup.new(:target=>$stdout, :indent=>2)
-#    #multiJobbedWorkload.xmlize(builder)
-#    multiJobbedWorkload.mergeWorkloadTo(aggregatedWorkload)
-#end
-
 print "Fixing job sizes -> Setting jobsize to 1\n"
 aggregatedWorkload.eachJob{|job|
-    job.numberAllocatedProcessors = 1
+  job.numberAllocatedProcessors = 1
 }
 
 ###
@@ -176,7 +172,7 @@ collection=WorkloadCollection.new
 # characteristics except for the interarrival time are not changed.
 print "Generating scaled workloads\n"
 collection.generateEachSlot {|load|
-    collection.addExact(load, aggregatedWorkload.scaleLoadLevel(load))
+  collection.addExact(load, aggregatedWorkload.scaleLoadLevel(load))
 }
 
 ###
@@ -195,13 +191,13 @@ store.close
 ## Finally: Put the generated workloads on the disk.
 #
 collection.eachWorkload {|w|
-    file=@@config.runPath+"/"+@@config.outFile+"-"+
-        w.calculateLoadLevel().to_s + ".xml"
+  file=@@config.runPath+"/"+@@config.outFile+"-"+
+    w.calculateLoadLevel().to_s + ".xml"
     outFile=File.new(file, "w")
-    builder = Builder::XmlMarkup.new(:target=>outFile, :indent=>2)
-# produce output
-    print "Generating XML workload file #{file}\n"
-    w.xmlize(builder)
-    outFile.close
+  builder = Builder::XmlMarkup.new(:target=>outFile, :indent=>2)
+  # produce output
+  print "Generating XML workload file #{file}\n"
+  w.xmlize(builder)
+  outFile.close
 }
 

@@ -110,55 +110,90 @@ class Lublin
 end
 
 class SteadyWorkloadModel
-    def initialize(clusterConfig, runTime)
-        @clusterConfig=clusterConfig
-		@defaultRunTime=runTime
-	end
-	def execute()
-		AtomicJob job=AtomicJob.new();
-		job
-	end
+  def initialize(clusterConfig, runTime)
+    @clusterConfig=clusterConfig
+    @defaultRunTime=runTime
+    @currentSubmitTime=0;
+    @currentFinishTime=0;
+  end
+  def execute()
+     retval=Workload.new(@clusterConfig);
+     (0..@clusterConfig.size).each{|jobID|
+       job=generateNextJob(jobID);
+       retval.addJob(job);
+       #puts "Generated job: #{job}"
+     } 
+     return retval
+  end
+  #
+  # Generate the next job that should be executed. The submittime is
+  # increased, and both runtime and walltime are set to the
+  # @defaultRunTime parameter.
+  def generateNextJob(jobID)
+    job=AtomicJob.new();
+    job.jobID = jobID;
+    job.submitTime = @currentSubmitTime
+    job.waitTime = -1
+    job.runTime = @defaultRunTime;
+    job.numberAllocatedProcessors = @clusterConfig.smallestJobSize
+    job.averageCPUTimeUsed = -1
+    job.usedMemory = -1
+    job.reqNumProcessors = -1
+    job.wallTime = @defaultRunTime;
+    job.reqMemory = -1
+    job.status = -1
+    job.userID = -1
+    job.groupID = 0
+    job.appID = -1
+    job.penalty = 0
+    job.queueID = 0
+    job.partitionID = -1
+    job.preceedingJobID = -1
+    job.timeAfterPreceedingJob = -1
+    @currentSubmitTime+=@defaultRunTime*2;
+    return job;
+  end
 end
 
 ###
 ## Encapsulates Dan Tsafrir's runtime estimation tool.
 #
 class TsafrirRuntime
-    def initialize(workload)
-        @workload = workload
-    end
-    ###
-    ## Prepares the model for execution. For Dan Tsafrirs runtime 
-    ## estimation tool, compile the code using make.
-    #
-    def prepare()
-        print "compilation...\n"
-        compile_cmd="cd #{@@config.runtimeestimatesPath}; make"
-        compile_msg=`#{compile_cmd}`
-    end
-    ###
-    ## Run the model. Returns a workload with defined runtime 
-    ## estimates.
-    #
-    def execute()
-        print "running...\n"
-        swfFormat=@workload.writeSWFFormat()
-        # Put the workload in a file
-        swfFilePath=@@config.runPath+"/runtime-tmp.swf"
-        swfFile=File.new(swfFilePath, "w")
-        swfFormat.each_line {|line|
-            swfFile.puts(line)
-        }
-        swfFile.close()
-        maxRuntime = @workload.maxRuntime()
-        run_cmd="#{@@config.runtimeestimatesPath}/est_driver #{maxRuntime} #{swfFilePath}"
-        #print run_cmd
-        run_msg=`#{run_cmd}`
-        retval=Workload.new(@workload.clusterConfig)
-        retval.parseSWF(run_msg)
-        print "finished.\n"
-        return retval
-    end
+  def initialize(workload)
+    @workload = workload
+  end
+  ###
+  ## Prepares the model for execution. For Dan Tsafrirs runtime 
+  ## estimation tool, compile the code using make.
+  #
+  def prepare()
+    print "compilation...\n"
+    compile_cmd="cd #{@@config.runtimeestimatesPath}; make"
+    compile_msg=`#{compile_cmd}`
+  end
+  ###
+  ## Run the model. Returns a workload with defined runtime 
+  ## estimates.
+  #
+  def execute()
+    print "running...\n"
+    swfFormat=@workload.writeSWFFormat()
+    # Put the workload in a file
+    swfFilePath=@@config.runPath+"/runtime-tmp.swf"
+    swfFile=File.new(swfFilePath, "w")
+    swfFormat.each_line {|line|
+      swfFile.puts(line)
+    }
+    swfFile.close()
+    maxRuntime = @workload.maxRuntime()
+    run_cmd="#{@@config.runtimeestimatesPath}/est_driver #{maxRuntime} #{swfFilePath}"
+    #print run_cmd
+    run_msg=`#{run_cmd}`
+    retval=Workload.new(@workload.clusterConfig)
+    retval.parseSWF(run_msg)
+    print "finished.\n"
+    return retval
+  end
 end
 
 ###
@@ -166,14 +201,14 @@ end
 ## estimates model. We just add 10% to the runTime.
 #
 def run_lModelRuntimeEstimates(workload)
-    workload.eachJob {|job|
-        job.wallTime=(job.runTime*1.10).to_i
-    }
+  workload.eachJob {|job|
+    job.wallTime=(job.runTime*1.10).to_i
+  }
 end
 
 ###
 ## Helper function: Calculate the binary logarithm.
 #
 def log2(n)
-    return (Math.log(n)/Math.log(2))
+  return (Math.log(n)/Math.log(2))
 end

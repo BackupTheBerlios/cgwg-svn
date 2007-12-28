@@ -16,6 +16,7 @@
 # along with CGWG; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+$LOAD_PATH << File.expand_path(File.dirname(__FILE__))
 require 'rubygems'
 require 'Models'
 require 'Workload'
@@ -100,9 +101,10 @@ end
 
 maxTime = 0
 maxNodes = 0
+intermediateTimeStep=100
 levels = Array.new
 
-puts ("Sampling load data for each loadlevel")
+puts ("Sampling load data for each loadlevel - using intermediateTimeStep=#{intermediateTimeStep}")
 collection.eachWorkload{|w|
     @events=Array.new
     capacity = w.clusterConfig.nodes
@@ -135,9 +137,15 @@ collection.eachWorkload{|w|
     @events.each{|event|
         #puts "Processing: #{event}"
         #puts "before: #{accumulator}"
+        oldAccumulator=accumulator
         accumulator, eventTime=event.accumulate(accumulator)
         #puts "got: acc=#{accumulator}, time=#{eventTime}"
         #puts "after: #{accumulator}"
+        intermediateTime=lastEventTime
+        while (intermediateTime < eventTime)
+          datafile.print("#{intermediateTime}\t#{oldAccumulator}\n")
+          intermediateTime+=intermediateTimeStep
+        end
         datafile.print("#{event.time}\t#{accumulator}\n")
         puts "#{event.time}\t#{accumulator}" if $verbose
         # Update max values

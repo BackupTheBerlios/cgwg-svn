@@ -49,9 +49,9 @@ def genLublinCluster(clusterConfig)
 end
 
 def genSteadyCluster(clusterConfig, runTime)
-    print "Generating workload using the steady arrival model."
-    print "ClusterConfig is: \n#{clusterConfig}"
-    steadyModel=SteadyWorkloadModel.new(clusterConfig,runTime);
+  print "Generating workload using the steady arrival model."
+  print "ClusterConfig is: \n#{clusterConfig}"
+  steadyModel=SteadyWorkloadModel.new(clusterConfig,runTime);
 	workload=steadyModel.execute();
 	return workload;
 end

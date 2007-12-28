@@ -503,9 +503,9 @@ class Workload
             size=job.numberAllocatedProcessors
             startEvent=AccumulatorSampleEvent.new(startTime)
             startEvent.addAmount(size)
+            @events.push(startEvent) 
             endEvent=AccumulatorSampleEvent.new(endTime)
             endEvent.subAmount(size)
-            @events.push(startEvent) 
             @events.push(endEvent)
         }
         @events.sort!
