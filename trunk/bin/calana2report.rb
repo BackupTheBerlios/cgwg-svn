@@ -152,11 +152,12 @@ class LoadARTReport
     def addJob(job)
         @cumulativeResponseTime += job.responseTime.to_f 
         if job.perfPref.to_f <= 0.25
-            puts "LowPref: #{job.responseTime.to_f}\t#{@lowResponseTime}"
+            puts "LowPerfPref: #{job.responseTime.to_f}\t#{@lowResponseTime}"
             @lowResponseTime += job.responseTime.to_f
             @lowCounter += 1
         end
         if job.perfPref.to_f >= 0.75
+            puts "HighPerfPref: #{job.responseTime.to_f}\t#{@lowResponseTime}"
             @highResponseTime += job.responseTime.to_f
             @highCounter += 1
         end
@@ -164,9 +165,10 @@ class LoadARTReport
     end
     
     def finalize()
-        art = (@cumulativeResponseTime.to_f / @jobCounter.to_f)
-        lowPerfPref = (@lowResponseTime.to_f / @lowCounter.to_f)
-        highPerfPref = (@highResponseTime.to_f / @highCounter.to_f)
+        art=lowPerfPref=highPerfPref=0;
+        art = (@cumulativeResponseTime.to_f / @jobCounter.to_f) unless (@jobCounter == 0)
+        lowPerfPref = (@lowResponseTime.to_f / @lowCounter.to_f) unless (@lowCounter == 0)
+        highPerfPref = (@highResponseTime.to_f / @highCounter.to_f) unless (@highCounter == 0)
         @reportFile.puts("#{@load}\t#{art}\t#{lowPerfPref}\t#{highPerfPref}")
         @reportFile.close
     end
