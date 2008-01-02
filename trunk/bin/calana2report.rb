@@ -119,9 +119,10 @@ class LoadQTReport
     end
     
     def finalize()
-        aqt = (@cumulativeQueueTime.to_f / @jobCounter.to_f)
-        lowPerfPref = (@lowQueueTime.to_f / @lowCounter.to_f)
-        highPerfPref = (@highQueueTime.to_f / @highCounter.to_f)
+        art=lowPerfPref=highPerfPref=0;
+        aqt = (@cumulativeQueueTime.to_f / @jobCounter.to_f) unless @jobCounter==0;
+        lowPerfPref = (@lowQueueTime.to_f / @lowCounter.to_f) unless @lowCounter==0;
+        highPerfPref = (@highQueueTime.to_f / @highCounter.to_f) unless @highCounter==0;
         @reportFile.puts("#{@load}\t#{aqt}\t#{lowPerfPref}\t#{highPerfPref}")
         @reportFile.close
     end
@@ -209,9 +210,10 @@ class LoadAvgPriceReport
     end
     
     def finalize()
-        avgprice = (@cumulativePrice.to_f / @jobCounter.to_f)
-        lowPricePref = (@lowPrice.to_f / @lowCounter.to_f)
-        highPricePref = (@highPrice.to_f / @highCounter.to_f)
+        art=lowPerfPref=highPerfPref=0;
+        avgprice = (@cumulativePrice.to_f / @jobCounter.to_f) unless (@jobCounter==0)
+        lowPricePref = (@lowPrice.to_f / @lowCounter.to_f) unless (@lowCounter==0)
+        highPricePref = (@highPrice.to_f / @highCounter.to_f) unless (@highCounter==0)
         @reportFile.puts("#{@load}\t#{avgprice}\t#{lowPricePref}\t#{highPricePref}")
         @reportFile.close
     end
