@@ -76,11 +76,25 @@ end
 ## Job abstraction class
 #
 class Job
-    attr_accessor :type, :responseTime, :jid, :price, :pricePref,
-            :perfPref, :runTime, :queueTime
-    def initialize(jid)
-        @jid=jid
-    end
+  attr_accessor :type, :responseTime, :jid, :price, :pricePref,
+    :perfPref, :runTime, :queueTime
+  def initialize(jid)
+    @jid=jid
+    @pricePref=0.0
+    @perfPref=0.0   
+    @responseTime=@runTime=@queueTime=0
+  end
+  def check
+    puts "job #{@jid}: negative queueTime: #{@queueTime}" if @queueTime < 0
+    puts "job #{@jid}: negative runtime: #{@runTime}" if @runTime <= 0
+    puts "job #{@jid}: invalid responseTime: #{@responseTime}" if @responseTime < (@runTime + @queueTime)
+    puts "job #{@jid}: invalid preferences: #{@pricePref}-#{@perfPref}" if (@pricePref+@perfPref) != 1
+  end
+  def setPrefs(perfPref, pricePref)
+    @perfPref=Float(perfPref);
+    @pricePref=Float(pricePref);
+    #puts("Updating prefs: perf=#{perfPref}, price=#{pricePref}")
+  end
 end
 
 ###
@@ -107,11 +121,12 @@ class LoadQTReport
     def addJob(job)
         @cumulativeQueueTime += job.queueTime.to_f 
         if job.perfPref.to_f <= 0.25
-            puts "LowPref: #{job.queueTime.to_f}\t#{@lowQueueTime}"
+            puts "LowPerfPref: #{job.queueTime.to_f}\t#{@lowQueueTime}" if $verbose
             @lowQueueTime += job.queueTime.to_f
             @lowCounter += 1
         end
         if job.perfPref.to_f >= 0.75
+            puts "HighPerfPref: #{job.queueTime.to_f}\t#{@highQueueTime}" if $verbose
             @highQueueTime += job.queueTime.to_f
             @highCounter += 1
         end
@@ -153,12 +168,12 @@ class LoadARTReport
     def addJob(job)
         @cumulativeResponseTime += job.responseTime.to_f 
         if job.perfPref.to_f <= 0.25
-            puts "LowPerfPref: #{job.responseTime.to_f}\t#{@lowResponseTime}"
+            puts "LowPerfPref: #{job.responseTime.to_f}\t#{@lowResponseTime}" if $verbose
             @lowResponseTime += job.responseTime.to_f
             @lowCounter += 1
         end
         if job.perfPref.to_f >= 0.75
-            puts "HighPerfPref: #{job.responseTime.to_f}\t#{@lowResponseTime}"
+            puts "HighPerfPref: #{job.responseTime.to_f}\t#{@lowResponseTime}" if $verbose
             @highResponseTime += job.responseTime.to_f
             @highCounter += 1
         end
@@ -195,22 +210,22 @@ class LoadAvgPriceReport
         @highCounter = 0
         @jobCounter = 0
     end
-    
+
     def addJob(job)
-        @cumulativePrice += job.price.to_f 
-        @jobCounter += 1
-        if job.pricePref.to_f <= 0.25
-            @lowPrice += job.price.to_f
-            @lowCounter += 1
-        end
-        if job.pricePref.to_f >= 0.75
-            @highPrice += job.price.to_f
-            @highCounter += 1
-        end
+      @cumulativePrice += job.price.to_f 
+      @jobCounter += 1
+      if job.pricePref.to_f <= 0.25
+        @lowPrice += job.price.to_f
+        @lowCounter += 1
+      end
+      if job.pricePref.to_f >= 0.75
+        @highPrice += job.price.to_f
+        @highCounter += 1
+      end
     end
     
     def finalize()
-        art=lowPerfPref=highPerfPref=0;
+        avgprice=lowPricePref=highPricePref=0;
         avgprice = (@cumulativePrice.to_f / @jobCounter.to_f) unless (@jobCounter==0)
         lowPricePref = (@lowPrice.to_f / @lowCounter.to_f) unless (@lowCounter==0)
         highPricePref = (@highPrice.to_f / @highCounter.to_f) unless (@highCounter==0)
@@ -317,6 +332,7 @@ class ReportCollection
     end
     
     def addJob(job)
+        job.check();
         @reports.each{|report|
             report.addJob(job)
         }
@@ -383,30 +399,30 @@ def createReport(reportFileName, loadLevel)
         jid = fields[2].strip!
         jid.sub!("job-", "")
         submitTime = fields[12].strip!
-        runTime = fields[13].strip!
+        runTime = fields[15].strip!
         responseTime = fields[17].strip!
         queueTime = responseTime.to_i - runTime.to_i
+        puts "Calculated negative queuetime, responsetime=#{responseTime}, runTime=#{runTime}" if queueTime < 0
         price = fields[18].strip!
         agent = fields[7].strip!
         prefs = fields[8].strip!
         prefFields = prefs.split(";")
         #puts "PREF for job #{jid}: #{prefFields}"
         finishtimeField = prefFields[0];
-        perfPref = (finishtimeField.split("="))[1]
+        perfPref = ((finishtimeField.split("="))[1]).gsub(/0,/, "0.")
         pricePrefField = prefFields[1];
-        pricePref = (pricePrefField.split("="))[1]
+        pricePref = ((pricePrefField.split("="))[1]).gsub(/0,/, "0.")
         #puts "perfPref = #{perfPref}, pricePref = #{pricePref}"
         
         ###
         ## Create a job instance
         #
         j = Job.new(jid)
-        j.price = price
-        j.pricePref = pricePref
-        j.perfPref = perfPref
-        j.responseTime = responseTime
-        j.runTime = runTime
-        j.queueTime = queueTime
+        j.price = price.to_f
+        j.setPrefs(perfPref, pricePref);
+        j.responseTime = responseTime.to_i
+        j.runTime = runTime.to_i
+        j.queueTime = queueTime.to_i
             
         if (context == SEQUENCE)
             puts "SEQUENCE: #{jid} #{submitTime} #{responseTime} #{price}" if $verbose

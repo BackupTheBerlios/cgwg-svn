@@ -85,6 +85,10 @@ if $inDir == nil or $outDir == nil
     exit
 end
 
+basedir=File.dirname(__FILE__)
+#basedir=Dir.getwd
+print "Assuming base directory #{basedir}\n"
+
 # Purge output directory
 empty = true;
 Find.find($outDir) {|path|
@@ -130,23 +134,23 @@ logDirs.each_pair {| load, path |
     puts "###\n## Processing load: #{load}\n#\n"
     report = "#{path}/report.log"
     trace = "#{path}/trace.log"
-    cmd = "ruby bin/calana2report.rb -r #{report} -l #{load} -o #{$outDir}"
+    cmd = "ruby calana2report.rb -r #{report} -l #{load} -o #{$outDir}"
     if (not $short)
         cmd << " -t #{trace}" 
     end
     if $verbose
         cmd << " -v"
     end
-    output = `cd /homes/hpc/b24/md/cgwg/trunk; #{cmd}`
+    output = `cd #{basedir}; #{cmd}`
     #puts "#{cmd}\n"
-    puts "output" if $verbose
+    puts "#{output}" if $verbose
 }
 
 # Run the report2pdf script
-cmd = "ruby bin/report2pdf.rb -i #{$outdir} -o #{$outdir}"
+cmd = "ruby report2pdf.rb -i #{$outdir} -o #{$outdir}"
 if $verbose
     cmd << " -v"
 end
-output = `cd /homes/hpc/b24/md/cgwg/trunk; #{cmd}`
-puts "output" if $verbose
+output = `cd #{basedir}; #{cmd}`
+puts "#{output}" if $verbose
 
