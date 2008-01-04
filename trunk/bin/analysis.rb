@@ -16,6 +16,14 @@
 # along with CGWG; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+# Read the CGWG location from the environment, warn otherwise
+if (ENV["CGWG_HOME"] == nil)
+  puts "WARNING: Environment does not define $CGWG_HOME!"
+else
+  libpath= File.join(File.expand_path(ENV["CGWG_HOME"]), "lib")
+  $:.unshift << libpath
+end
+
 require 'optparse'
 require 'ostruct'
 require 'find'
@@ -85,7 +93,8 @@ if $inDir == nil or $outDir == nil
     exit
 end
 
-basedir=File.dirname(__FILE__)
+basedir=File.dirname(ENV["CGWG_HOME"])
+#basedir=File.dirname(__FILE__)
 #basedir=Dir.getwd
 print "Assuming base directory #{basedir}\n"
 

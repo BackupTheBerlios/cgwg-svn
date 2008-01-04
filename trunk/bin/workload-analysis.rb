@@ -16,7 +16,16 @@
 # along with CGWG; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-$LOAD_PATH << File.expand_path(File.dirname(__FILE__))
+# Read the CGWG location from the environment, warn otherwise
+if (ENV["CGWG_HOME"] == nil)
+  puts "WARNING: Environment does not define $CGWG_HOME!"
+else
+  libpath= File.join(File.expand_path(ENV["CGWG_HOME"]), "lib")
+  $:.unshift << libpath
+#  puts "Using libraty path #{$:.join(":")}" 
+end
+
+
 require 'rubygems'
 require 'Models'
 require 'Workload'

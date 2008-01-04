@@ -16,14 +16,23 @@
 # along with CGWG; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+# Read the CGWG location from the environment, warn otherwise
+if (ENV["CGWG_HOME"] == nil)
+  puts "WARNING: Environment does not define $CGWG_HOME!"
+else
+  libpath= File.join(File.expand_path(ENV["CGWG_HOME"]), "lib")
+  $:.unshift << libpath
+#  puts "Using libraty path #{$:.join(":")}" 
+end
+
 require 'yaml'
-require 'rubygems'
-require_gem 'builder' #we need xml builder
-require 'Models'
 require 'Workload'
+require 'Models'
 require 'Helpers'
 require 'optparse'
 require 'ostruct'
+require 'rubygems'
+gem 'builder' #we need xml builder
 
 ###
 ## This is the main workload generator file. You should look at the
