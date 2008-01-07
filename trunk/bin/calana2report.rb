@@ -27,6 +27,7 @@ end
 
 require 'Workload'
 require 'Helpers'
+require 'Dataplot'
 require 'optparse'
 require 'ostruct'
 
@@ -81,6 +82,14 @@ class Optparser
     end
 end
 
+
+class Float
+  def to_s
+    #force all Floats to 2 decimal places
+    "%.2f" % self
+  end
+end 
+
 ###
 ## Job abstraction class
 #
@@ -103,6 +112,10 @@ class Job
     @perfPref=Float(perfPref);
     @pricePref=Float(pricePref);
     #puts("Updating prefs: perf=#{perfPref}, price=#{pricePref}")
+  end
+  def to_dataplot_format
+    retval="#{@jid.to_f} #{pricePref} #{@price} #{(@price/@runTime)} "
+    retval+="#{@perfPref} #{@runTime} #{queueTime} #{@responseTime}"
   end
 end
 
@@ -328,6 +341,39 @@ class PricePrefCorrelationReport
     end
 end
 
+###
+## A report that prints a dataplot-compatible representation in a file.
+## Then, several reports are printed - see the plotSingle* routines in
+## lib/Dataplot.rb.
+#
+class DataplotReport
+  def initialize(directory, load)
+    @load = load
+    reportFileName = "DP"+load+".DAT"
+    fullReportFileName=directory+"/"+reportFileName
+    @dp=Dataplot.new(directory, reportFileName);
+    @reportFile = File.new(fullReportFileName, "w")
+    @reportFile.puts("jid pricepref price pricert perfpref rtime qtime resptime")
+  end
+
+  def addJob(job)
+    jobline=job.to_dataplot_format;
+    #puts jobline
+    @reportFile.puts(jobline);
+  end
+
+  def finalize()
+    @reportFile.puts("\n")
+    @reportFile.close
+    # now, run dataplot to do the analysis.
+    @dp.plotSingleRun()
+    @dp.ps2pdf()
+    @dp.finalize()
+  end
+end
+
+
+
 class ReportCollection
     def initialize(load)
         @reports = Array.new
@@ -336,8 +382,9 @@ class ReportCollection
         report3 = PriceRTPrefReport.new($outDir, load);
         report4 = PricePrefCorrelationReport.new($outDir, load);
         report5 = LoadQTReport.new($outDir, load);
+        report6 = DataplotReport.new($outDir, load);
         @reports << report1 << report2 << report3 
-        @reports << report4 << report5
+        @reports << report4 << report5 << report6
     end
     
     def addJob(job)
@@ -358,6 +405,7 @@ end
 def createReport(reportFileName, loadLevel)
     reportFile=File.new(reportFileName, "r")
     reports = ReportCollection.new(loadLevel);
+
     print "Reading calanasim report file and converting.\n"
     inExplanation = false;
     context = 0;

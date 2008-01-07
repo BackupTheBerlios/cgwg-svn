@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# This file is part of the calana grid work$load generator.
+# This file is part of the calana grid workload generator.
 # (c) 2006 Mathias Dalheimer, md@gonium.net
 #
 # The calana grid work$load generator (CGWG) is free software; you can 
@@ -93,7 +93,7 @@ if $inDir == nil or $outDir == nil
     exit
 end
 
-basedir=File.dirname(ENV["CGWG_HOME"])
+basedir=File.expand_path(ENV["CGWG_HOME"])
 #basedir=File.dirname(__FILE__)
 #basedir=Dir.getwd
 print "Assuming base directory #{basedir}\n"
@@ -143,7 +143,7 @@ logDirs.each_pair {| load, path |
     puts "###\n## Processing load: #{load}\n#\n"
     report = "#{path}/report.log"
     trace = "#{path}/trace.log"
-    cmd = "ruby calana2report.rb -r #{report} -l #{load} -o #{$outDir}"
+    cmd = "ruby #{basedir}/bin/calana2report.rb -r #{report} -l #{load} -o #{$outDir}"
     if (not $short)
         cmd << " -t #{trace}" 
     end
@@ -156,7 +156,7 @@ logDirs.each_pair {| load, path |
 }
 
 # Run the report2pdf script
-cmd = "ruby report2pdf.rb -i #{$outdir} -o #{$outdir}"
+cmd = "ruby #{basedir}/bin/report2pdf.rb -i #{$outdir} -o #{$outdir}"
 if $verbose
     cmd << " -v"
 end
