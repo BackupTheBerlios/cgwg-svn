@@ -23,7 +23,7 @@ if (ENV["CGWG_HOME"] == nil)
 else
   libpath= File.join(File.expand_path(ENV["CGWG_HOME"]), "lib")
   $:.unshift << libpath
-#  puts "Using libraty path #{$:.join(":")}" 
+  #  puts "Using libraty path #{$:.join(":")}" 
 end
 
 
@@ -34,101 +34,101 @@ require 'ostruct'
 ## Commandline parser
 #
 class Optparser
-    CODES = %w[iso-2022-jp shift_jis euc-jp utf8 binary]
-    CODE_ALIASES = { "jis" => "iso-2022-jp", "sjis" => "shift_jis" }
-    #
-    # Return a structure describing the options.
-    #
-    def self.parse(args)
-        # The options specified on the command line will be collected in *options*.
-        # We set default values here.
-        options = OpenStruct.new
-        options.inplace = false
-        options.encoding = "utf8"
-        options.verbose = false
-        opts = OptionParser.new do |opts|
-            opts.banner = "Usage: calana2r.rb [options]"
-            opts.separator ""
-            opts.separator "Specific options:"
-            # Mandatory argument.
-            opts.on("-i", "--input directory", "the input file in calanasim format") do |indir|
-                options.indir=indir
-            end
-            opts.on("-o", "--output directory","the output directory for the report files") do |outdir|
-                options.outdir=outdir
-            end
-            opts.on("-l", "--load FLOAT", "the load level of the input
-            file, e.g. 0.25") do |load|
-                options.load=load
-            end
-            opts.on("-e", "--entity String", "The entity to plot when
-            doing load-dependent plots, e.g. bidder-43") do |entity|
-                options.entity=entity
-            end
-            # Boolean switch.
-            opts.on("-v", "--verbose", "Run verbosely") do |v|
-                options.verbose = v
-            end
-            opts.on_tail("-h", "--help", "Show this message") do
-                puts opts
-                exit
-            end
-        end
-        opts.parse!(args)
-        options
+  CODES = %w[iso-2022-jp shift_jis euc-jp utf8 binary]
+  CODE_ALIASES = { "jis" => "iso-2022-jp", "sjis" => "shift_jis" }
+  #
+  # Return a structure describing the options.
+  #
+  def self.parse(args)
+    # The options specified on the command line will be collected in *options*.
+    # We set default values here.
+    options = OpenStruct.new
+    options.inplace = false
+    options.encoding = "utf8"
+    options.verbose = false
+    opts = OptionParser.new do |opts|
+      opts.banner = "Usage: calana2r.rb [options]"
+      opts.separator ""
+      opts.separator "Specific options:"
+      # Mandatory argument.
+      opts.on("-i", "--input directory", "the input file in calanasim format") do |indir|
+        options.indir=indir
+      end
+      opts.on("-o", "--output directory","the output directory for the report files") do |outdir|
+        options.outdir=outdir
     end
+    opts.on("-l", "--load FLOAT", "the load level of the input
+            file, e.g. 0.25") do |load|
+      options.load=load
+            end
+    opts.on("-e", "--entity String", "The entity to plot when
+            doing load-dependent plots, e.g. bidder-43") do |entity|
+      options.entity=entity
+            end
+    # Boolean switch.
+    opts.on("-v", "--verbose", "Run verbosely") do |v|
+      options.verbose = v
+    end
+    opts.on_tail("-h", "--help", "Show this message") do
+      puts opts
+      exit
+    end
+  end
+  opts.parse!(args)
+  options
+end
 end
 
 # ========================================================
 # = Runs gnuplot with the given config, then runs ps2pdf =
 # ========================================================
 def runGnuPlot (gnuplotCmd, inFile, outFile)
-    inputFile = $inDir+"/"+inFile
-    outputFile = $outDir+"/"+outFile
-    outPDF = outFile.sub(/eps/, "pdf")
-    outPDFFile = $outDir+"/"+outPDF
-    puts "Using gnuplot command: \n#{gnuplotCmd}\n" if $verbose
-    puts "running gnuplot to create #{outFile}"
-    cmd = `echo -n "#{gnuplotCmd}" | gnuplot`
-    print "Gnuplot said: \n#{cmd}\n" if $verbose 
-    print "converting to PDF\n" if $verbose
-    cmd = `ps2pdf #{outputFile} #{outPDFFile}`
-    print "ps2pdf said: #{cmd}\n" if $verbose    
+  inputFile = $inDir+"/"+inFile
+  outputFile = $outDir+"/"+outFile
+  outPDF = outFile.sub(/eps/, "pdf")
+  outPDFFile = $outDir+"/"+outPDF
+  puts "Using gnuplot command: \n#{gnuplotCmd}\n" if $verbose
+  puts "running gnuplot to create #{outFile}"
+  cmd = `echo -n "#{gnuplotCmd}" | gnuplot`
+  print "Gnuplot said: \n#{cmd}\n" if $verbose 
+  print "converting to PDF\n" if $verbose
+  cmd = `ps2pdf #{outputFile} #{outPDFFile}`
+  print "ps2pdf said: #{cmd}\n" if $verbose    
 end
 
 # ==================================
 # = Prints a 2-dimensional dataset =
 # ==================================
 def gnuPlot2Data(inFile, outFile, title, xlabel, ylabel, xcolumn, ycolumn)
-    inputFile = $inDir+"/"+inFile
-    outputFile = $outDir+"/"+outFile
-    gnuplotCmd = <<-EOC
+  inputFile = $inDir+"/"+inFile
+  outputFile = $outDir+"/"+outFile
+  gnuplotCmd = <<-EOC
 set terminal postscript eps color
 set output \\"#{outputFile}\\"
 set xlabel \\"#{xlabel}\\"
 set ylabel \\"#{ylabel}\\"
 plot \\"#{inputFile}\\" using #{xcolumn}:#{ycolumn} axis x1y1 title \\"#{title}\\"
 EOC
-    runGnuPlot(gnuplotCmd, inFile, outFile)
+  runGnuPlot(gnuplotCmd, inFile, outFile)
 end
 
 # =============================================================
 # = Prints a 2-dimensional dataset , connects data with lines =
 # =============================================================
 def gnuPlot2Lines(inFile, outFile, title, xlabel, ylabel, xcolumn, ycolumn)
-    inputFile = $inDir+"/"+inFile
-    sortedInput = "#{inputFile}.sorted"
-    # Hack: Sort the values accending..."
-    msg = `cat #{inputFile} | sort -n > #{sortedInput}`
-    outputFile = $outDir+"/"+outFile
-    gnuplotCmd = <<-EOC
+  inputFile = $inDir+"/"+inFile
+  sortedInput = "#{inputFile}.sorted"
+  # Hack: Sort the values accending..."
+  msg = `cat #{inputFile} | sort -n > #{sortedInput}`
+  outputFile = $outDir+"/"+outFile
+  gnuplotCmd = <<-EOC
 set terminal postscript eps color
 set output \\"#{outputFile}\\"
 set xlabel \\"#{xlabel}\\"
 set ylabel \\"#{ylabel}\\"
 plot \\"#{sortedInput}\\" using #{xcolumn}:#{ycolumn} axis x1y1 title \\"#{title}\\" with linespoints
 EOC
-    runGnuPlot(gnuplotCmd, inFile, outFile)
+  runGnuPlot(gnuplotCmd, inFile, outFile)
 end
 
 
@@ -137,30 +137,30 @@ end
 # = Prints a multi-dimensional dataset =
 # ======================================
 def gnuPlotMultiData(inFile, outFile, title, xlabel, ylabel, columns)
-    inputFile = $inDir+"/"+inFile
-    outputFile = $outDir+"/"+outFile
-    gnuplotCmd = <<-EOC
+  inputFile = $inDir+"/"+inFile
+  outputFile = $outDir+"/"+outFile
+  gnuplotCmd = <<-EOC
 set terminal postscript eps color
 set output \\"#{outputFile}\\"
 set xlabel \\"#{xlabel}\\"
 set ylabel \\"#{ylabel}\\"
 EOC
-    plotCmd="\nplot "
-    maxIndex = columns.length()
-    columns.each_index{|index|
-        column = index+2
-        if (index < maxIndex-1)
-            tmp = <<-EOC
+  plotCmd="\nplot "
+  maxIndex = columns.length()
+  columns.each_index{|index|
+    column = index+2
+    if (index < maxIndex-1)
+      tmp = <<-EOC
 \\"#{inputFile}\\" using 1:#{column} title \\"#{columns[index]}\\" with steps, \\
 EOC
-        else
-            tmp = <<-EOC
+    else
+      tmp = <<-EOC
 \\"#{inputFile}\\" using 1:#{column} title \\"#{columns[index]}\\" with steps
 EOC
-        end
-        plotCmd << tmp
-    }
-    runGnuPlot(gnuplotCmd<<plotCmd, inFile, outFile)    
+    end
+    plotCmd << tmp
+  }
+  runGnuPlot(gnuplotCmd<<plotCmd, inFile, outFile)    
 end
 
 # ======================================
@@ -251,7 +251,7 @@ def plotNumberUnusedResources()
     gnuPlot2Lines("utilization-unused-resources.txt",
         "utilization-unused-resources.eps", 
         "Number of unused Resources vs. Load", "Load", "Unused Resources", 1,2)
-        
+
 end
 
 # Runs the load-dependent scripts.
@@ -303,7 +303,7 @@ def runGeneralScripts()
     gnuPlotMultiLines("load-ART.txt", "load-ART-all.eps", 
         "Average Response Time vs. Load (with perfPref settings)",
         "Load", "ART", names)
-        
+
     names = Array.new
     names << "Queuetime" << "Queuetime (perfPref <= 0.25)" 
     names << "Queuetime (perfPref >= 0.75)"
@@ -313,7 +313,7 @@ def runGeneralScripts()
 
     gnuPlot2Lines("load-avgprice.txt", "load-avgprice.eps", 
         "Average Price vs. Load", "Load", "Average Price", 1,2)
-        
+
     names = Array.new
     names << "Price" << "Price (pricePref <= 0.25)" 
     names << "Price (pricePref >= 0.75)"
@@ -335,9 +335,9 @@ end
 ## Script begins here
 #
 print "report to PDF converter\n"
-   
+
 options = Optparser.parse(ARGV)
-    
+
 $inDir = options.indir
 $outDir = options.outdir
 $load = options.load

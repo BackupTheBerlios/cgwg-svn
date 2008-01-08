@@ -351,7 +351,7 @@ class DataplotReport
     @load = load
     reportFileName = "DP"+load+".DAT"
     fullReportFileName=directory+"/"+reportFileName
-    @dp=Dataplot.new(directory, reportFileName);
+    @dp=Dataplot.new(directory, reportFileName, load);
     @reportFile = File.new(fullReportFileName, "w")
     @reportFile.puts("jid pricepref price pricert perfpref rtime qtime resptime")
   end

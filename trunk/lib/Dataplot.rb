@@ -21,10 +21,11 @@ DATAPLOT_CMD = "dataplot"
 VARIABLE_LIST = "JID PRPREF PRICE PRICERT PEPREF RT QT RESPT"
 
 class Dataplot
-  def initialize(path, datafile)
+  def initialize(path, datafile, load)
     puts "Using datafile #{path+"/"+datafile}" if $verbose
     @path=path
     @datafile=datafile
+    @load=load
     @dp_in, @dp_out, @dp_err = Open3.popen3(DATAPLOT_CMD)
     puts "dataplot in/out is #{@dp_in}/#{@dp_out}" if $verbose
     writePrefix()
@@ -92,7 +93,7 @@ class Dataplot
   def executeToFile(outputfile)
     open=<<-END_OF_CMD
       DEVICE 2 CLOSE
-      SET IPL1NA #{outputfile}.ps
+      SET IPL1NA #{outputfile}#{@load}.ps
       DEVICE 2 POSTSCRIPT
     END_OF_CMD
     executeCmd(open)
