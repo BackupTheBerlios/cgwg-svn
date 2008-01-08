@@ -1,21 +1,101 @@
-foo
-test on @@date@@
-fkreokfroprek
-foo
-foo
-foo
+\documentclass[11pt]{article}
 
-@@load-QT-all@@
+% Use utf-8 encoding for foreign characters
+\usepackage[utf8]{inputenc}
 
-foo
-foo
-test
-fkreokfroprek
-test
-fkreokfroprek
-test
-fkreokfroprek
-test
-fkreokfroprek
-test
-fkreokfroprek
+% Setup for fullpage use
+\usepackage{fullpage}
+\usepackage{url}
+%\usepackage{german}
+
+% Uncomment some of the following if you use the features
+%
+% Running Headers and footers
+%\usepackage{fancyhdr}
+%\pagestyle{fancy} % options: empty , plain , fancy
+%\renewcommand{\headrulewidth}{1pt} % customise the layout...
+%\lhead{}\chead{}\rhead{}
+%\lfoot{}\cfoot{\thepage}\rfoot{}
+
+%\fancyhead[LE,RO]{\slshape \rightmark} 
+%\fancyhead[LO,RE]{\slshape \leftmark} 
+%\fancyfoot[LE, RO]{\thepage} 
+
+%%% SECTION TITLE APPEARANCE
+\usepackage{sectsty}
+\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+% (This matches ConTeXt defaults)
+
+\setlength{\parindent}{0cm}
+\clubpenalty=1500
+\widowpenalty=2000
+
+%\usepackage{ngerman}
+
+% Multipart figures
+%\usepackage{subfigure}
+%\usepackage{lib/algorithm2e}
+
+% More symbols
+\usepackage{amsmath}
+%\usepackage{amssymb}
+\usepackage{latexsym}
+
+% Surround parts of graphics with box
+%\usepackage{boxedminipage}
+
+% If you want to generate a toc for each chapter (use with book)
+%\usepackage{minitoc}
+
+% This is now the recommended way for checking for PDFLaTeX:
+\usepackage{ifpdf}
+
+%\newif\ifpdf
+%\ifx\pdfoutput\undefined
+%\pdffalse % we are not running PDFLaTeX
+%\else
+%\pdfoutput=1 % we are running PDFLaTeX
+%\pdftrue
+%\fi
+
+\ifpdf
+\usepackage[pdftex]{graphicx}
+\else
+\usepackage{graphicx}
+\fi
+
+
+\usepackage{listings}  
+\lstset{numbers=left, numberstyle=\tiny,numbersep=5pt}  
+\lstset{language=Xml, basicstyle=\small, frame=shadowbox}  
+
+\usepackage[hypertexnames=false,pdftex]{hyperref}
+\hypersetup{
+pdfauthor = {Mathias Dalheimer},
+pdftitle = {@@title@@},
+pdfsubject = {Analysis of a Calana Experiment},
+pdfkeywords = {Scheduling, Grid Computing}
+pdfcreator = {LaTeX with hyperref package},
+pdfproducer = {foobar Ltd. International}}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}} 
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{\textsf{Auswertung Experiment}}
+
+\date{@@date@@}
+
+\begin{document}
+
+\ifpdf
+\DeclareGraphicsExtensions{.pdf, .jpg, .tif}
+\else
+\DeclareGraphicsExtensions{.eps, .jpg}
+\fi
+
+\maketitle
+
+\end{document}
