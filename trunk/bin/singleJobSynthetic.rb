@@ -32,6 +32,7 @@ end
 require 'yaml'
 require 'rubygems'
 gem 'builder' #we need xml builder
+require 'builder/xmlmarkup'
 require 'Models'
 require 'Workload'
 require 'Helpers'
