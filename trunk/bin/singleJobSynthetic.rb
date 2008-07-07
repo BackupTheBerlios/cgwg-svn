@@ -23,7 +23,7 @@ if (ENV["CGWG_HOME"] == nil)
 else
   libpath= File.join(File.expand_path(ENV["CGWG_HOME"]), "lib")
   $:.unshift << libpath
-#  puts "Using libraty path #{$:.join(":")}" 
+  puts "Using libraty path #{$:.join(":")}" 
 end
 
 

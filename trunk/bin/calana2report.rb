@@ -20,6 +20,8 @@
 # Read the CGWG location from the environment, warn otherwise
 if (ENV["CGWG_HOME"] == nil)
   puts "WARNING: Environment does not define $CGWG_HOME!"
+elsif (ENV["GRIDSIMBASE"] == nil)
+  puts "WARNING: Environment does not define $GRIDSIMBASE! (Should point to the path where your input (-i) dir is placed)"
 else
   libpath= File.join(File.expand_path(ENV["CGWG_HOME"]), "lib")
   $:.unshift << libpath
@@ -95,7 +97,7 @@ end
 #
 class Job
   attr_accessor :type, :responseTime, :jid, :price, :pricePref,
-    :perfPref, :runTime, :queueTime
+    :perfPref, :runTime, :queueTime, :startTime, :endTime
   def initialize(jid)
     @jid=jid
     @pricePref=0.0
@@ -124,7 +126,7 @@ end
 #
 class LoadQTReport
     def initialize(directory, load)
-        reportFileName = directory+"/load-QT.txt"
+        reportFileName = ENV['GRIDSIMBASE']+"/"+directory+"/load-QT.txt"
         @load = load
         if (File.exists?("#{reportFileName}"))
             @reportFile = File.new(reportFileName, "a")
@@ -171,7 +173,7 @@ end
 #
 class LoadARTReport
     def initialize(directory, load)
-        reportFileName = directory+"/load-ART.txt"
+        reportFileName = ENV['GRIDSIMBASE']+"/"+directory+"/load-ART.txt"
         @load = load
         if (File.exists?("#{reportFileName}"))
             @reportFile = File.new(reportFileName, "a")
@@ -217,7 +219,7 @@ end
 #
 class LoadAvgPriceReport
     def initialize(directory, load)
-        reportFileName = directory+"/load-avgprice.txt"
+        reportFileName = ENV['GRIDSIMBASE']+"/"+directory+"/load-avgprice.txt"
         @load = load
         if (File.exists?("#{reportFileName}"))
             @reportFile = File.new(reportFileName, "a")
@@ -256,14 +258,13 @@ class LoadAvgPriceReport
     end
 end
 
-
 ###
 ## A report that prints the price vs. pricePreference and rt vs. perfPref data
 #
 class PriceRTPrefReport
     def initialize(directory, load)
         @load = load
-        reportFileName = directory+"/price-rt-preference-"+load+".txt"
+        reportFileName = ENV['GRIDSIMBASE']+"/"+directory+"/price-rt-preference-"+load+".txt"
         @reportFile = File.new(reportFileName, "w")
         @reportFile.puts("#pricePerSecond\tpricePref\tqueueTime\tperfPref")
     end
@@ -280,12 +281,32 @@ class PriceRTPrefReport
 end
 
 ###
+## A report that prints the price along time
+#
+class TimePriceReport
+    def initialize(directory, load)
+        @load = load
+        reportFileName = ENV['GRIDSIMBASE']+"/"+directory+"/time-price-"+load+".txt"
+        @reportFile = File.new(reportFileName, "w")
+        @reportFile.puts("#time\tprice")
+    end
+    
+    def addJob(job)
+        @reportFile.puts("#{job.startTime}\t#{job.price}")
+    end
+    
+    def finalize()
+        @reportFile.close
+    end
+end
+
+###
 ## A report that prints the price vs. pricePreference and rt vs. perfPref data
 #
 class PricePrefCorrelationReport
     def initialize(directory, load)
         @load=load
-        reportFileName = directory+"/preference-correlation.txt"
+        reportFileName = ENV['GRIDSIMBASE']+"/"+directory+"/preference-correlation.txt"
         if (File.exists?("#{reportFileName}"))
             @reportFile = File.new(reportFileName, "a")
         else
@@ -350,7 +371,7 @@ class DataplotReport
   def initialize(directory, load)
     @load = load
     reportFileName = "DP"+load+".DAT"
-    fullReportFileName=directory+"/"+reportFileName
+    fullReportFileName = ENV['GRIDSIMBASE']+"/"+directory+"/"+reportFileName
     @dp=Dataplot.new(directory, reportFileName, load);
     @reportFile = File.new(fullReportFileName, "w")
     @reportFile.puts("jid pricepref price pricert perfpref rtime qtime resptime")
@@ -382,7 +403,8 @@ class ReportCollection
         report3 = PriceRTPrefReport.new($outDir, load);
         report4 = PricePrefCorrelationReport.new($outDir, load);
         report5 = LoadQTReport.new($outDir, load);
-        report6 = DataplotReport.new($outDir, load);
+        report6 = TimePriceReport.new($outDir, load);
+        #report7 = DataplotReport.new($outDir, load);
         @reports << report1 << report2 << report3 
         @reports << report4 << report5 << report6
     end
@@ -419,6 +441,10 @@ def createReport(reportFileName, loadLevel)
         if (line =~ /^$/)
             next
         end
+	# And debug messages.
+	if (line =~ /^[0-9]/)
+	    next
+	end
         # We need to ignore the three field explanation lines.
         if (line =~ /^=/ and not inExplanation)
             inExplanation=true
@@ -458,6 +484,8 @@ def createReport(reportFileName, loadLevel)
         submitTime = fields[12].strip!
         runTime = fields[15].strip!
         responseTime = fields[17].strip!
+	startTime = fields[14].strip!
+	endTime = fields[16].strip!
         queueTime = responseTime.to_i - runTime.to_i
         puts "Calculated negative queuetime, responsetime=#{responseTime}, runTime=#{runTime}" if queueTime < 0
         price = fields[18].strip!
@@ -480,6 +508,8 @@ def createReport(reportFileName, loadLevel)
         j.responseTime = responseTime.to_i
         j.runTime = runTime.to_i
         j.queueTime = queueTime.to_i
+	j.startTime = startTime.to_i
+	j.endTime = endTime.to_i
             
         if (context == SEQUENCE)
             puts "SEQUENCE: #{jid} #{submitTime} #{responseTime} #{price}" if $verbose
@@ -550,7 +580,7 @@ end
 class UtilizationReport
     def initialize(directory, load, entities)
         @load=load
-        reportFileName = directory+"/utilization-all.txt"
+        reportFileName = ENV['GRIDSIMBASE']+"/"+directory+"/utilization-all.txt"
         if (File.exists?("#{reportFileName}"))
             @reportFile = File.new(reportFileName, "a")
         else
@@ -602,8 +632,8 @@ def processTrace(traceFileName, loadLevel)
 
     traceFile=File.new(traceFileName, "r")
     puts "Processing trace file #{traceFileName}"
-    @utilReportFile = File.new($outDir+"/utilization-"+loadLevel+".txt", "w")
-    @queueReportFile = File.new($outDir+"/queuelength-"+loadLevel+".txt", "w")
+    @utilReportFile = File.new(ENV['GRIDSIMBASE']+"/"+$outDir+"/utilization-"+loadLevel+".txt", "w")
+    @queueReportFile = File.new(ENV['GRIDSIMBASE']+"/"+$outDir+"/queuelength-"+loadLevel+".txt", "w")
     traceFile.each_line {|line|
         line.sub!(/trace./, "") # Drop the trace. prefix.
         line.sub!(/-\ /, "") # Drop the dash.
@@ -754,12 +784,14 @@ if ($reportFileName == nil and $traceFileName == nil) or
     exit
 end
 
-puts "Using libraty path #{$:.join(":")}" if $verbose
+puts "Using library path #{$:.join(":")}" if $verbose
 
 if ($reportFileName != nil)
+    $reportFileName = ENV['GRIDSIMBASE']+"/"+$reportFileName
     createReport($reportFileName, $load)
 end
 if ($traceFileName != nil)
+    $traceFileName = ENV['GRIDSIMBASE']+"/"+$traceFileName
     processTrace($traceFileName, $load)
 end
 

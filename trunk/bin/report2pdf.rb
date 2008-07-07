@@ -132,6 +132,22 @@ EOC
 end
 
 
+# ==============================================================
+# = Prints a 2-dimensional dataset , connects data with points =
+# ==============================================================
+def gnuPlot2Points(inFile, outFile, title, xlabel, ylabel, xcolumn, ycolumn)
+  inputFile = $inDir+"/"+inFile
+  outputFile = $outDir+"/"+outFile
+  gnuplotCmd = <<-EOC
+set terminal postscript eps color
+set output \\"#{outputFile}\\"
+set xlabel \\"#{xlabel}\\"
+set ylabel \\"#{ylabel}\\"
+plot \\"#{inputFile}\\" using #{xcolumn}:#{ycolumn} axis x1y1 title \\"#{title}\\" with points pt 7
+EOC
+  runGnuPlot(gnuplotCmd, inFile, outFile)
+end
+
 
 # ======================================
 # = Prints a multi-dimensional dataset =
@@ -160,7 +176,7 @@ EOC
     end
     plotCmd << tmp
   }
-  runGnuPlot(gnuplotCmd<<plotCmd, inFile, outFile)    
+  runGnuPlot(gnuplotCmd << plotCmd, inFile, outFile)    
 end
 
 # ======================================
@@ -193,7 +209,7 @@ EOC
         end
         plotCmd << tmp
     }
-    runGnuPlot(gnuplotCmd<<plotCmd, inFile, outFile)    
+    runGnuPlot(gnuplotCmd << plotCmd, inFile, outFile)    
 end
 
 
@@ -256,6 +272,8 @@ end
 
 # Runs the load-dependent scripts.
 def runLoadDepScripts()
+    gnuPlot2Points("time-price-#{$load}.txt", "time-price-#{$load}.eps", 
+        "Time vs. Price", "time", "price", 1, 2)
     gnuPlot2Data("price-rt-preference-#{$load}.txt", "price-pref-#{$load}.eps", 
         "Price vs. PricePreference", "pricePref", "pricePerSecond", 2, 1)
     gnuPlot2Data("price-rt-preference-#{$load}.txt", "perf-pref-#{$load}.eps", 
