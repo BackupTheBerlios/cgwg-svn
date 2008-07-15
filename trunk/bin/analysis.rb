@@ -141,8 +141,8 @@ end
 
 logDirs.each_pair {| load, path |
     puts "###\n## Processing load: #{load}\n#\n"
-    report = "#{path}/report.log"
-    trace = "#{path}/trace.log"
+    report = File.join(File.expand_path(path), "report.log")
+    trace = File.join(File.expand_path(path), "trace.log")
     cmd = "ruby #{basedir}/bin/calana2report.rb -r #{report} -l #{load} -o #{$outDir}"
     if (not $short)
         cmd << " -t #{trace}" 
@@ -150,16 +150,20 @@ logDirs.each_pair {| load, path |
     if $verbose
         cmd << " -v"
     end
-    output = `cd #{basedir}; #{cmd}`
+    output = `#{cmd}`
     #puts "#{cmd}\n"
+    puts "#{output}" if $verbose
+    #Run the report2pdf script for each load level
+    cmd = "ruby #{basedir}/bin/report2pdf.rb -i #{$outDir} -l #{load} -o #{$outDir}"
+    output = `#{cmd}`
     puts "#{output}" if $verbose
 }
 
 # Run the report2pdf script
-cmd = "ruby #{basedir}/bin/report2pdf.rb -i #{$outdir} -o #{$outdir}"
+cmd = "ruby #{basedir}/bin/report2pdf.rb -i #{$outDir} -o #{$outDir}"
 if $verbose
     cmd << " -v"
 end
-output = `cd #{basedir}; #{cmd}`
+output = `#{cmd}`
 puts "#{output}" if $verbose
 
