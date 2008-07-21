@@ -273,8 +273,14 @@ end
 # Runs the load-dependent scripts.
 def runLoadDepScripts()
     gnuPlot2Points("time-price-#{$load}.txt", "time-price-#{$load}.eps", 
-        "Time vs. Price", "time", "price", 1, 2)
-    gnuPlot2Data("price-rt-preference-#{$load}.txt", "price-pref-#{$load}.eps", 
+        "Time vs. Price per Second", "time", "price", 1, 2)
+    gnuPlot2Points("queue-time-#{$load}.txt", "queue-time-#{$load}.eps", 
+        "Time vs. QueueTime", "Time", "queueTime", 1, 2)
+    gnuPlot2Points("turn-over-#{$load}.txt", "turn-over-#{$load}.eps",
+        "Agents vs. Turn over", "agents", "turn over", 1, 2)
+    gnuPlot2Data("price-pref-#{$load}.txt", "price-pref-#{$load}.eps", 
+        "Time vs. PricePreference", "time", "accuracy of user preference", 1, 2)
+    gnuPlot2Data("price-rt-preference-#{$load}.txt", "price-rt-pref-#{$load}.eps", 
         "Price vs. PricePreference", "pricePref", "pricePerSecond", 2, 1)
     gnuPlot2Data("price-rt-preference-#{$load}.txt", "perf-pref-#{$load}.eps", 
         "Queuetime vs. PerfPreference", "perfPref", "queuetime", 4, 3)
