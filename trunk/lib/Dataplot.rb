@@ -47,6 +47,8 @@ class Dataplot
       TITLE Job Queuetime Plot
       Y1LABEL Queuetime (s)
       X1LABEL Job ID
+      CHARACTERS * 
+      LINES BLANK
       PLOT QT
     END_OF_CMD
     executeToFile("qtplot") {
@@ -59,6 +61,8 @@ class Dataplot
       TITLE Job Price Plot
       Y1LABEL Price
       X1LABEL Job ID
+      CHARACTERS * 
+      LINES BLANK
       PLOT PRICE
     END_OF_CMD
     executeToFile("priplot") {
@@ -68,10 +72,12 @@ class Dataplot
   
   def plotSingleRun_PricePrefVsPrice()
     drawcmd=<<-END_OF_CMD
-      TITLE Price Preference vs. Price
-      Y1LABEL Price
+      TITLE Price Preference vs. Price/Time
+      Y1LABEL Price per Time
       X1LABEL Price Preference
-      PLOT PRICE VERSUS PRPREF
+      CHARACTERS * 
+      LINES BLANK
+      PLOT PRICERT VERSUS PRPREF
     END_OF_CMD
     executeToFile("PvPPplot") {
       executeCmd(drawcmd)
@@ -83,6 +89,8 @@ class Dataplot
       TITLE Performance Preference vs. Queuetime
       Y1LABEL Queuetime (s)
       X1LABEL Performance Preference
+      CHARACTERS * 
+      LINES BLANK
       PLOT QT VERSUS PEPREF
     END_OF_CMD
     executeToFile("QTvPPplot") {
@@ -139,9 +147,10 @@ class Dataplot
 end
 
 # Test routines below - execute this file directly...
-
-#$verbose=true;
-#dp=Dataplot.new("/scratch/md/single-synthetic/run04/load-0.902927433628319", "DP0.90.DAT");
-#dp.plotSingleRun()
-#dp.ps2pdf()
-#dp.finalize()
+if __FILE__ == $0
+  $verbose=true;
+  dp=Dataplot.new("/scratch/md/single-synthetic/run04/load-0.902927433628319", "DP0.90.DAT", 0.90);
+  dp.plotSingleRun()
+  dp.ps2pdf()
+  dp.finalize()
+end

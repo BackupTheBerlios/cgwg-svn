@@ -26,6 +26,7 @@ require "date"
 
 # Locate the report template file
 REPORT_TEMPLATE_FILE=File.join(File.expand_path(ENV["CGWG_HOME"]), "lib/analysis-template.tex")
+LATEX_CMD="pdflatex -interaction batchmode"
 
 # Creates a PDF that summarizes the current experiment. All 
 # previously generated summaries are integrated using latex.
@@ -52,7 +53,7 @@ class LatexReport
 
   # Use latex to create a PDF from the previously generated document
   def runLatex
-    #TODO: waiting for pdflatex installation on hercules
+    #TODO: Waiting for hercules pdflatex installation
   end
 
   def generateArtefactHash()
@@ -110,6 +111,8 @@ class Template
 end
 
 # test routines below
-lr=LatexReport.new("/scratch/md/single-synthetic/run06/analysis")
-lr.composeDocument()
-lr.runLatex();
+if __FILE__ == $0 
+  lr=LatexReport.new("/scratch/md/single-synthetic/run06/analysis")
+  lr.composeDocument()
+  lr.runLatex();
+end
