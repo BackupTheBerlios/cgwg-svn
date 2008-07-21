@@ -95,7 +95,7 @@ end
 #
 class Job
   attr_accessor :type, :responseTime, :jid, :price, :minprice, :maxprice, :pricePref,
-    :perfPref, :runTime, :queueTime, :startTime, :endTime, :minfinishtime, :maxfinishtime
+    :perfPref, :runTime, :queueTime, :startTime, :endTime, :minfinishtime, :maxfinishtime, :agent
   def initialize(jid)
     @jid=jid
     @pricePref=0.0
@@ -300,6 +300,81 @@ class TimePriceReport
 end
 
 ###
+## A report that prints the queue time along time
+#
+class QueueTimeReport
+    def initialize(directory, load)
+        @load = load
+        reportFileName = directory+"/queue-time-"+load+".txt"
+        @reportFile = File.new(reportFileName, "w")
+        @reportFile.puts("#time\tqueue time")
+    end
+    
+    def addJob(job)
+	queueTime = job.queueTime.to_f / job.responseTime.to_f
+        @reportFile.puts("#{job.startTime}\t#{queueTime}")
+    end
+    
+    def finalize()
+        @reportFile.close
+    end
+end
+
+###
+## A report that prints the relative difference of the user's price preference to the price range time along time
+#
+class PricePrefReport
+    def initialize(directory, load)
+        @load = load
+        reportFileName = directory+"/price-pref-"+load+".txt"
+        @reportFile = File.new(reportFileName, "w")
+        @reportFile.puts("#time\trelUserPref")
+    end
+    
+    def addJob(job)
+	relUserPref = 0
+	priceSpan = job.maxprice - job.minprice
+	if (not priceSpan == 0)
+		difference = job.price - priceSpan * job.pricePref - job.minprice
+		relUserPref = difference.abs / priceSpan
+	end
+        @reportFile.puts("#{job.startTime}\t#{relUserPref}")
+    end
+    
+    def finalize()
+        @reportFile.close
+    end
+end
+
+class TurnOverReport
+    def initialize(directory, load)
+	@load = load
+        reportFileName = directory+"/turn-over-"+load+".txt"
+        @reportFile = File.new(reportFileName, "w")
+        @reportFile.puts("#agent\tturnOver")
+	@turnOver = Hash.new
+	@turnOver.default = 0.0
+    end
+
+    def addJob(job)
+	@turnOver[job.agent.split("-")[1]] += job.price
+	@turnOver["sum"] += job.price
+    end
+
+    def finalize()
+	agents = @turnOver.keys
+	agents.sort!
+	agents.each {|entity|
+		tmp = ""
+		tmp << "#" if entity == "sum"
+		tmp << "#{entity}\t#{@turnOver[entity]}"
+		@reportFile.puts(tmp)
+	}
+	@reportFile.close
+    end
+end
+
+###
 ## A report that prints the price vs. pricePreference and rt vs. perfPref data
 #
 class PricePrefCorrelationReport
@@ -424,9 +499,13 @@ class ReportCollection
     report4 = PricePrefCorrelationReport.new($outDir, load);
     report5 = LoadQTReport.new($outDir, load);
     report6 = TimePriceReport.new($outDir, load);
-    #report7 = DataplotReport.new($outDir, load);
+    report7 = QueueTimeReport.new($outDir, load);
+    report8 = PricePrefReport.new($outDir, load);
+    report9 = TurnOverReport.new($outDir, load);
+    #report10 = DataplotReport.new($outDir, load);
     @reports << report1 << report2 << report3 
     @reports << report4 << report5 << report6
+    @reports << report7 << report8 << report9
   end
 
   def addJob(job)
@@ -547,6 +626,7 @@ def createReport(reportFileName, loadLevel)
     j.endTime = endTime.to_i
     j.minfinishtime = minfinishtime.to_i
     j.maxfinishtime = maxfinishtime.to_i
+    j.agent = agent
 
     if (context == SEQUENCE)
       puts "SEQUENCE: #{jid} #{submitTime} #{responseTime} #{price}" if $verbose
