@@ -28,6 +28,8 @@ end
 require 'Workload'
 require 'Helpers'
 require 'Dataplot'
+require 'R'
+require 'Latex'
 require 'optparse'
 require 'ostruct'
 
@@ -116,6 +118,10 @@ class Job
   def to_dataplot_format
     retval="#{@jid.to_f} #{pricePref} #{@price} #{(@price/@runTime)} "
     retval+="#{@perfPref} #{@runTime} #{queueTime} #{@responseTime} #{@minprice} #{@maxprice}" 
+  end
+  def to_R_format
+    retval="#{@jid.to_f} #{pricePref} #{@price} #{(@price/@runTime)} #{@minprice} #{@maxprice} "
+    retval+="#{@perfPref} #{@runTime} #{queueTime} #{@responseTime} "
   end
 end
 
@@ -346,32 +352,32 @@ class PricePrefReport
     end
 end
 
-class TurnOverReport
-    def initialize(directory, load)
-	@load = load
-        reportFileName = directory+"/turn-over-"+load+".txt"
-        @reportFile = File.new(reportFileName, "w")
-        @reportFile.puts("#agent\tturnOver")
-	@turnOver = Hash.new
-	@turnOver.default = 0.0
-    end
+class TotalRevenueReport
+  def initialize(directory, load)
+    @load = load
+    reportFileName = directory+"/total-revenue-"+load+".txt"
+    @reportFile = File.new(reportFileName, "w")
+    @reportFile.puts("#agent\ttotalrevenue")
+    @totalRevenue = Hash.new
+    @totalRevenue.default = 0.0
+  end
 
-    def addJob(job)
-	@turnOver[job.agent.split("-")[1]] += job.price
-	@turnOver["sum"] += job.price
-    end
+  def addJob(job)
+    @totalRevenue[job.agent.split("-")[1]] += job.price
+    @totalRevenue["sum"] += job.price
+  end
 
-    def finalize()
-	agents = @turnOver.keys
-	agents.sort!
-	agents.each {|entity|
-		tmp = ""
-		tmp << "#" if entity == "sum"
-		tmp << "#{entity}\t#{@turnOver[entity]}"
-		@reportFile.puts(tmp)
-	}
-	@reportFile.close
-    end
+  def finalize()
+    agents = @totalRevenue.keys
+    agents.sort!
+    agents.each {|entity|
+      tmp = ""
+      tmp << "#" if entity == "sum"
+      tmp << "#{entity}\t#{@totalRevenue[entity]}"
+      @reportFile.puts(tmp)
+    }
+    @reportFile.close
+  end
 end
 
 ###
@@ -488,6 +494,35 @@ class DataplotReport
   end
 end
 
+###
+## A report that prints a R-compatible representation of the current
+## workload level in a file.
+## Then, several reports are printed - see the plotSingle* routines in
+## lib/R.rb.
+#
+class RReport
+  def initialize(directory, load)
+    @load = load
+    reportFileName = "rtable-"+load+".txt"
+    fullReportFileName = File.expand_path(File.join(directory,reportFileName))
+    @r=RExperimentAnalysis.new(directory, reportFileName, load);
+    @reportFile = File.new(fullReportFileName, "w")
+    @reportFile.puts("jid pricepref price pricert minprice maxprice perfpref rtime qtime resptime")
+  end
+
+  def addJob(job)
+    jobline=job.to_R_format;
+    puts jobline if $verbose
+    @reportFile.puts(jobline);
+  end
+
+  def finalize()
+    @reportFile.puts("\n")
+    @reportFile.close
+    # now, run R to do the analysis.
+    @r.plotSingleRun()
+  end
+end
 
 
 class ReportCollection
@@ -501,11 +536,14 @@ class ReportCollection
     report6 = TimePriceReport.new($outDir, load);
     report7 = QueueTimeReport.new($outDir, load);
     report8 = PricePrefReport.new($outDir, load);
-    report9 = TurnOverReport.new($outDir, load);
+    report9 = TotalRevenueReport.new($outDir, load);
     #report10 = DataplotReport.new($outDir, load);
+    report10 = RReport.new($outDir, load);
+  #  report11 = LatexExperimentReport.new($outDir);
     @reports << report1 << report2 << report3 
     @reports << report4 << report5 << report6
     @reports << report7 << report8 << report9
+    @reports << report10
   end
 
   def addJob(job)

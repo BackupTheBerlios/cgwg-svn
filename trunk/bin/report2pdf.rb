@@ -28,6 +28,7 @@ end
 
 
 require 'optparse'
+require 'Latex'
 require 'ostruct'
 
 ###
@@ -47,7 +48,7 @@ class Optparser
     options.encoding = "utf8"
     options.verbose = false
     opts = OptionParser.new do |opts|
-      opts.banner = "Usage: calana2r.rb [options]"
+      opts.banner = "Usage: report2pdf.rb [options]"
       opts.separator ""
       opts.separator "Specific options:"
       # Mandatory argument.
@@ -91,8 +92,8 @@ def runGnuPlot (gnuplotCmd, inFile, outFile)
   puts "running gnuplot to create #{outFile}"
   cmd = `echo -n "#{gnuplotCmd}" | gnuplot`
   print "Gnuplot said: \n#{cmd}\n" if $verbose 
-  print "converting to PDF\n" if $verbose
-  cmd = `ps2pdf #{outputFile} #{outPDFFile}`
+  print "converting to PDF, using the EPS boundingbox\n" if $verbose
+  cmd = `ps2pdf -dEPSCrop #{outputFile} #{outPDFFile}`
   print "ps2pdf said: #{cmd}\n" if $verbose    
 end
 
@@ -214,60 +215,66 @@ end
 
 
 def discoverEntities(inFile)
-    file = File.new($inDir+"/"+inFile, "r")
-    entityLine = ""
-    file.each_line {|line|
-        if line =~ /#entities:/
-            entityLine = line.sub(/#entities:/, "")
-            entityLine.strip!
-            break
-        end
-    }
-    file.close()
-    entities = entityLine.split(";")
-    entities.compact!
-    if $verbose
-        entities.each{|entity|
-            puts "#{entity}\n" 
-        }
+    filename = File.join($inDir, inFile)
+    entities = Array.new
+    if File.exist?(filename)
+      file = File.new(filename, "r")
+      entityLine = ""
+      file.each_line {|line|
+          if line =~ /#entities:/
+              entityLine = line.sub(/#entities:/, "")
+              entityLine.strip!
+              break
+          end
+      }
+      file.close()
+      entities = entityLine.split(";")
+      entities.compact!
+      if $verbose
+          entities.each{|entity|
+              puts "#{entity}\n" 
+          }
+      end
     end
     return entities
 end
 
 def plotNumberUnusedResources()
     values = Hash.new
-    File.open("#{$inDir}/utilization-all.txt") { |file|
-        # for each loadlevel (line), count the number of used resources.
-        file.each_line {|line|
-            if line =~ /^#/
-                next
-            end
-            counter = 0
-            entities = line.split()
-            # The first field contains the load level of the workload
-            loadLevel = entities[0].to_f
-            # The second contains the aggregated load, ignore it
-            for i in 2..entities.length
-                if (entities[i].to_f > 0.0)
-                    counter += 1
-                end
-            end
-            numAgents = entities.length - 2
-            values[loadLevel] = numAgents - counter
-            #puts "Discovered loadLevel=#{loadLevel}, counter=#{counter}"
-        }
-    }
-    sortedLoads=values.sort()
-    outFile = File.open("#{$inDir}/utilization-unused-resources.txt", "w")
-    sortedLoads.each {|loadLevel, value|
-        puts "Writing line: LoadLevel=#{loadLevel}; value = #{value}" if $verbose
-        outFile.puts "#{loadLevel}\t#{value}"
-    }
-    outFile.close
-    gnuPlot2Lines("utilization-unused-resources.txt",
-        "utilization-unused-resources.eps", 
-        "Number of unused Resources vs. Load", "Load", "Unused Resources", 1,2)
-
+    filename = File.join($inDir, "utilization-all.txt")
+    if File.exist?(filename)
+      File.open(filename) { |file|
+          # for each loadlevel (line), count the number of used resources.
+          file.each_line {|line|
+              if line =~ /^#/
+                  next
+              end
+              counter = 0
+              entities = line.split()
+              # The first field contains the load level of the workload
+              loadLevel = entities[0].to_f
+              # The second contains the aggregated load, ignore it
+              for i in 2..entities.length
+                  if (entities[i].to_f > 0.0)
+                      counter += 1
+                  end
+              end
+              numAgents = entities.length - 2
+              values[loadLevel] = numAgents - counter
+              #puts "Discovered loadLevel=#{loadLevel}, counter=#{counter}"
+          }
+      }
+      sortedLoads=values.sort()
+      outFile = File.open("#{$inDir}/utilization-unused-resources.txt", "w")
+      sortedLoads.each {|loadLevel, value|
+          puts "Writing line: LoadLevel=#{loadLevel}; value = #{value}" if $verbose
+          outFile.puts "#{loadLevel}\t#{value}"
+      }
+      outFile.close
+      gnuPlot2Lines("utilization-unused-resources.txt",
+          "utilization-unused-resources.eps", 
+          "Number of unused Resources vs. Load", "Load", "Unused Resources", 1,2)
+    end
 end
 
 # Runs the load-dependent scripts.
@@ -276,8 +283,8 @@ def runLoadDepScripts()
         "Time vs. Price per Second", "time", "price", 1, 2)
     gnuPlot2Points("queue-time-#{$load}.txt", "queue-time-#{$load}.eps", 
         "Time vs. QueueTime", "Time", "queueTime", 1, 2)
-    gnuPlot2Points("turn-over-#{$load}.txt", "turn-over-#{$load}.eps",
-        "Agents vs. Turn over", "agents", "turn over", 1, 2)
+    gnuPlot2Points("total-revenue-#{$load}.txt", "total-revenue-#{$load}.eps",
+        "Total Revenue per Agent", "agents", "Total Revenue", 1, 2)
     gnuPlot2Data("price-pref-#{$load}.txt", "price-pref-#{$load}.eps", 
         "Time vs. PricePreference", "time", "accuracy of user preference", 1, 2)
     gnuPlot2Data("price-rt-preference-#{$load}.txt", "price-rt-pref-#{$load}.eps", 
@@ -376,6 +383,9 @@ end
 if $load == nil
     puts "No load specified, running load-independent scripts"
     runGeneralScripts()
+    puts "Generating summary report"
+    lr=LatexExperimentReport.new("/scratch/md/single-synthetic/run01/analysis")
+    lr.createReport()
 else
     if $entity == nil
         puts "Running load-dependent scripts only, for all entities"

@@ -5,7 +5,8 @@
 
 % Setup for fullpage use
 \usepackage{fullpage}
-\usepackage{url}
+\usepackage{graphicx}
+%\usepackage{url}
 %\usepackage{german}
 
 % Uncomment some of the following if you use the features
@@ -48,7 +49,7 @@
 %\usepackage{minitoc}
 
 % This is now the recommended way for checking for PDFLaTeX:
-\usepackage{ifpdf}
+%\usepackage{ifpdf}
 
 %\newif\ifpdf
 %\ifx\pdfoutput\undefined
@@ -58,29 +59,29 @@
 %\pdftrue
 %\fi
 
-\ifpdf
-\usepackage[pdftex]{graphicx}
-\else
-\usepackage{graphicx}
-\fi
-
-
-\usepackage{listings}  
-\lstset{numbers=left, numberstyle=\tiny,numbersep=5pt}  
-\lstset{language=Xml, basicstyle=\small, frame=shadowbox}  
-
-\usepackage[hypertexnames=false,pdftex]{hyperref}
-\hypersetup{
-pdfauthor = {Mathias Dalheimer},
-pdftitle = {@@title@@},
-pdfsubject = {Analysis of a Calana Experiment},
-pdfkeywords = {Scheduling, Grid Computing}
-pdfcreator = {LaTeX with hyperref package},
-pdfproducer = {foobar Ltd. International}}
-\usepackage{algorithmic}
-\usepackage{algorithm}
-\renewcommand{\algorithmicrequire}{\textbf{Input:}} 
-\renewcommand{\algorithmicensure}{\textbf{Output:}}
+%\ifpdf
+%\usepackage[pdftex]{graphicx}
+%\else
+%\usepackage{graphicx}
+%\fi
+%
+%
+%\usepackage{listings}  
+%\lstset{numbers=left, numberstyle=\tiny,numbersep=5pt}  
+%\lstset{language=Xml, basicstyle=\small, frame=shadowbox}  
+%
+%\usepackage[hypertexnames=false,pdftex]{hyperref}
+%\hypersetup{
+%pdfauthor = {Mathias Dalheimer},
+%pdftitle = {Auswerung},
+%pdfsubject = {Analysis of a Calana Experiment},
+%pdfkeywords = {Scheduling, Grid Computing}
+%pdfcreator = {LaTeX with hyperref package},
+%pdfproducer = {foobar Ltd. International}}
+%\usepackage{algorithmic}
+%\usepackage{algorithm}
+%\renewcommand{\algorithmicrequire}{\textbf{Input:}} 
+%\renewcommand{\algorithmicensure}{\textbf{Output:}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -90,12 +91,262 @@ pdfproducer = {foobar Ltd. International}}
 
 \begin{document}
 
-\ifpdf
-\DeclareGraphicsExtensions{.pdf, .jpg, .tif}
-\else
+%\ifpdf
+%\DeclareGraphicsExtensions{.pdf, .jpg, .tif}
+%\else
 \DeclareGraphicsExtensions{.eps, .jpg}
-\fi
+%\fi
 
 \maketitle
+
+\section{Metainformationen}
+Analyse der Daten aus dem Verzeichnis 
+\begin{center}
+@@analysisdir@@ 
+\end{center}
+Datum: @@date@@ \\
+low load level: @@lowload@@ \\
+mid load level: @@midload@@ \\
+high load level: @@highload@@ \\
+
+\newpage
+\section{Load-dependent plots}
+
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=14cm]{@@load-QT-all@@}
+    \caption{load-QT-all}
+    \label{fig:load-QT-all}
+  \end{center}
+\end{figure}
+
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=14cm]{@@load-avgprice-all@@}
+    \caption{load-avgprice-all}
+    \label{fig:load-avgprice-all}
+  \end{center}
+\end{figure}
+
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@perfCorrelation@@}
+    \caption{perfCorrelation}
+    \label{fig:perfCorrelation}
+  \end{center}
+\end{figure}
+
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@priceCorrelation@@}
+    \caption{priceCorrelation}
+    \label{fig:priceCorrelation}
+  \end{center}
+\end{figure}
+
+
+\newpage
+\section{Histograms}
+
+\subsection{Prices per second}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@histpricepersecond-lowload@@}
+    \caption{Histogram for lowload prices per second}
+    \label{fig:histpricepersecond-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@histpricepersecond-midload@@}
+    \caption{Histogram for midload prices per second}
+    \label{fig:histpricepersecond-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@histpricepersecond-highload@@}
+    \caption{Histogram for highload prices per second}
+    \label{fig:histpricepersecond-highload}
+  \end{center}
+\end{figure}
+
+\newpage
+\subsection{Queuetimes}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@histqueuetimes-lowload@@}
+    \caption{Histogram for lowload queuetimes}
+    \label{fig:histqueuetimes-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@histqueuetimes-midload@@}
+    \caption{Histogram for midload queuetimes}
+    \label{fig:histqueuetimes-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@histqueuetimes-highload@@}
+    \caption{Histogram for highload queuetimes}
+    \label{fig:histqueuetimes-highload}
+  \end{center}
+\end{figure}
+
+\newpage
+\section{Plots over time}
+\subsection{Prices over time}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@time-price-lowload@@}
+    \caption{Price over time for lowload}
+    \label{fig:time-price-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@time-price-midload@@}
+    \caption{Price over time for midload}
+    \label{fig:time-price-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@time-price-highload@@}
+    \caption{Price over time for highload}
+    \label{fig:time-price-highload}
+  \end{center}
+\end{figure}
+
+\newpage
+\subsection{Prices per second for all jobs}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@pricepersecond-lowload@@}
+    \caption{Price per second for lowload}
+    \label{fig:pricepersecond-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@pricepersecond-midload@@}
+    \caption{Price per second for midload}
+    \label{fig:pricepersecond-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@pricepersecond-highload@@}
+    \caption{Price per second for highload}
+    \label{fig:pricepersecond-highload}
+  \end{center}
+\end{figure}
+
+
+\newpage
+\subsection{Queuetimes for all jobs}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@queuetimes-lowload@@}
+    \caption{Queuetimes for lowload}
+    \label{fig:queuetimes-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@queuetimes-midload@@}
+    \caption{Queuetimes for midload}
+    \label{fig:queuetimes-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@queuetimes-highload@@}
+    \caption{Queuetimes for highload}
+    \label{fig:queuetimes-highload}
+  \end{center}
+\end{figure}
+
+
+
+\newpage
+\section{Preferences}
+\subsection{Price preference vs. price per second}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@priceprefvspricert-lowload@@}
+    \caption{Price preference vs. Price per second for lowload}
+    \label{fig:priceprefvspricert-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@priceprefvspricert-midload@@}
+    \caption{Price preference vs. Price per second for midload}
+    \label{fig:priceprefvspricert-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@priceprefvspricert-highload@@}
+    \caption{Price preference vs. Price per second for highload}
+    \label{fig:priceprefvspricert-highload}
+  \end{center}
+\end{figure}
+
+\newpage
+\subsection{Performance preference vs. queuetime}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@perfprefvsqtime-lowload@@}
+    \caption{Performance preference vs. queuetime for lowload}
+    \label{fig:perfprefvsqtime-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@perfprefvsqtime-midload@@}
+    \caption{Performance preference vs. queuetime for midload}
+    \label{fig:perfprefvsqtime-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@perfprefvsqtime-highload@@}
+    \caption{Performance preference vs. queuetime for highload}
+    \label{fig:perfprefvsqtime-highload}
+  \end{center}
+\end{figure}
+
+\newpage
+\section{Agent-related plots}
+\subsection{Total Revenue}\label{sub:total_revenue}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@total-revenue-lowload@@}
+    \caption{Total revenue per agent for lowload}
+    \label{fig:total-revenue-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@total-revenue-midload@@}
+    \caption{Total revenue per agent for midload}
+    \caption{Performance preference vs. queuetime for midload}
+    \label{fig:total-revenue-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@total-revenue-highload@@}
+    \caption{Total revenue per agent for highload}
+    \label{fig:total-revenue-highload}
+  \end{center}
+\end{figure}
+
+
+
 
 \end{document}

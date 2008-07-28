@@ -26,15 +26,24 @@ require "date"
 
 # Locate the report template file
 REPORT_TEMPLATE_FILE=File.join(File.expand_path(ENV["CGWG_HOME"]), "lib/analysis-template.tex")
-LATEX_CMD="pdflatex -interaction batchmode"
+LATEX_CMD="latex -interaction batchmode"
 
 # Creates a PDF that summarizes the current experiment. All 
 # previously generated summaries are integrated using latex.
-class LatexReport
+class LatexExperimentReport
   def initialize(analysisdir)
     @analysisdir=analysisdir
+    @psReportFilename="analysis.ps"
     @pdfReportFilename="analysis.pdf"
+    @dviReportFilename="analysis.dvi"
     @texReportFilename="analysis.tex"
+    @texdoc=File.join(@analysisdir, @texReportFilename)
+  end
+
+  # convenience function to create a report.
+  def createReport()
+    composeDocument()
+    runLatex();
   end
 
   # Creates an analysis document:
@@ -45,26 +54,94 @@ class LatexReport
     @template=buildTemplateFromFile(REPORT_TEMPLATE_FILE)
     @template.setValueHash(generateArtefactHash())
     doc=@template.run()
-    texdoc=File.join(@analysisdir, @texReportFilename)
-    File.open(texdoc, "w") {|outfile|
+    File.open(@texdoc, "w") {|outfile|
       outfile.write(doc)
     }
   end
 
   # Use latex to create a PDF from the previously generated document
   def runLatex
-    #TODO: Waiting for hercules pdflatex installation
+    commandline="#{LATEX_CMD} -output-directory #{@analysisdir} #{@texdoc}"
+    puts "using commandline: #{commandline}" if $verbose
+    stdout = %x[#{commandline}]
+    puts "Latex (Exitcode: #{$?}) said: #{stdout}" if $verbose
+
+    puts "converting to postscript" if $verbose
+    fullDVIFile = File.join(@analysisdir, @dviReportFilename)
+    fullPSFile = File.join(@analysisdir, @psReportFilename)
+    commandline = "dvips -o #{fullPSFile} #{fullDVIFile}"
+    puts "using commandline: #{commandline}" if $verbose
+    cmd = %x[#{commandline}]
+    puts "dvips (Exitcode: #{$?}) said: #{cmd}" if $verbose
+
+    puts "converting to PDF" if $verbose
+    fullPSFile = File.join(@analysisdir, @psReportFilename)
+    fullPDFFile = File.join(@analysisdir, @pdfReportFilename)
+    commandline = "ps2pdf #{fullPSFile} #{fullPDFFile}"
+    puts "using commandline: #{commandline}" if $verbose
+    cmd = %x[#{commandline}]
+    puts "ps2pdf (Exitcode: #{$?}) said: #{cmd}" if $verbose
   end
 
+  # artifact: AE, artefact: BE!
   def generateArtefactHash()
     artefacts={}
     # First, put all files from the analysis into the hash.
-    Dir.glob(File.join(@analysisdir, "*.pdf")) {|filename|
-      key=File.basename(filename, ".pdf")
-      #puts "#{key}: #{filename}"
+    Dir.glob(File.join(@analysisdir, "*.eps")) {|filename|
+      key=File.basename(filename, ".eps")
+      puts "#{key}: #{filename}" if $verbose
       artefacts[key]=filename
     }
-    # Now, generate some metadata
+    # Build a list of special keys pointing to the workload ranks
+    # 10%, 50%, 90% load level files.
+    loadlevels=Array.new
+    artefacts.each{|key, value|
+      # use only one filetype to create list.
+      if key =~ /^price-\d\./
+        loadlevel = key.gsub(/^price-/, "")
+        loadlevels << loadlevel
+      end
+    }
+    loadlevels.sort!
+    if $verbose 
+      loadlevels.each{|level|
+        puts "Found loadlevel #{level}"
+      }
+    end
+    lowLevelIndex = (loadlevels.size * 0.1).to_i
+    lowLevel = loadlevels[lowLevelIndex]
+    midLevelIndex = (loadlevels.size * 0.5).to_i
+    midLevel = loadlevels[midLevelIndex]
+    highLevelIndex = (loadlevels.size * 0.9).to_i
+    highLevel = loadlevels[highLevelIndex]
+    if $verbose
+      puts "low level index: #{lowLevelIndex}, pointing to #{lowLevel}" 
+      puts "mid level index: #{midLevelIndex}, pointing to #{midLevel}"
+      puts "high level index: #{highLevelIndex}, pointing to #{highLevel}"
+    end
+    # put the load levels in the artefacts hash.
+    artefacts["lowload"]=lowLevel
+    artefacts["midload"]=midLevel
+    artefacts["highload"]=highLevel
+    # for all artefacts in the hash that match one of the load levels:
+    # replace the load number in the key with the load tag and add to
+    # the artefacts hash.
+    # (1) For all load levels
+    levels = { "#{lowLevel}" => "lowload", 
+              "#{midLevel}" => "midload",
+              "#{highLevel}" => "highload"
+             }
+    levels.each{|level, loadname|
+      # (2) For all artefacts
+      artefacts.each{|key, value|
+        if key =~ /#{level}/
+          newkey = key.gsub(/#{level}/, loadname)
+          artefacts[newkey]=value
+          puts "#{loadname}: #{key} -> generated new key #{newkey}" if $verbose
+        end
+      }
+    }
+    # finally, generate some metadata
     artefacts["date"]=Date.today()
     artefacts["analysisdir"]=@analysisdir
     artefacts
@@ -75,7 +152,7 @@ class LatexReport
     raise "Template not found, assumed #{filename}" unless (File.exists?(filename))
     File.open(filename, "r") {|file|
       content=file.readlines();
-      puts content if $verbose
+      #puts content if $verbose
       template=Template.new(content)
     }
     template
@@ -112,7 +189,7 @@ end
 
 # test routines below
 if __FILE__ == $0 
-  lr=LatexReport.new("/scratch/md/single-synthetic/run06/analysis")
-  lr.composeDocument()
-  lr.runLatex();
+  $verbose = true
+  lr=LatexExperimentReport.new("/scratch/md/single-synthetic/run01/analysis")
+  lr.createReport()
 end
