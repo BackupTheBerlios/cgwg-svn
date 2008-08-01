@@ -25,18 +25,28 @@ end
 require "date"
 
 # Locate the report template file
-REPORT_TEMPLATE_FILE=File.join(File.expand_path(ENV["CGWG_HOME"]), "lib/analysis-template.tex")
+REPORT_TEMPLATE_PATH=File.join(File.expand_path(ENV["CGWG_HOME"]), "lib")
+REPORT_TEMPLATE_SUFFIX="-template.tex"
 LATEX_CMD="latex -interaction batchmode"
 
-# Creates a PDF that summarizes the current experiment. All 
+# Creates a PDF that summarizes a directory. All 
 # previously generated summaries are integrated using latex.
-class LatexExperimentReport
-  def initialize(analysisdir)
+# This is a file-based approach: the directory is searched for all *.eps
+# files previiously generated. These can then be used in the template.
+# Parameters:
+# - analysisdir: where does the data live?
+# - filenameprefix: which template to use? e.g. analysis
+# - indicatorprefix: which filename prefix to use for discovering load
+# levels.
+class LatexReport
+  def initialize(analysisdir, filenameprefix, indicatorprefix)
     @analysisdir=analysisdir
-    @psReportFilename="analysis.ps"
-    @pdfReportFilename="analysis.pdf"
-    @dviReportFilename="analysis.dvi"
-    @texReportFilename="analysis.tex"
+    @psReportFilename="#{filenameprefix}.ps"
+    @pdfReportFilename="#{filenameprefix}.pdf"
+    @dviReportFilename="#{filenameprefix}.dvi"
+    @texReportFilename="#{filenameprefix}.tex"
+    @indicatorprefix=indicatorprefix
+    @filenameprefix=filenameprefix
     @texdoc=File.join(@analysisdir, @texReportFilename)
   end
 
@@ -51,7 +61,13 @@ class LatexExperimentReport
   # - Use the template class to integrate the artefacts into the 
   #   tex input file.
   def composeDocument
-    @template=buildTemplateFromFile(REPORT_TEMPLATE_FILE)
+    templateFile=File.join(REPORT_TEMPLATE_PATH, "#{@filenameprefix}#{REPORT_TEMPLATE_SUFFIX}")
+    if not File.exist?(templateFile)
+      puts "Cannot create report: non-existing template file #{templateFile}"
+      exit 5
+    end
+    puts "Using template #{templateFile}" if $verbose
+    @template=buildTemplateFromFile(templateFile)
     @template.setValueHash(generateArtefactHash())
     doc=@template.run()
     File.open(@texdoc, "w") {|outfile|
@@ -97,8 +113,8 @@ class LatexExperimentReport
     loadlevels=Array.new
     artefacts.each{|key, value|
       # use only one filetype to create list.
-      if key =~ /^price-\d\./
-        loadlevel = key.gsub(/^price-/, "")
+      if key =~ /^#{@indicatorprefix}\d\./
+        loadlevel = key.gsub(/^#{@indicatorprefix}/, "")
         loadlevels << loadlevel
       end
     }
@@ -190,6 +206,6 @@ end
 # test routines below
 if __FILE__ == $0 
   $verbose = true
-  lr=LatexExperimentReport.new("/scratch/md/single-synthetic/run01/analysis")
+  lr=LatexReport.new("/scratch/md/single-synthetic/run01/analysis", "analysis", "price-")
   lr.createReport()
 end

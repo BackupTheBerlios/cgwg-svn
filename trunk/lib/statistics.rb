@@ -22,6 +22,16 @@ else
   $:.unshift << libpath
 end
 
+class Range
+  attr_accessor :min, :max
+  def initialize(min=0.0, max=1.0)
+    @min=min; @max=max;
+  end
+  def to_s
+    "[#{@min}, #{@max}]"
+  end
+end
+
 # A simple function that dumps the given array of values to
 # a file in the global temp directory -> this is for debugging
 def dumpRTable(values, filename)
@@ -36,14 +46,15 @@ def dumpRTable(values, filename)
 end
 
 # Implements the MC approach - takes a block that checks if x < pdf(y).
-def generateMCRandoms(amount)
+def generateMCRandoms(amount, range=Range.new(min=0.0,max=1.0))
+  puts "Using range #{range}" if $verbose
   if not block_given?
     raise "No probability density function check given - aborting"
   end
   values = Array.new
   while values.size() < amount
-    x=rand()
-    y=rand()
+    x=[range.min, rand()*range.max].max
+    y=[range.min, rand()*range.max].max
     inDistribution = yield(x, y)
     if inDistribution
       values << x
@@ -64,18 +75,37 @@ end
 
 # Use Monte-Carlo method to filter uniform randoms such that they 
 # fit the gaussian distribution
-def generateGaussianRandoms(amount, mean=0.0, sd=1.0)
-  values = generateMCRandoms(amount) {|x, y|
+def generateGaussianRandoms(amount, mean=0.0, sd=1.0, range=Range.new(0.0, 1.0))
+  values = generateMCRandoms(amount, range) {|x, y|
     gaussianvalue = pdf_gaussian(x, mean, sd)
     y < gaussianvalue
   }
   return values
 end
 
+# Generate randoms from an exponential distribution
+def generateExponentialRandoms(amount, varlambda=1, range=Range.new(0.0, 1.0))
+  values = generateMCRandoms(amount, range) {|x, y|
+    expvalue = pdf_exponential(x, varlambda)
+    y < expvalue
+  }
+  return values
+end
+
+
 # Calculates the value of the probability density function (PDF)
 # for the gaussian distribution for x with the given parameters.
 def pdf_gaussian(x, mean, sd)
   return (1/(sd*Math.sqrt(Math::PI*2)))*Math.exp(-((x-mean)**2/(2*sd**2)))
+end
+
+# The PDF of the exponential distribution
+def pdf_exponential(x, varlambda)
+  if (x<0)
+    return 0
+  else
+    return varlambda*Math.exp(-varlambda * x)
+  end
 end
 
 # Generate simple uniformly distributed random numbers.
@@ -92,8 +122,10 @@ if __FILE__ == $0
   amount=1000
   uniforms=generateUniformRandoms(amount);
   dumpRTable(uniforms, "uniform.txt");
-  gaussians=generateGaussianRandoms(amount, mean=0.5, sd=0.25);
+  gaussians=generateGaussianRandoms(amount, mean=0.5, sd=0.25, range=Range.new(-5, 5));
   dumpRTable(gaussians, "gaussians.txt");
   doublegaussians=generateDoubleGaussianRandoms(amount);
   dumpRTable(doublegaussians, "doublegaussians.txt");
+  exponentials=generateExponentialRandoms(amount, varlambda=1, range=Range.new(0,10));
+  dumpRTable(exponentials, "exponentials.txt");
 end

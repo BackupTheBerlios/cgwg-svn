@@ -16,8 +16,8 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 require "tempfile"
-require "rubygems"
-require "ruby-debug"
+#require "rubygems"
+#require "ruby-debug"
 
 # Run R without saving of environment, as quiet as possible.
 R_CMD = "Rscript --vanilla"  

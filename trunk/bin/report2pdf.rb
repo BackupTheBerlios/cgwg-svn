@@ -384,7 +384,7 @@ if $load == nil
     puts "No load specified, running load-independent scripts"
     runGeneralScripts()
     puts "Generating summary report"
-    lr=LatexExperimentReport.new("/scratch/md/single-synthetic/run01/analysis")
+    lr=LatexReport.new("/scratch/md/single-synthetic/run01/analysis", "analysis", "price-")
     lr.createReport()
 else
     if $entity == nil

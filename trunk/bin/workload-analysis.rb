@@ -31,6 +31,8 @@ require 'Models'
 require 'Workload'
 require 'Helpers'
 require 'Gnuplot'
+require 'R'
+require 'Latex'
 require 'optparse'
 require 'ostruct'
 
@@ -65,6 +67,9 @@ class Optparser
             end
             opts.on("-o", "--output directory","the output directory for the report files") do |outdir|
                 options.outdir=outdir
+            end
+            opts.on("-l", "--loadlevel [double]","loadlevel to analyze") do |loadlevel|
+                options.loadlevel=loadlevel
             end
 
             # Boolean switch.
@@ -108,77 +113,16 @@ if $verbose
     collection.printWorkloadOverview()
 end
 
-maxTime = 0
-maxNodes = 0
-intermediateTimeStep=100
-levels = Array.new
-
-puts ("Sampling load data for each loadlevel - using intermediateTimeStep=#{intermediateTimeStep}")
 collection.eachWorkload{|w|
-    @events=Array.new
-    capacity = w.clusterConfig.nodes
-    loadlevel=w.calculateLoadLevel()
-    levelString = sprintf("%1.3f", loadlevel)
-    levels << levelString
-    datafilepath=outdir+"/allocationsamples-#{levelString}.txt"
-    picfilepath=outdir+"/allocationsamples-#{levelString}.eps"
-    puts("Working on load level #{loadlevel}, sampling to #{datafilepath}")
-    datafile=File.new(datafilepath, "w")
-    datafile.print("time\trequested nodes\n")
-    w.eachJob{|job|
-        ###
-        ## Todo: Think about the timing!
-        #
-        startTime=job.submitTime
-        endTime=startTime + job.runTime
-        size=job.numberAllocatedProcessors
-        startEvent=AccumulatorSampleEvent.new(startTime)
-        startEvent.addAmount(size)
-        endEvent=AccumulatorSampleEvent.new(endTime)
-        endEvent.subAmount(size)
-        @events.push(startEvent) 
-        @events.push(endEvent)
-    }
-    @events.sort!
-    accumulator = 0
-    lastEventTime=0
-    sumLoadSamples = 0.0
-    @events.each{|event|
-        #puts "Processing: #{event}"
-        #puts "before: #{accumulator}"
-        oldAccumulator=accumulator
-        accumulator, eventTime=event.accumulate(accumulator)
-        #puts "got: acc=#{accumulator}, time=#{eventTime}"
-        #puts "after: #{accumulator}"
-        intermediateTime=lastEventTime
-        while (intermediateTime < eventTime)
-          datafile.print("#{intermediateTime}\t#{oldAccumulator}\n")
-          intermediateTime+=intermediateTimeStep
-        end
-        datafile.print("#{event.time}\t#{accumulator}\n")
-        puts "#{event.time}\t#{accumulator}" if $verbose
-        # Update max values
-        maxTime = event.time if eventTime > maxTime
-        maxNodes = accumulator if accumulator > maxNodes
-        sumLoadSamples += (accumulator.to_f * (eventTime - lastEventTime))
-        lastEventTime = eventTime
-        #puts "Load info: sum=#{sumLoadSamples}, numLoadSamples=#{numLoadSamples}, lastEventTime=#{lastEventTime}"
-    }
-    datafile.close
-    avgLoad = sumLoadSamples / (capacity * maxTime)
-    puts "The average load for loadlevel #{loadlevel} is #{avgLoad}, maxNodes = #{maxNodes}"
+  analysator=WorkloadAnalysis.new(w, outdir)
+  analysator.plotUtilization()
+  analysator.plotGraphs()
 }
+puts "Generating a PDF summary report"
+lr=LatexReport.new(outdir, "workload", "runtimes-")
+lr.createReport()
 
-puts "Maximum nodes: #{maxNodes}, maximum time: #{maxTime}"
-puts "Plotting..."
-levels.each{|levelString|
-    datafilepath=outdir+"/allocationsamples-#{levelString}.txt"
-    picfilepath=outdir+"/allocationsamples-#{levelString}.eps"
-    puts "Plotting workload..." if $verbose
-    gnuPlot2Lines(datafilepath, picfilepath, "Accumulated allocation (load = #{levelString})", "time", "requested nodes", 1, 2, maxTime, maxNodes)
-}
-
-puts "Hint: Create a movie with\nmencoder \"mf://*.png\" -mf fps=3 -o output.avi -ovc lavc"
+puts "Hint: Create a movie with\nmencoder \"mf://allocationsamples*.png\" -mf fps=3 -o output.avi -ovc lavc"
 
 
 exit

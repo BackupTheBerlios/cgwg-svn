@@ -1,0 +1,261 @@
+\documentclass[11pt]{article}
+
+% Use utf-8 encoding for foreign characters
+\usepackage[utf8]{inputenc}
+
+% Setup for fullpage use
+\usepackage{fullpage}
+\usepackage{graphicx}
+%\usepackage{url}
+%\usepackage{german}
+
+% Uncomment some of the following if you use the features
+%
+% Running Headers and footers
+%\usepackage{fancyhdr}
+%\pagestyle{fancy} % options: empty , plain , fancy
+%\renewcommand{\headrulewidth}{1pt} % customise the layout...
+%\lhead{}\chead{}\rhead{}
+%\lfoot{}\cfoot{\thepage}\rfoot{}
+
+%\fancyhead[LE,RO]{\slshape \rightmark} 
+%\fancyhead[LO,RE]{\slshape \leftmark} 
+%\fancyfoot[LE, RO]{\thepage} 
+
+%%% SECTION TITLE APPEARANCE
+\usepackage{sectsty}
+\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+% (This matches ConTeXt defaults)
+
+\setlength{\parindent}{0cm}
+\clubpenalty=1500
+\widowpenalty=2000
+
+%\usepackage{ngerman}
+
+% Multipart figures
+%\usepackage{subfigure}
+%\usepackage{lib/algorithm2e}
+
+% More symbols
+\usepackage{amsmath}
+%\usepackage{amssymb}
+\usepackage{latexsym}
+
+% Surround parts of graphics with box
+%\usepackage{boxedminipage}
+
+% If you want to generate a toc for each chapter (use with book)
+%\usepackage{minitoc}
+
+% This is now the recommended way for checking for PDFLaTeX:
+%\usepackage{ifpdf}
+
+%\newif\ifpdf
+%\ifx\pdfoutput\undefined
+%\pdffalse % we are not running PDFLaTeX
+%\else
+%\pdfoutput=1 % we are running PDFLaTeX
+%\pdftrue
+%\fi
+
+%\ifpdf
+%\usepackage[pdftex]{graphicx}
+%\else
+%\usepackage{graphicx}
+%\fi
+%
+%
+%\usepackage{listings}  
+%\lstset{numbers=left, numberstyle=\tiny,numbersep=5pt}  
+%\lstset{language=Xml, basicstyle=\small, frame=shadowbox}  
+%
+%\usepackage[hypertexnames=false,pdftex]{hyperref}
+%\hypersetup{
+%pdfauthor = {Mathias Dalheimer},
+%pdftitle = {Auswerung},
+%pdfsubject = {Analysis of a Calana Experiment},
+%pdfkeywords = {Scheduling, Grid Computing}
+%pdfcreator = {LaTeX with hyperref package},
+%pdfproducer = {foobar Ltd. International}}
+%\usepackage{algorithmic}
+%\usepackage{algorithm}
+%\renewcommand{\algorithmicrequire}{\textbf{Input:}} 
+%\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{\textsf{Auswertung Workload}}
+
+\date{@@date@@}
+
+\begin{document}
+
+%\ifpdf
+%\DeclareGraphicsExtensions{.pdf, .jpg, .tif}
+%\else
+\DeclareGraphicsExtensions{.eps, .jpg}
+%\fi
+
+\maketitle
+
+\section{Metainformationen}
+Analyse der Daten aus dem Verzeichnis 
+\begin{center}
+@@analysisdir@@ 
+\end{center}
+Datum: @@date@@ \\
+low load level: @@lowload@@ \\
+mid load level: @@midload@@ \\
+high load level: @@highload@@ \\
+
+\newpage
+\section{Runtime plots}
+
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=14cm]{@@runtimes-lowload@@}
+    \caption{Runtimes: Lowload}
+    \label{fig:rt-lowload}
+  \end{center}
+\end{figure}
+
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=14cm]{@@runtimes-midload@@}
+    \caption{Runtimes: Midload}
+    \label{fig:rt-midload}
+  \end{center}
+\end{figure}
+
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@runtimes-highload@@}
+    \caption{Runtimes: Highload}
+    \label{fig:rt-highload}
+  \end{center}
+\end{figure}
+
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=14cm]{@@histruntimes-lowload@@}
+    \caption{Runtime Histogram: Lowload}
+    \label{fig:rt-hist-lowload}
+  \end{center}
+\end{figure}
+
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=14cm]{@@histruntimes-midload@@}
+    \caption{Runtime Histogram: Midload}
+    \label{fig:rt-hist-midload}
+  \end{center}
+\end{figure}
+
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@histruntimes-highload@@}
+    \caption{Runtime Histogram: Highload}
+    \label{fig:rt-hist-highload}
+  \end{center}
+\end{figure}
+
+
+\newpage
+\section{Submittime}
+
+\subsection{Submission times}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@submittime-lowload@@}
+    \caption{Submittimes lowload }
+    \label{fig:submittime-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@submittime-midload@@}
+    \caption{Submittimes midload }
+    \label{fig:submittime-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@submittime-highload@@}
+    \caption{Submittimes highload }
+    \label{fig:submittime-highload}
+  \end{center}
+\end{figure}
+
+\newpage
+\subsection{Histogram of submission times}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@histsubmittime-lowload@@}
+    \caption{Histogram for lowload submittimes}
+    \label{fig:histsubmittime-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@histsubmittime-midload@@}
+    \caption{Histogram for midload submittimes}
+    \label{fig:histsubmittime-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@histsubmittime-highload@@}
+    \caption{Histogram for highload submittimes}
+    \label{fig:histsubmittime-highload}
+  \end{center}
+\end{figure}
+
+\newpage
+\section{Requested Processors}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@req-processors-lowload@@}
+    \caption{Requested Processors for lowload}
+    \label{fig:req-processors-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@req-processors-midload@@}
+    \caption{Requested Processors for midload}
+    \label{fig:req-processors-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@req-processors-highload@@}
+    \caption{Requested Processors for highload}
+    \label{fig:req-processors-highload}
+  \end{center}
+\end{figure}
+
+\newpage
+\section{Sampled Utilization}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@allocationsamples-lowload@@}
+    \caption{Sampled Utilization for lowload}
+    \label{fig:allocationsamples-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@allocationsamples-midload@@}
+    \caption{Sampled Utilization for midload}
+    \label{fig:allocationsamples-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@allocationsamples-highload@@}
+    \caption{Sampled Utilization for highload}
+    \label{fig:allocationsamples-highload}
+  \end{center}
+\end{figure}
+\end{document}
