@@ -675,7 +675,39 @@ class WorkloadAnalysis
     outfile="submittime-"+@levelString
     @runner.execute(@fullDataFileName, outfile, drawcmd)
   end
-  
+
+  def plot_interarrivaltimes()
+    drawcmd=<<-END_OF_CMD
+      iat<-array()
+      for (i in 2:length(data$submittime)) {
+        iat<-append(iat, (data$submittime[i] - data$submittime[i-1]))
+      }
+      plot(data$jid, iat,
+        main="Job interarrival time for all jobs",
+        xlab="Job ID",
+        ylab="Interarrival time [s]"
+      )
+    END_OF_CMD
+    outfile="interarrival-"+@levelString
+    @runner.execute(@fullDataFileName, outfile, drawcmd)
+  end
+
+  def plot_interarrivaltimes_histogram()
+    drawcmd=<<-END_OF_CMD
+      iat<-array()
+      for (i in 2:length(data$submittime)) {
+        iat<-append(iat, (data$submittime[i] - data$submittime[i-1]))
+      }
+      hist(iat,
+        main="Histogram: Job interarrival times",
+        xlab="Interarrival time [s]"
+      )
+    END_OF_CMD
+    outfile="interarrival-hist-"+@levelString
+    @runner.execute(@fullDataFileName, outfile, drawcmd)
+  end
+
+
   def plot_numprocessors()
     drawcmd=<<-END_OF_CMD
       plot(data$jid, data$numprocessors,

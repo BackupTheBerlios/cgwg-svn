@@ -48,6 +48,15 @@ def genLublinCluster(clusterConfig)
     return workload
 end
 
+def genPoissonCluster(clusterConfig)
+  print "Generating workload using the poisson process model."
+  print "ClusterConfig is: \n#{clusterConfig}"
+  poissonModel=PoissonWorkloadModel.new(clusterConfig);
+	workload=poissonModel.execute();
+	return workload;
+end
+
+
 def genSteadyCluster(clusterConfig, runTime)
   print "Generating workload using the steady arrival model."
   print "ClusterConfig is: \n#{clusterConfig}"

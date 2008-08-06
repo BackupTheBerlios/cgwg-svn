@@ -15,6 +15,9 @@
 # along with CGWG; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+
+require "statistics.rb"
+
 ###
 ## Runs the lublin model for the creation of a cluster workload. We need 
 ## to set various parameters within the model - unfortunately, there is no 
@@ -155,6 +158,55 @@ class SteadyWorkloadModel
   end
 end
 
+class PoissonWorkloadModel
+  def initialize(clusterConfig)
+    @clusterConfig=clusterConfig
+    @currentSubmitTime=0;
+    @currentFinishTime=0;
+    @workloadsize=@clusterConfig.size();
+    meanInterarrivalTime=10
+    @interarrivalRandoms = generateExponentialRandoms(@workloadsize+1, varlambda=meanInterarrivalTime);
+    @defaultRunTime=100
+    puts "Generating #{@workloadsize} jobs."
+  end
+  def execute()
+     retval=Workload.new(@clusterConfig);
+     (0..@workloadsize).each{|jobID|
+       job=generateNextJob(jobID);
+       retval.addJob(job);
+       puts "Generated job: #{job}"
+     } 
+     return retval
+  end
+  #
+  # Generate the next job that should be executed. The submittime is
+  # increased, and both runtime and walltime are set to the
+  # @defaultRunTime parameter.
+  def generateNextJob(jobID)
+    job=AtomicJob.new();
+    job.jobID = jobID;
+    job.submitTime = @currentSubmitTime
+    job.waitTime = -1
+    job.runTime = @defaultRunTime;
+    job.numberAllocatedProcessors = @clusterConfig.smallestJobSize
+    job.averageCPUTimeUsed = -1
+    job.usedMemory = -1
+    job.reqNumProcessors = -1
+    job.wallTime = @defaultRunTime;
+    job.reqMemory = -1
+    job.status = -1
+    job.userID = -1
+    job.groupID = 0
+    job.appID = -1
+    job.penalty = 0
+    job.queueID = 0
+    job.partitionID = -1
+    job.preceedingJobID = -1
+    job.timeAfterPreceedingJob = -1
+    @currentSubmitTime+=@interarrivalRandoms.pop()
+    return job;
+  end
+end
 ###
 ## Encapsulates Dan Tsafrir's runtime estimation tool.
 #

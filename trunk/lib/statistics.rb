@@ -32,6 +32,9 @@ class Range
   end
 end
 
+class RejectionException < StandardError
+end
+
 # A simple function that dumps the given array of values to
 # a file in the global temp directory -> this is for debugging
 def dumpRTable(values, filename)
@@ -45,53 +48,173 @@ def dumpRTable(values, filename)
   }
 end
 
+# Enhance Array: Allow it to shuffle its contents randomly.
+class Array
+  def shuffle
+    sort_by { rand }
+  end
+
+  def shuffle!
+    self.replace shuffle
+  end
+end
+
 # Implements the MC approach - takes a block that checks if x < pdf(y).
-def generateMCRandoms(amount, range=Range.new(min=0.0,max=1.0))
-  puts "Using range #{range}" if $verbose
+def generateMCRandoms(amount)
   if not block_given?
     raise "No probability density function check given - aborting"
   end
   values = Array.new
   while values.size() < amount
-    x=[range.min, rand()*range.max].max
-    y=[range.min, rand()*range.max].max
-    inDistribution = yield(x, y)
-    if inDistribution
-      values << x
+    u1=rand()
+    u2=rand()
+    begin
+      distvalue = yield(u1, u2)
+      values << distvalue
+    rescue RejectionException 
+      # do nothing here, just don't add distvalue
     end
   end
   return values
 end
 
-# Used for generating randoms for the user preference setting.
+# Used for generating randoms for the user preference setting. 
+# uses the composition method to multiplex two gaussian distributions.
+# TODO: Eliminate outliers before merging and scaling - see Walsh test,
+# http://www.statistics4u.info/fundstat_germ/ee_walsh_outliertest.html
 def generateDoubleGaussianRandoms(amount)
-  values = generateMCRandoms(amount) {|x, y|
-    gaussianvalue1 = pdf_gaussian(x, 0.15, 0.1)
-    gaussianvalue2 = pdf_gaussian(x, 0.85, 0.1)
-    (y < gaussianvalue1) or (y < gaussianvalue2) 
+  range=Range.new(0,1)
+  leftvalues=generateGaussianRandoms(amount/2,mean=0.1,sd=0.1)
+  rightvalues=generateGaussianRandoms(amount/2,mean=0.9,sd=0.1)
+  values= (leftvalues + rightvalues)
+  # We need to shuffle the randoms - otherwise, the two arrays would 
+  # maintain their structure, which is not desired.
+  values.shuffle!
+  return linearTransformation(values, range)
+end
+
+# Use rejection method to filter uniform randoms such that they 
+# fit the gaussian distribution. See Raj Jain, "The Art of Computer
+# Systems Performance Analysis", p. 494.
+def generateGaussianRandoms(amount, mean=0.0, sd=1.0, range=nil)
+  rawvalues = generateMCRandoms(amount) {|u1, u2|
+    x = - Math.log(u1)
+    y = Math.exp((-(x-1)**2)/2)
+    if (u2 > y)
+      raise RejectionException, "Not acceptable random number."
+    else
+      u3=rand()
+      if (u3>0.5)
+        mean+sd*x
+      else
+        mean-sd*x
+      end
+    end
+  }
+  if range != nil
+    return linearTransformation(rawvalues, range)
+  else
+    return rawvalues
+  end
+end
+
+# Generate randoms from a gamma distribution - See Raj Jain, "The Art of
+# Computer Systems Performance Analysis", p. 490. See also M. Lublins
+# Workload Generator.
+def generateGammaRandoms(amount, scale=1, shape=1, range=nil)
+  a=scale; b=shape;
+  if not a>0 and b>0
+    raise RejectionException("Invalid parameterization: a=#{a}, b=#{b}")
+  end
+  if (shape.integer?)
+    rawvalues=generateGammaRandomsIntShape(amount, a, b)
+  elsif (shape<1)
+    rawvalues=generateGammaRandomsShapeSmallerOne(amount, a, b)
+  else 
+    # Combine the distributions for non-integer shape
+    leftvalues = generateGammaRandomsIntShape(amount/2, scale, shape.floor())
+    rightvalues = generateGammaRandomsIntShape(amount/2, scale, (shape - shape.floor()))
+    rawvalues= (leftvalues + rightvalues)
+    rawvalues.shuffle!
+  end
+  if range != nil
+    return linearTransformation(rawvalues, range)
+  else
+    return rawvalues
+  end
+end
+
+# Helper method, see generateGammaRandoms
+def generateGammaRandomsIntShape(amount, scale, shape)
+  rawvalues=Array.new()
+  amount.downto(0) {
+    uniforms=generateUniformRandoms(shape)
+    product=uniforms.inject(1) {|product, n|
+      product * n
+    }
+    rawvalues << -scale*Math.log(product)
+  }
+  return rawvalues
+end
+
+# Helper method, see generateGammaRandoms
+def generateGammaRandomsShapeSmallerOne(amount, scale, shape)
+  exponentials=generateExponentialRandoms(amount, varlambda=1)
+  betas=generateBetaRandoms(amount, shape, 1-shape)
+  values=Array.new
+  for i in (0..amount)
+    value=scale * exponentials[i] * betas[i]
+    values << value
+  end
+  return values
+end
+
+# Helper method, see generateGammaRandoms
+def generateBetaRandoms(amount, alpha, beta)
+  if not alpha>0 and beta>0
+    raise RejectionException("Invalid parameterization: a=#{alpha}, b=#{beta}")
+  end
+  if not alpha<1 and beta<1
+    raise RejectionException("Invalid parameter for this implementation: a=#{alpha}, b=#{beta}")
+  end
+  values=Array.new
+  u1=u2=x=y=0.0
+  amount.downto(0) {
+    begin
+      u1=rand()
+      u2=rand()
+      x=u1.to_f ** (1/alpha.to_f)
+      y=u2.to_f ** (1/beta.to_f)
+    end while (x+y > 1)
+    values << (x/(x+y))
   }
   return values
 end
 
-# Use Monte-Carlo method to filter uniform randoms such that they 
-# fit the gaussian distribution
-def generateGaussianRandoms(amount, mean=0.0, sd=1.0, range=Range.new(0.0, 1.0))
-  values = generateMCRandoms(amount, range) {|x, y|
-    gaussianvalue = pdf_gaussian(x, mean, sd)
-    y < gaussianvalue
+# Generate randoms from an exponential distribution using the inversion
+# method. 
+def generateExponentialRandoms(amount, varlambda=1, range=nil)
+  rawvalues=generateUniformRandoms(amount);
+  rawvalues.map!{|u|
+    -varlambda*Math.log(u)
+  }
+  if range != nil
+    return linearTransformation(rawvalues, range)
+  else
+    return rawvalues
+  end
+end
+
+# Scales a set of raw values using linear transformation.
+def linearTransformation(rawvalues, range)
+  values=Array.new()
+  rawmin=rawvalues.min()
+  rawmax=rawvalues.max()
+  rawvalues.each{|val|
+    values << ((range.max - range.min)/(rawmax-rawmin))*(val-rawmin)+range.min
   }
   return values
 end
-
-# Generate randoms from an exponential distribution
-def generateExponentialRandoms(amount, varlambda=1, range=Range.new(0.0, 1.0))
-  values = generateMCRandoms(amount, range) {|x, y|
-    expvalue = pdf_exponential(x, varlambda)
-    y < expvalue
-  }
-  return values
-end
-
 
 # Calculates the value of the probability density function (PDF)
 # for the gaussian distribution for x with the given parameters.
@@ -119,13 +242,19 @@ end
 
 if __FILE__ == $0 
   $verbose = true
-  amount=1000
+  amount=10000
   uniforms=generateUniformRandoms(amount);
   dumpRTable(uniforms, "uniform.txt");
-  gaussians=generateGaussianRandoms(amount, mean=0.5, sd=0.25, range=Range.new(-5, 5));
+  gaussians=generateGaussianRandoms(amount, mean=0.0, sd=1, range=Range.new(-10.0, 10.0));
   dumpRTable(gaussians, "gaussians.txt");
+  rawgaussians=generateGaussianRandoms(amount, mean=0.0, sd=1); 
+  dumpRTable(rawgaussians, "rawgaussians.txt");
   doublegaussians=generateDoubleGaussianRandoms(amount);
   dumpRTable(doublegaussians, "doublegaussians.txt");
-  exponentials=generateExponentialRandoms(amount, varlambda=1, range=Range.new(0,10));
+  exponentials=generateExponentialRandoms(amount, varlambda=1)#, range=Range.new(0,1000));
   dumpRTable(exponentials, "exponentials.txt");
+  gammas=generateGammaRandoms(amount, scale=2, shape=0.9);
+  dumpRTable(gammas, "gammas.txt");
+  betas=generateGammaRandoms(amount, alpha=0.5, beta=0.5);
+  dumpRTable(betas, "betas.txt");
 end
