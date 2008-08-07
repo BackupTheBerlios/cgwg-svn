@@ -164,14 +164,13 @@ class PoissonWorkloadModel
     @currentSubmitTime=0;
     @currentFinishTime=0;
     @workloadsize=@clusterConfig.size();
-    meanInterarrivalTime=10
-    @interarrivalRandoms = generateExponentialRandoms(@workloadsize+1, varlambda=meanInterarrivalTime);
-    @defaultRunTime=100
+    @interarrivalRandoms = generateExponentialRandoms(@workloadsize, varlambda=1, range=Range.new(1,100));
+    @runtimeRandoms=generateGammaRandoms(@workloadsize, 4, 2)
     puts "Generating #{@workloadsize} jobs."
   end
   def execute()
      retval=Workload.new(@clusterConfig);
-     (0..@workloadsize).each{|jobID|
+     (0..@workloadsize-1).each{|jobID|
        job=generateNextJob(jobID);
        retval.addJob(job);
        puts "Generated job: #{job}"
@@ -187,12 +186,14 @@ class PoissonWorkloadModel
     job.jobID = jobID;
     job.submitTime = @currentSubmitTime
     job.waitTime = -1
-    job.runTime = @defaultRunTime;
-    job.numberAllocatedProcessors = @clusterConfig.smallestJobSize
+    job.runTime = 100
+    job.runTime = @runtimeRandoms.pop();
+    job.numberAllocatedProcessors = 1
     job.averageCPUTimeUsed = -1
     job.usedMemory = -1
     job.reqNumProcessors = -1
-    job.wallTime = @defaultRunTime;
+    job.wallTime = job.runTime * 1.1;
+#    job.wallTime = 110 
     job.reqMemory = -1
     job.status = -1
     job.userID = -1

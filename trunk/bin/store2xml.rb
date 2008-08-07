@@ -27,19 +27,13 @@ end
 
 
 require 'rubygems'
+gem 'builder' #we need xml builder
+require 'builder/xmlmarkup'
 require 'Models'
 require 'Workload'
 require 'Helpers'
-require 'Gnuplot'
-require 'R'
-require 'Latex'
 require 'optparse'
 require 'ostruct'
-
-###
-## This is the main workload generator file. You should look at the
-## ConfigManager class (in lib/Helpers.rb) and the main program below.
-#
 
 ###
 ## Commandline parser
@@ -58,23 +52,16 @@ class Optparser
     options.encoding = "utf8"
     options.verbose = false
     opts = OptionParser.new do |opts|
-      opts.banner = "Usage: workload-analysis.rb [options]"
+      opts.banner = "Usage: #{$0} [options]"
       opts.separator ""
       opts.separator "Specific options:"
       # Mandatory argument.
       opts.on("-s", "--store PATH", "path to workload collection store") do |store|
         options.store=store
       end
-      opts.on("-o", "--output directory","the output directory for the report files") do |outdir|
+      opts.on("-o", "--output directory","the output directory for the xml files") do |outdir|
         options.outdir=outdir
     end
-    opts.on("-l", "--loadlevel [double]","loadlevel to analyze") do |loadlevel|
-      options.loadlevel=loadlevel
-    end
-    opts.on("-u", "--include-utilization","include the utilization analysis") do |utilization|
-      options.utilization=utilization
-    end
-
     # Boolean switch.
     opts.on("-v", "--verbose", "Run verbosely") do |v|
       options.verbose = v
@@ -92,12 +79,10 @@ end
 ###
 ## Script startup
 #
-
+@@config = ConfigManager.new # some global constants etc.
 options = Optparser.parse(ARGV)
 outdir = options.outdir    
 storePath = options.store
-utilSwitch = options.utilization
-
 $verbose = options.verbose
 
 if storePath == nil or outdir == nil
@@ -117,17 +102,15 @@ if $verbose
   collection.printWorkloadOverview()
 end
 
-collection.eachWorkload{|w|
-  analysator=WorkloadAnalysis.new(w, outdir)
-  analysator.plotUtilization() if utilSwitch
-  analysator.plotGraphs()
+outputdir=File.expand_path(outdir);
+collection.eachWorkload {|w|
+  loadlevel=w.calculateLoadLevel().to_s
+  file=File.join(outputdir, "#{@@config.outFile}-#{loadlevel}.xml")
+  outFile=File.new(file, "w")
+  builder = Builder::XmlMarkup.new(:target=>outFile, :indent=>2)
+  # produce output
+  print "Generating XML workload file #{file}\n"
+  w.xmlize(builder)
+  outFile.close
 }
-puts "Generating a PDF summary report"
-lr=LatexReport.new(outdir, "workload", "runtimes-")
-lr.createReport()
-
-puts "Hint: Create a movie with\nmencoder \"mf://allocationsamples*.png\" -mf fps=3 -o output.avi -ovc lavc"
-
-
-exit
 

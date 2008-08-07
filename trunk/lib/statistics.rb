@@ -251,10 +251,10 @@ if __FILE__ == $0
   dumpRTable(rawgaussians, "rawgaussians.txt");
   doublegaussians=generateDoubleGaussianRandoms(amount);
   dumpRTable(doublegaussians, "doublegaussians.txt");
-  exponentials=generateExponentialRandoms(amount, varlambda=1)#, range=Range.new(0,1000));
+  exponentials=generateExponentialRandoms(amount, varlambda=1, range=Range.new(0,100));
   dumpRTable(exponentials, "exponentials.txt");
-  gammas=generateGammaRandoms(amount, scale=2, shape=0.9);
+  gammas=generateGammaRandoms(amount, scale=4, shape=2);
   dumpRTable(gammas, "gammas.txt");
-  betas=generateGammaRandoms(amount, alpha=0.5, beta=0.5);
+  betas=generateBetaRandoms(amount, alpha=0.5, beta=0.5);
   dumpRTable(betas, "betas.txt");
 end

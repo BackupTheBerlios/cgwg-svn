@@ -133,8 +133,10 @@ class AtomicJob
       job2.numberAllocatedProcessors=newNodes
       return job1, job2
     end
+    # Human-readable data.
     def to_s
-      writeSWFFormat()
+      retval="Jid: #{@jobID.to_f} ST:#{@submitTime} RT:#{@runTime} WT:#{@wallTime} " 
+      retval+="NODES: #{@numberAllocatedProcessors}"
     end
 end
 

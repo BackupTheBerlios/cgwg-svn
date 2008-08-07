@@ -23,7 +23,7 @@ if (ENV["CGWG_HOME"] == nil)
 else
   libpath= File.join(File.expand_path(ENV["CGWG_HOME"]), "lib")
   $:.unshift << libpath
-  puts "Using libraty path #{$:.join(":")}" 
+#  puts "Using libraty path #{$:.join(":")}" 
 end
 
 
@@ -61,7 +61,7 @@ class Optparser
     options.encoding = "utf8"
     options.verbose = false
     opts = OptionParser.new do |opts|
-      opts.banner = "Usage: singleCPUgridwgen.rb [options]"
+      opts.banner = "Usage: #{$0} [options]"
       opts.separator ""
       opts.separator "Specific options:"
       # Mandatory argument.
@@ -152,10 +152,10 @@ aggregatedWorkload = nil
 
 aggregatedWorkload=aggregatedWorkload.createSequentialJobWorkload()
 
-print "Fixing job sizes -> Setting jobsize to 1\n"
-aggregatedWorkload.eachJob{|job|
-  job.numberAllocatedProcessors = 1
-}
+#print "Fixing job sizes -> Setting jobsize to 1\n"
+#aggregatedWorkload.eachJob{|job|
+#  job.numberAllocatedProcessors = 1
+#}
 
 ###
 ## Next step: We generate a set of users and connect them to jobs at random.
