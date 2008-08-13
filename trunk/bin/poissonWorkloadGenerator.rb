@@ -33,9 +33,9 @@ require 'yaml'
 require 'rubygems'
 gem 'builder' #we need xml builder
 require 'builder/xmlmarkup'
+require 'Helpers'
 require 'Models'
 require 'Workload'
-require 'Helpers'
 require 'optparse'
 require 'ostruct'
 
@@ -143,19 +143,15 @@ aggregatedWorkload = nil
   #print clusterConfig
   print "### Working on cluster #{clusterConfig.name}\n"
   if aggregatedWorkload == nil
+    puts "Clusterconfig: #{clusterConfig}"
     aggregatedWorkload = genPoissonCluster(clusterConfig)
   else
     tempWorkload = genPoissonCluster(clusterConfig)
-    tempWorkload.mergeWorkloadTo(aggregatedWorkload)
+    tempWorkload.appendWorkloadTo(aggregatedWorkload)
   end
 }
 
 aggregatedWorkload=aggregatedWorkload.createSequentialJobWorkload()
-
-#print "Fixing job sizes -> Setting jobsize to 1\n"
-#aggregatedWorkload.eachJob{|job|
-#  job.numberAllocatedProcessors = 1
-#}
 
 ###
 ## Next step: We generate a set of users and connect them to jobs at random.

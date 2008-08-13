@@ -355,13 +355,37 @@ class Workload
   end
   ###
   ## Adds the given workload to this instance. Basically, we need to
-  ## iterate over both workloads, and put them in the right sequence. 
+  ## iterate over both workloads, and put them in the right sequence.
+  ## Right sequence means: Job are sorted according to their submission
+  ## time. Please note that this might lead to problems regarding the 
+  ## distribution of submission times - use appendWorkloadTo instead.
   #
   def mergeWorkloadTo(aWorkload)
+    puts "mergeWorkloadTo is deprecreated! use appendWorkloadTo instead"
     aWorkload.addJobs(self.jobs)
     aWorkload.addTasks(self.tasks)
     aWorkload.sort!
+    aWorkload.fixJobIndices
     @clusterConfig.mergeTo(aWorkload.clusterConfig)
+  end
+
+  # appends this workload to the given workload. the submission times of
+  # this workload are adjusted so that these jobs start after the jobs
+  # in the given workload.
+  def appendWorkloadTo(aWorkload)
+    offset = aWorkload.maxSubmitTime()
+    shiftJobSubmissionTime(offset)
+    aWorkload.addJobs(self.jobs)
+    aWorkload.addTasks(self.tasks)
+    aWorkload.fixJobIndices
+    @clusterConfig.mergeTo(aWorkload.clusterConfig)
+  end
+
+  # for all jobs, add an offset to the submission time.
+  def shiftJobSubmissionTime(offset)
+    jobs.each{|job|
+      job.submitTime+=offset
+    }
   end
   # Add an array of jobs to the workload.
   def addJobs(additionalJobs)
@@ -425,8 +449,10 @@ class Workload
     @tasks.sort! { |a,b|
       a.getEarliestSubmitTime <=> b.getEarliestSubmitTime
     }
-    # Check that the array index equals the job id. otherwise, the
-    # produced XML will have mixed indices...
+  end
+  # Check that the array index equals the job id. otherwise, the
+  # produced XML will have mixed indices...
+  def fixJobIndices
     for i in 0..@jobs.length-1
       @jobs[i].jobID = i+1
     end
@@ -435,6 +461,7 @@ class Workload
       @tasks[i].id = i+1
     end
   end
+
   # calculate the mean runtime of this workload
   def calculateMeanRuntime
     aggRuntime = 0
@@ -542,6 +569,16 @@ class Workload
     }
     return maxRuntime
   end
+  def maxSubmitTime()
+    maxSubmitTime=0
+    @jobs.each{|job|
+      if (job.submitTime > maxSubmitTime)
+        maxSubmitTime = job.submitTime
+      end
+    }
+    return maxSubmitTime
+  end
+
 end
 
 ###

@@ -1,12 +1,24 @@
 #undef SIZE
+<<<<<<< .mine
+#define SIZE 20          
+=======
 #define SIZE 107          
+>>>>>>> .r66
 /* UHI: Needs to be adjusted, depending on the cluster */
 #undef UHI
+<<<<<<< .mine
+#define UHI 0
+=======
 #define UHI 5
+>>>>>>> .r66
 #undef ULOW
 #define ULOW 0.0
 #undef UMED
+<<<<<<< .mine
+#define UMED -2.5
+=======
 #define UMED 2.5
+>>>>>>> .r66
 
 /* Values for a different load level */
 #undef A1

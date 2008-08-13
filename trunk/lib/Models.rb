@@ -111,7 +111,6 @@ class Lublin
         return 0.00, 0.10
     end
 end
-
 class SteadyWorkloadModel
   def initialize(clusterConfig, runTime)
     @clusterConfig=clusterConfig
@@ -158,6 +157,16 @@ class SteadyWorkloadModel
   end
 end
 
+def generateJobSizeDistribution(workloadsize, serialprob=0, maxJobSize=32) 
+  serialamount=(@workloadsize * serialprob).round
+  parallelamount=@workloadsize - serialamount
+  puts "Job size distribution: #{serialamount} serial, #{parallelamount} parallel jobs to be generated." if $verbose
+  leftvalues=Array.new(serialamount, 1)
+  rightvalues=generateExp2Randoms(parallelamount, 1, maxJobSize)
+  retval = (leftvalues + rightvalues)
+  retval.shuffle!
+end
+
 class PoissonWorkloadModel
   def initialize(clusterConfig)
     @clusterConfig=clusterConfig
@@ -165,7 +174,10 @@ class PoissonWorkloadModel
     @currentFinishTime=0;
     @workloadsize=@clusterConfig.size();
     @interarrivalRandoms = generateExponentialRandoms(@workloadsize, varlambda=1, range=Range.new(1,100));
+  #  dumpfile="interarrivals.txt";
+  #  dumpRTable(@interarrivalRandoms, dumpfile);
     @runtimeRandoms=generateGammaRandoms(@workloadsize, 4, 2)
+    @jobsizeRandoms=generateJobSizeDistribution(@workloadsize, 0, 32)
     puts "Generating #{@workloadsize} jobs."
   end
   def execute()
@@ -186,14 +198,13 @@ class PoissonWorkloadModel
     job.jobID = jobID;
     job.submitTime = @currentSubmitTime
     job.waitTime = -1
-    job.runTime = 100
     job.runTime = @runtimeRandoms.pop();
-    job.numberAllocatedProcessors = 1
+    job.numberAllocatedProcessors = @jobsizeRandoms.pop()
     job.averageCPUTimeUsed = -1
     job.usedMemory = -1
     job.reqNumProcessors = -1
+    #TODO: Adjust this!
     job.wallTime = job.runTime * 1.1;
-#    job.wallTime = 110 
     job.reqMemory = -1
     job.status = -1
     job.userID = -1
@@ -208,6 +219,7 @@ class PoissonWorkloadModel
     return job;
   end
 end
+#
 ###
 ## Encapsulates Dan Tsafrir's runtime estimation tool.
 #

@@ -191,6 +191,20 @@ def generateBetaRandoms(amount, alpha, beta)
   return values
 end
 
+def generateExp2Randoms(amount, lowerbound=0, upperbound=8)
+  max=log2(upperbound)
+  min=log2(lowerbound)
+  if (max % 1) != 0 or (min % 1) != 0
+    raise RejectionException("Invalid parameterization: upperbound (#{upperbound}) or lowerbound (#{lowerbound} is not a power2-number!")
+  end
+  rawvalues=generateUniformRandoms(amount);
+  scaledvalues = linearTransformation(rawvalues, Range.new(min, max))
+  scaledvalues.map!{|u|
+    2**(u.round())
+  }
+  return scaledvalues
+end
+
 # Generate randoms from an exponential distribution using the inversion
 # method. 
 def generateExponentialRandoms(amount, varlambda=1, range=nil)
@@ -240,6 +254,38 @@ def generateUniformRandoms(amount)
   values
 end
 
+###
+## Helper function: Calculate the binary logarithm.
+#
+def log2(n)
+  return (Math.log(n)/Math.log(2))
+end
+
+def testSortingAssumption
+  numDistr=10
+  expCount=1000
+  randcollection=Array.new
+  sums=Array.new(numDistr*expCount, 0)
+  # create numDistr arrays with exponential randoms.
+  numDistr.downto(0) {|i|
+    exponentials = generateExponentialRandoms(expCount, varlambda=1, range=Range.new(0,100))
+    randcollection  = randcollection + exponentials
+  }
+  (1..10).each{|offset|
+    # now, sum stuff up.
+    lower=(offset-1)*expCount
+    upper=(offset)*expCount
+    puts "Summing [#{lower}:#{upper}]"
+    (lower..upper).each {|i|
+      if i!=0 
+        sums[i]=sums[i-1]+randcollection[i];
+      end
+    }
+  }
+    #sums.sort!
+  dumpRTable(sums, "testsorting.txt");
+end
+
 if __FILE__ == $0 
   $verbose = true
   amount=10000
@@ -257,4 +303,7 @@ if __FILE__ == $0
   dumpRTable(gammas, "gammas.txt");
   betas=generateBetaRandoms(amount, alpha=0.5, beta=0.5);
   dumpRTable(betas, "betas.txt");
+  exp2s=generateExp2Randoms(amount, lowerbound=1, upperbound=32);
+  dumpRTable(exp2s, "exp2s.txt");
+  testSortingAssumption();
 end
