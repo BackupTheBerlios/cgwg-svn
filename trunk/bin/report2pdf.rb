@@ -280,9 +280,9 @@ end
 # Runs the load-dependent scripts.
 def runLoadDepScripts()
     gnuPlot2Points("time-price-#{$load}.txt", "time-price-#{$load}.eps", 
-        "Time vs. Price per Second", "time", "price", 1, 2)
+        "Time vs. Price per Second", "time", "price per sec", 1, 2)
     gnuPlot2Points("queue-time-#{$load}.txt", "queue-time-#{$load}.eps", 
-        "Time vs. QueueTime", "Time", "queueTime", 1, 2)
+        "Time vs. QueueTime per Second", "Time", "queueTime per sec", 1, 2)
     gnuPlot2Points("total-revenue-#{$load}.txt", "total-revenue-#{$load}.eps",
         "Total Revenue per Agent", "agents", "Total Revenue", 1, 2)
     gnuPlot2Data("price-pref-#{$load}.txt", "price-pref-#{$load}.eps", 

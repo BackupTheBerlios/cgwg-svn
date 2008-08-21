@@ -381,6 +381,81 @@ class TotalRevenueReport
 end
 
 ###
+## A report that prints the queue time along time
+#
+class QueueTimeReport
+    def initialize(directory, load)
+        @load = load
+        reportFileName = directory+"/queue-time-"+load+".txt"
+        @reportFile = File.new(reportFileName, "w")
+        @reportFile.puts("#time\tqueue-time-per-second")
+    end
+    
+    def addJob(job)
+	queueTimePerSecond = job.queueTime.to_f / job.runTime.to_f
+        @reportFile.puts("#{job.startTime}\t#{queueTimePerSecond}")
+    end
+    
+    def finalize()
+        @reportFile.close
+    end
+end
+
+###
+## A report that prints the relative difference of the user's price preference to the price range time along time
+#
+class PricePrefReport
+    def initialize(directory, load)
+        @load = load
+        reportFileName = directory+"/price-pref-"+load+".txt"
+        @reportFile = File.new(reportFileName, "w")
+        @reportFile.puts("#time\trelUserPref")
+    end
+    
+    def addJob(job)
+	relUserPref = 0
+	priceSpan = job.maxprice - job.minprice
+	if (not priceSpan == 0)
+		difference = job.price - priceSpan * job.pricePref - job.minprice
+		relUserPref = difference.abs / priceSpan
+	end
+        @reportFile.puts("#{job.startTime}\t#{relUserPref}")
+    end
+    
+    def finalize()
+        @reportFile.close
+    end
+end
+
+class TurnOverReport
+    def initialize(directory, load)
+	@load = load
+        reportFileName = directory+"/turn-over-"+load+".txt"
+        @reportFile = File.new(reportFileName, "w")
+        @reportFile.puts("#agent\tturnOver")
+	@turnOver = Hash.new
+	@turnOver.default = 0.0
+    end
+
+    def addJob(job)
+	@turnOver[job.agent.split("-")[1]] += job.price
+	@turnOver["sum"] += job.price
+    end
+
+    def finalize()
+	agents = @turnOver.keys
+	agents.sort!
+	agents.each {|entity|
+		tmp = ""
+		tmp << "#" if entity == "sum"
+		tmp << "#{entity}\t#{@turnOver[entity]}"
+		@reportFile.puts(tmp)
+	}
+	@reportFile.close
+    end
+end
+
+###
 ## A report that prints the price vs. pricePreference and rt vs. perfPref data
 #
 class PricePrefCorrelationReport
@@ -535,14 +610,14 @@ class ReportCollection
     report5 = LoadQTReport.new($outDir, load);
     report6 = TimePriceReport.new($outDir, load);
     report7 = QueueTimeReport.new($outDir, load);
-    report8 = PricePrefReport.new($outDir, load);
+    #report8 = PricePrefReport.new($outDir, load);
     report9 = TotalRevenueReport.new($outDir, load);
     #report10 = DataplotReport.new($outDir, load);
     report10 = RReport.new($outDir, load);
   #  report11 = LatexExperimentReport.new($outDir);
     @reports << report1 << report2 << report3 
     @reports << report4 << report5 << report6
-    @reports << report7 << report8 << report9
+    @reports << report7 << reportr9# << report9
     @reports << report10
   end
 
@@ -580,9 +655,6 @@ def createReport(reportFileName, loadLevel)
           puts "Found different report version, aborting!"
           exit
         end
-      end
-      next
-    end
     # And empty lines.
     if (line =~ /^$/)
       next
