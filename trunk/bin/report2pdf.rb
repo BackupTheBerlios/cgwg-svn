@@ -286,7 +286,7 @@ def runLoadDepScripts()
     gnuPlot2Points("total-revenue-#{$load}.txt", "total-revenue-#{$load}.eps",
         "Total Revenue per Agent", "agents", "Total Revenue", 1, 2)
     gnuPlot2Data("price-pref-#{$load}.txt", "price-pref-#{$load}.eps", 
-        "Time vs. PricePreference", "time", "accuracy of user preference", 1, 2)
+        "PricePreference vs. Time", "accuracy of user preference", "time", 2, 1)
     gnuPlot2Data("price-rt-preference-#{$load}.txt", "price-rt-pref-#{$load}.eps", 
         "Price vs. PricePreference", "pricePref", "pricePerSecond", 2, 1)
     gnuPlot2Data("price-rt-preference-#{$load}.txt", "perf-pref-#{$load}.eps", 
@@ -327,6 +327,8 @@ end
 def runGeneralScripts()
     gnuPlot2Lines("load-ART.txt", "load-ART.eps", 
         "Average Response Time vs. Load", "Load", "ART", 1,2)
+    gnuPlot2Points("load-total-revenue.txt", "load-total-revenue.eps",
+        "Total Revenue vs. Load", "Load", "Total Revenue", 1, 2)
 
     names = Array.new
     names << "ART" << "ART (perfPref <= 0.25)" 
@@ -384,7 +386,8 @@ if $load == nil
     puts "No load specified, running load-independent scripts"
     runGeneralScripts()
     puts "Generating summary report"
-    lr=LatexReport.new("/scratch/md/single-synthetic/run01/analysis", "analysis", "price-")
+    #lr=LatexReport.new("/scratch/md/single-synthetic/run01/analysis", "analysis", "price-")
+    lr=LatexReport.new($outDir, "analysis", "price-")
     lr.createReport()
 else
     if $entity == nil

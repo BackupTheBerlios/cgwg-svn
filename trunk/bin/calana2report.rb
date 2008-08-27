@@ -27,7 +27,7 @@ end
 
 require 'Workload'
 require 'Helpers'
-require 'Dataplot'
+#require 'Dataplot'
 require 'R'
 require 'Latex'
 require 'optparse'
@@ -219,6 +219,31 @@ class LoadARTReport
 end
 
 ###
+## A report that prints the total revenue for each workload
+#
+class LoadTotalRevenue
+  def initialize(directory, load)
+    @reportFileName = directory+"/load-total-revenue.txt"
+    @load = load
+    @totalRevenue = 0.0
+  end
+
+  def addJob(job)
+    @totalRevenue += job.price.to_f
+  end
+
+  def finalize()
+    mode = "w"
+    mode = "a" if File.exists?("#{@reportFileName}")
+    File.open(@reportFileName, mode) {|handle|
+      handle.puts("#load\ttotalRevenue") if mode == "w"
+      handle.puts("#{@load}\t#{@totalRevenue}")
+      }
+  end
+end
+
+
+###
 ## A report that prints the Load vs. Price table
 #
 class LoadAvgPriceReport
@@ -306,77 +331,55 @@ class TimePriceReport
 end
 
 ###
-## A report that prints the queue time along time
-#
-class QueueTimeReport
-    def initialize(directory, load)
-        @load = load
-        reportFileName = directory+"/queue-time-"+load+".txt"
-        @reportFile = File.new(reportFileName, "w")
-        @reportFile.puts("#time\tqueue time")
-    end
-    
-    def addJob(job)
-	queueTime = job.queueTime.to_f / job.responseTime.to_f
-        @reportFile.puts("#{job.startTime}\t#{queueTime}")
-    end
-    
-    def finalize()
-        @reportFile.close
-    end
-end
-
-###
 ## A report that prints the relative difference of the user's price preference to the price range time along time
 #
 class PricePrefReport
-    def initialize(directory, load)
-        @load = load
-        reportFileName = directory+"/price-pref-"+load+".txt"
-        @reportFile = File.new(reportFileName, "w")
-        @reportFile.puts("#time\trelUserPref")
-    end
+  def initialize(directory, load)
+    @load = load
+    reportFileName = directory+"/price-pref-"+load+".txt"
+    @reportFile = File.new(reportFileName, "w")
+    @reportFile.puts("#time\trelUserPref")
+  end
     
-    def addJob(job)
-	relUserPref = 0
-	priceSpan = job.maxprice - job.minprice
-	if (not priceSpan == 0)
-		difference = job.price - priceSpan * job.pricePref - job.minprice
-		relUserPref = difference.abs / priceSpan
-	end
-        @reportFile.puts("#{job.startTime}\t#{relUserPref}")
+  def addJob(job)
+    relUserPref = 0
+    priceSpan = job.maxprice - job.minprice
+    if (not priceSpan == 0)
+      difference = job.price - priceSpan * job.pricePref - job.minprice
+      relUserPref = difference.abs / priceSpan
     end
+    @reportFile.puts("#{job.startTime}\t#{relUserPref}")
+  end
     
-    def finalize()
-        @reportFile.close
-    end
+  def finalize()
+    @reportFile.close
+  end
 end
 
 class TotalRevenueReport
   def initialize(directory, load)
     @load = load
-    reportFileName = directory+"/total-revenue-"+load+".txt"
-    @reportFile = File.new(reportFileName, "w")
-    @reportFile.puts("#agent\ttotalrevenue")
-    @totalRevenue = Hash.new
-    @totalRevenue.default = 0.0
+    @reportFileName = directory+"/total-revenue-"+load+".txt"
+
+    @totalRunTime = Hash.new(0.0)
+    @totalRevenue = Hash.new(0)
   end
 
   def addJob(job)
-    @totalRevenue[job.agent.split("-")[1]] += job.price
-    @totalRevenue["sum"] += job.price
+    agentName = job.agent.split("-")[1]
+    @totalRunTime[agentName] += job.runTime.to_f
+    @totalRevenue[agentName] += job.price
   end
 
   def finalize()
     agents = @totalRevenue.keys
     agents.sort!
-    agents.each {|entity|
-      tmp = ""
-      tmp << "#" if entity == "sum"
-      tmp << "#{entity}\t#{@totalRevenue[entity]}"
-      @reportFile.puts(tmp)
+    File.open(@reportFileName, "w") {|handle|
+      handle.puts("#agent\tavgPricePerSec\ttotalRevenue")
+      agents.each {|entity|
+        handle.puts("#{entity}\t#{@totalRevenue[entity]/@totalRunTime[entity]}\t#{@totalRevenue[entity]}")
+      }
     }
-    @reportFile.close
   end
 end
 
@@ -384,75 +387,21 @@ end
 ## A report that prints the queue time along time
 #
 class QueueTimeReport
-    def initialize(directory, load)
-        @load = load
-        reportFileName = directory+"/queue-time-"+load+".txt"
-        @reportFile = File.new(reportFileName, "w")
-        @reportFile.puts("#time\tqueue-time-per-second")
-    end
+  def initialize(directory, load)
+    @load = load
+    reportFileName = directory+"/queue-time-"+load+".txt"
+    @reportFile = File.new(reportFileName, "w")
+    @reportFile.puts("#time\tqueue-time-per-second")
+  end
     
-    def addJob(job)
-	queueTimePerSecond = job.queueTime.to_f / job.runTime.to_f
-        @reportFile.puts("#{job.startTime}\t#{queueTimePerSecond}")
-    end
+  def addJob(job)
+    queueTimePerSecond = job.queueTime.to_f / job.runTime.to_f
+    @reportFile.puts("#{job.startTime}\t#{queueTimePerSecond}")
+  end
     
-    def finalize()
-        @reportFile.close
-    end
-end
-
-###
-## A report that prints the relative difference of the user's price preference to the price range time along time
-#
-class PricePrefReport
-    def initialize(directory, load)
-        @load = load
-        reportFileName = directory+"/price-pref-"+load+".txt"
-        @reportFile = File.new(reportFileName, "w")
-        @reportFile.puts("#time\trelUserPref")
-    end
-    
-    def addJob(job)
-	relUserPref = 0
-	priceSpan = job.maxprice - job.minprice
-	if (not priceSpan == 0)
-		difference = job.price - priceSpan * job.pricePref - job.minprice
-		relUserPref = difference.abs / priceSpan
-	end
-        @reportFile.puts("#{job.startTime}\t#{relUserPref}")
-    end
-    
-    def finalize()
-        @reportFile.close
-    end
-end
-
-class TurnOverReport
-    def initialize(directory, load)
-	@load = load
-        reportFileName = directory+"/turn-over-"+load+".txt"
-        @reportFile = File.new(reportFileName, "w")
-        @reportFile.puts("#agent\tturnOver")
-	@turnOver = Hash.new
-	@turnOver.default = 0.0
-    end
-
-    def addJob(job)
-	@turnOver[job.agent.split("-")[1]] += job.price
-	@turnOver["sum"] += job.price
-    end
-
-    def finalize()
-	agents = @turnOver.keys
-	agents.sort!
-	agents.each {|entity|
-		tmp = ""
-		tmp << "#" if entity == "sum"
-		tmp << "#{entity}\t#{@turnOver[entity]}"
-		@reportFile.puts(tmp)
-	}
-	@reportFile.close
-    end
+  def finalize()
+    @reportFile.close
+  end
 end
 
 ###
@@ -610,15 +559,16 @@ class ReportCollection
     report5 = LoadQTReport.new($outDir, load);
     report6 = TimePriceReport.new($outDir, load);
     report7 = QueueTimeReport.new($outDir, load);
-    #report8 = PricePrefReport.new($outDir, load);
+    report8 = PricePrefReport.new($outDir, load);
     report9 = TotalRevenueReport.new($outDir, load);
     #report10 = DataplotReport.new($outDir, load);
     report10 = RReport.new($outDir, load);
-  #  report11 = LatexExperimentReport.new($outDir);
+    report11 = LoadTotalRevenue.new($outDir, load);
+#    report12 = LatexExperimentReport.new($outDir);
     @reports << report1 << report2 << report3 
     @reports << report4 << report5 << report6
-    @reports << report7 << reportr9# << report9
-    @reports << report10
+    @reports << report7 << report8 << report9
+    @reports << report10 << report11 #<< report12
   end
 
   def addJob(job)
@@ -655,6 +605,9 @@ def createReport(reportFileName, loadLevel)
           puts "Found different report version, aborting!"
           exit
         end
+			end
+			next
+		end
     # And empty lines.
     if (line =~ /^$/)
       next
@@ -893,7 +846,8 @@ def processTrace(traceFileName, loadLevel)
     end
   }
 
-  srate = 100000
+#  srate = 100000
+  srate = 100
   puts "Sampling trace events with samplingrate #{srate}"
 
   ###
@@ -1014,11 +968,9 @@ end
 puts "Using library path #{$:.join(":")}" if $verbose
 
 if ($reportFileName != nil)
-  $reportFileName = $reportFileName
   createReport($reportFileName, $load)
 end
 if ($traceFileName != nil)
-  $traceFileName = $traceFileName
   processTrace($traceFileName, $load)
 end
 
