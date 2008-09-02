@@ -16,6 +16,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 require 'Utils'
+require 'statistics'
 
 ###
 ## Contains the description of an atomic job. A coallocation job 
@@ -300,10 +301,22 @@ class Workload
     return retval
   end
   def generateRandomUsers()
-    count=@@config.numUsers;
+    count=@@config.numUsers
     for i in 0..(count-1)
       current=User.new(i)
       pref=rand
+      current.pricePreference = pref
+      current.perfPreference = 1-pref
+      @users.push(current)
+    end
+  end
+  def generateDoubleGaussUsers()
+    count=@@config.numUsers
+    gaussRand=generateDoubleGaussianRandoms(count) #TODO testen!
+    gaussRand.shuffle!
+    for i in 0..(count-1)
+      current=User.new(i)
+      pref=gaussRand.pop
       current.pricePreference = pref
       current.perfPreference = 1-pref
       @users.push(current)

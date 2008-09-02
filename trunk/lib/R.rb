@@ -33,9 +33,9 @@ class RExperimentAnalysis
 
   def plotSingleRun_Queuetimes
     drawcmd=<<-END_OF_CMD
-      plot(data$qtime,
+      plot(data$stime, data$qtime,
         main="Queuetime for all jobs",
-        xlab="Job ID",
+        xlab="submittime",
         ylab="queuetime"
       )
     END_OF_CMD

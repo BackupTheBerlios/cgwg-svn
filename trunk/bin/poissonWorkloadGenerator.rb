@@ -80,6 +80,9 @@ class Optparser
       opts.on("-r", "--numTotalResources INT","the number of resources in the grid") do |numtotalresources|
         options.numTotalResources=numtotalresources
       end
+      opts.on("-d", "--directory STRING", "the subdirectory in var to put the generated files in") do |subdir|
+        options.subDir=subdir
+      end
       #            opts.on("-c", "--percentCoallocation FLOAT","the number of jobs to generate") do |percentCoallocation|
       #                options.percentCoallocation = percentCoallocation
       #            end
@@ -109,9 +112,10 @@ numTotalJobs = options.numJobs.to_i
 $verbose = options.verbose
 joblength=options.joblength.to_i
 numTotalSystems = options.numTotalResources.to_i
+subDir = options.subDir
 #percentCoallocation = options.percentCoallocation.to_f
 
-if numTotalJobs == 0 or @@config.numUsers == 0 or joblength == 0 or numTotalSystems == 0
+if numTotalJobs == 0 or @@config.numUsers == 0 or joblength == 0 or numTotalSystems == 0 or subDir == nil
   print "please read usage note (-h)\n"
   exit
 end
@@ -157,7 +161,7 @@ aggregatedWorkload=aggregatedWorkload.createSequentialJobWorkload()
 ## Next step: We generate a set of users and connect them to jobs at random.
 #
 print "Generating users\n"
-aggregatedWorkload.generateRandomUsers()
+aggregatedWorkload.generateDoubleGaussUsers()
 print "Connecting users with jobs\n"
 aggregatedWorkload.linkUsers()
 
@@ -185,7 +189,8 @@ collection.generateEachSlot {|load|
 ###
 ## Put the workload collection on disk for analysis later on...
 #
-storeFileName=@@config.runPath+"/"+@@config.outFile+"-wcollection.bin"
+Dir.mkdir(@@config.runPath+"/#{subDir}")
+storeFileName=@@config.runPath+"/#{subDir}/"+@@config.outFile+"-wcollection.bin"
 store=File.new(storeFileName, "w")
 Marshal.dump(collection, store)
 store.close
@@ -195,7 +200,7 @@ store.close
 #
 if options.xml
   collection.eachWorkload {|w|
-    file=@@config.runPath+"/"+@@config.outFile+"-"+
+    file=@@config.runPath+"/#{subDir}/"+@@config.outFile+"-"+
       w.calculateLoadLevel().to_s + ".xml"
       outFile=File.new(file, "w")
     builder = Builder::XmlMarkup.new(:target=>outFile, :indent=>2)

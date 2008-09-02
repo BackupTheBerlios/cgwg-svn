@@ -97,7 +97,8 @@ end
 #
 class Job
   attr_accessor :type, :responseTime, :jid, :price, :minprice, :maxprice, :pricePref,
-    :perfPref, :runTime, :queueTime, :startTime, :endTime, :minfinishtime, :maxfinishtime, :agent
+    :perfPref, :runTime, :queueTime, :startTime, :endTime, :minfinishtime, :maxfinishtime,
+    :agent, :submitTime
   def initialize(jid)
     @jid=jid
     @pricePref=0.0
@@ -121,7 +122,7 @@ class Job
   end
   def to_R_format
     retval="#{@jid.to_f} #{pricePref} #{@price} #{(@price/@runTime)} #{@minprice} #{@maxprice} "
-    retval+="#{@perfPref} #{@runTime} #{queueTime} #{@responseTime} "
+    retval+="#{@perfPref} #{@submitTime} #{@runTime} #{queueTime} #{@responseTime} "
   end
 end
 
@@ -531,7 +532,7 @@ class RReport
     fullReportFileName = File.expand_path(File.join(directory,reportFileName))
     @r=RExperimentAnalysis.new(directory, reportFileName, load);
     @reportFile = File.new(fullReportFileName, "w")
-    @reportFile.puts("jid pricepref price pricert minprice maxprice perfpref rtime qtime resptime")
+    @reportFile.puts("jid pricepref price pricert minprice maxprice perfpref stime rtime qtime resptime")
   end
 
   def addJob(job)
@@ -678,6 +679,7 @@ def createReport(reportFileName, loadLevel)
     ## Create a job instance
     #
     j = Job.new(jid)
+    j.submitTime = submitTime.to_i
     j.price = price.to_f
     j.minprice = minprice.to_f
     j.maxprice = maxprice.to_f

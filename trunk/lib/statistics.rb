@@ -246,12 +246,16 @@ def pdf_exponential(x, varlambda)
 end
 
 # Generate simple uniformly distributed random numbers.
-def generateUniformRandoms(amount)
+def generateUniformRandoms(amount, range=nil)
   values=Array.new
   amount.downto(0) {|index|
     values << rand()
   }
-  values
+  if range != nil
+    return linearTransformation(values, range)
+  else
+    return values
+  end
 end
 
 ###
