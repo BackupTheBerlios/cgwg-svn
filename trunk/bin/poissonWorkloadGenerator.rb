@@ -80,6 +80,12 @@ class Optparser
       opts.on("-r", "--numTotalResources INT","the number of resources in the grid") do |numtotalresources|
         options.numTotalResources=numtotalresources
       end
+      opts.on("-s", "--serialProb FLOAT", "the probability of a job to be serial, if not given 0 is assumed") do |serialprob|
+        options.serialprob=serialprob
+      end
+      opts.on("-m", "--maxJobSize INT", "maximal job size (usually power of 2), if not given 32 is assumed") do |maxjobsize|
+        options.maxjobsize=maxjobsize
+      end
       opts.on("-d", "--directory STRING", "the subdirectory in var to put the generated files in") do |subdir|
         options.subDir=subdir
       end
@@ -112,9 +118,13 @@ numTotalJobs = options.numJobs.to_i
 $verbose = options.verbose
 joblength=options.joblength.to_i
 numTotalSystems = options.numTotalResources.to_i
+serialProb = 0
+maxJobSize = 32
 subDir = options.subDir
 #percentCoallocation = options.percentCoallocation.to_f
 
+serialProb = options.serialprob.to_f if options.serialprob.to_f != 0
+maxJobSize = options.maxjobsize.to_i if options.maxjobsize.to_i != 0
 if numTotalJobs == 0 or @@config.numUsers == 0 or joblength == 0 or numTotalSystems == 0 or subDir == nil
   print "please read usage note (-h)\n"
   exit
@@ -126,7 +136,7 @@ print "#{numTotalSystems} single-node machines.\n"
 print "We create #{numTotalJobs} jobs.\n"
 print "Starting up in directory #{@@config.basePath}\n"
 
-cleanVarDirectory()
+cleanVarDirectory(subDir)
 
 # calculate how many jobs each resource must have
 # to add up to numTotalJobs
@@ -147,10 +157,10 @@ aggregatedWorkload = nil
   #print clusterConfig
   print "### Working on cluster #{clusterConfig.name}\n"
   if aggregatedWorkload == nil
-    puts "Clusterconfig: #{clusterConfig}"
-    aggregatedWorkload = genPoissonCluster(clusterConfig)
+    puts "Clusterconfig: #{clusterConfig} with probability of #{serialProb} for serial jobs and a max size of #{maxJobSize} cpus"
+    aggregatedWorkload = genPoissonCluster(clusterConfig, serialProb, maxJobSize)
   else
-    tempWorkload = genPoissonCluster(clusterConfig)
+    tempWorkload = genPoissonCluster(clusterConfig, serialProb, maxJobSize)
     tempWorkload.appendWorkloadTo(aggregatedWorkload)
   end
 }
@@ -189,8 +199,8 @@ collection.generateEachSlot {|load|
 ###
 ## Put the workload collection on disk for analysis later on...
 #
-Dir.mkdir(@@config.runPath+"/#{subDir}")
-storeFileName=@@config.runPath+"/#{subDir}/"+@@config.outFile+"-wcollection.bin"
+Dir.mkdir(ENV["CGWG_HOME"]+"/var/#{subDir}")
+storeFileName=ENV["CGWG_HOME"]+"/var/#{subDir}/"+@@config.outFile+"-wcollection.bin"
 store=File.new(storeFileName, "w")
 Marshal.dump(collection, store)
 store.close
@@ -200,7 +210,7 @@ store.close
 #
 if options.xml
   collection.eachWorkload {|w|
-    file=@@config.runPath+"/#{subDir}/"+@@config.outFile+"-"+
+    file=ENV["CGWG_HOME"]+"/var/#{subDir}/"+@@config.outFile+"-"+
       w.calculateLoadLevel().to_s + ".xml"
       outFile=File.new(file, "w")
     builder = Builder::XmlMarkup.new(:target=>outFile, :indent=>2)

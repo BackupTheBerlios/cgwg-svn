@@ -144,6 +144,20 @@ def generateGammaRandoms(amount, scale=1, shape=1, range=nil)
   end
 end
 
+# Generate log uniform distribution - See M. Downey
+# www.cs.huji.ac.il/labs/parallel/workload/m_downey97/m_downey97.c
+#def generateLogUniformRandoms(amount, min=0.00001, max=10)
+def generateLogUniformRandoms(amount, min, max)
+  normal = generateUniformRandoms(amount)
+  min = Math.log(min)
+  max = Math.log(max)
+  values = Array(amount)
+  amount.times{|idx|
+    values[idx] = Math.exp(normal[idx] * (max - min) + min)
+  }
+  return values
+end
+
 # Helper method, see generateGammaRandoms
 def generateGammaRandomsIntShape(amount, scale, shape)
   rawvalues=Array.new()
@@ -301,7 +315,7 @@ if __FILE__ == $0
   dumpRTable(rawgaussians, "rawgaussians.txt");
   doublegaussians=generateDoubleGaussianRandoms(amount);
   dumpRTable(doublegaussians, "doublegaussians.txt");
-  exponentials=generateExponentialRandoms(amount, varlambda=1, range=Range.new(0,100));
+  exponentials=generateExponentialRandoms(amount, varlambda=1, range=Range.new(0,1));
   dumpRTable(exponentials, "exponentials.txt");
   gammas=generateGammaRandoms(amount, scale=4, shape=2);
   dumpRTable(gammas, "gammas.txt");
@@ -309,5 +323,7 @@ if __FILE__ == $0
   dumpRTable(betas, "betas.txt");
   exp2s=generateExp2Randoms(amount, lowerbound=1, upperbound=32);
   dumpRTable(exp2s, "exp2s.txt");
+  logUniforms=generateLogUniformRandoms(amount, 1, 20);
+  dumpRTable(logUniforms, "loguniform.txt");
   testSortingAssumption();
 end

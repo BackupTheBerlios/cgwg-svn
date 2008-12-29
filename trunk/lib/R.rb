@@ -115,6 +115,18 @@ class RExperimentAnalysis
     @runner.execute(@datafile, outfile, drawcmd)
   end
 
+  def plotSingleRun_perfPrefHistogram
+    drawcmd=<<-END_OF_CMD
+      hist(data$perfpref,
+        main="Histogram of user preferences",
+        xlab="Performance Preference",
+        ylab="Frequency"
+      )
+    END_OF_CMD
+    outfile="histperfpref-"+@loadlevel.to_s
+    @runner.execute(@datafile, outfile, drawcmd)
+  end
+
   def plotSingleRun
     methods.grep(/^plotSingleRun_/){|m|
       self.send(m)

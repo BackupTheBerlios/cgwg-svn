@@ -58,56 +58,41 @@ class Optparser
             opts.on("-d", "--duration INT", "auction duration") do |duration|
                 options.duration=duration
             end
-            opts.on("-e", "--disable-scoring", "disable scoring") do |s|
-                options.disablescoring=s
+            opts.on("-f", "--force", "ignore existing output file") do |force|
+                options.force=force
             end
-            opts.on("-f", "--filename STRING","output file name (without .xml)") do |filename|
+            opts.on("-m", "--cpu-mode STRING","single: (#CPUs = #cpus), pow: (#CPUs = 2^n where max(n) = #cpus)") do |cpumode|
+                options.cpumode=cpumode
+            end
+            opts.on("-o", "--output-file STRING","output file name (without .xml)") do |filename|
                 options.filename=filename
             end
-            opts.on("-i", "--base-price-min FLOAT","min base price") do |basepmin|
-                options.basepmin=basepmin 
+            opts.on("-p", "--bid-prob FLOAT:FLOAT","min:max bid probability") do |bp|
+                options.bp=bp
             end
-            opts.on("-j", "--base-price-max FLOAT","max base price") do |basepmax|
-                options.basepmax=basepmax 
+            opts.on("-q", "--abort-prob FLOAT:FLOAT","min:max abort probability") do |ap|
+                options.ap=ap
             end
-            opts.on("-k", "--time-price-min FLOAT","min time price") do |timepmin|
-                options.timepmin=timepmin 
+            opts.on("-r", "--reject-prob FLOAT:FLOAT","min:max reject probability") do |rp|
+                options.rp=rp
             end
-            opts.on("-l", "--time-price-max FLOAT","max time price") do |timepmax|
-                options.timepmax=timepmax 
-            end
-            opts.on("-m", "--cpu-mode STRING","single (#CPUs = #cpus), pow (#CPUs = 2^n where max(n) = #cpus)") do |cpumode|
-                options.cpumode=cpumode 
-            end
-            opts.on("-n", "--bid-prob-min FLOAT","min bid probability") do |bpmin|
-                options.bpmin=bpmin 
-            end
-            opts.on("-o", "--bid-prob-max FLOAT","max bid probability") do |bpmax|
-                options.bpmax=bpmax 
-            end
-            opts.on("-p", "--reject-prob-min FLOAT","min reject probability") do |rpmin|
-                options.rpmin=rpmin 
-            end
-            opts.on("-q", "--reject-prob-max FLOAT","max reject probability") do |rpmax|
-                options.rpmax=rpmax 
-            end
-            opts.on("-r", "--abort-prob-min FLOAT","min abort probability") do |apmin|
-                options.apmin=apmin 
-            end
-            opts.on("-s", "--abort-prob-max FLOAT","max abort probability") do |apmax|
-                options.apmax=apmax 
+            opts.on("-s", "--disable-scoring", "disable scoring") do |s|
+                options.disablescoring=s
             end
             opts.on("-t", "--type STRING","broker type (direct, text)") do |brokertype|
                 options.brokertype=brokertype 
             end
-            opts.on("-v", "--verbose", "Run verbosely") do |v|
+            opts.on("-v", "--verbose", "run verbosely") do |v|
                 options.verbose = v
             end
-            opts.on("-w", "--over-alloc-min FLOAT","min over allocation fee") do |overallocmin|
-                options.overallocmin=overallocmin
+            opts.on("-x", "--base-price FLOAT:FLOAT","min:max base price") do |baseprice|
+                options.baseprice=baseprice
             end
-            opts.on("-x", "--over-alloc-max FLOAT","max over allocation fee") do |overallocmax|
-                options.overallocmax=overallocmax
+            opts.on("-y", "--time-price FLOAT:FLOAT","min:max time price") do |timeprice|
+                options.timeprice=timeprice
+            end
+            opts.on("-z", "--over-alloc FLOAT:FLOAT","min:max over allocation fee") do |overalloc|
+                options.overalloc=overalloc
             end
     
             opts.on_tail("-h", "--help", "Show this message") do
@@ -174,7 +159,7 @@ def getHeader #TODO adept
   header = <<-END_OF_HEADER
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE calana:experiment SYSTEM "experiment.dtd">
-<calana:experiment name="single-#{@brokerType}" xmlns:calana="http://www.itwm.fhg.de/calana/experiment/">
+<calana:experiment name="#{@fileName.match(/var\/(.*).xml/)[-1]}" xmlns:calana="http://www.itwm.fhg.de/calana/experiment/">
   <description>
     some experiment
   </description>
@@ -263,40 +248,46 @@ print "Calana Experiment Generator Frontend\n"
 options = Optparser.parse(ARGV)
 
 agents = options.agents.to_i
-fileName = options.filename
 disableScoring = options.disablescoring
+force = options.force
+basePrice = options.baseprice
+timePrice = options.timeprice
+overAllocFee = options.overalloc
+bidProbability = options.bp
+rejectProbability = options.rp
+abortProbability = options.ap
+@fileName = options.filename
 @scoring = true
 @brokerType = options.brokertype
 @verbose = options.verbose
 @duration = options.duration.to_i
 @cpus = options.cpus.to_i
 @cpuMode = options.cpumode
-@basePriceMin = options.basepmin.to_f
-@basePriceMax = options.basepmax.to_f
-@timePriceMin = options.timepmin.to_f
-@timePriceMax = options.timepmax.to_f
-@bidProbabilityMin = options.bpmin.to_f
-@bidProbabilityMax = options.bpmax.to_f
-@rejectProbabilityMin = options.rpmin.to_f
-@rejectProbabilityMax = options.rpmax.to_f
-@abortProbabilityMin = options.apmin.to_f
-@abortProbabilityMax = options.apmax.to_f
-@overAllocMin = options.overallocmin.to_f
-@overAllocMax = options.overallocmax.to_f
 
 
-# setting defaults
+
+# checking mandatory parameters
 if agents == 0 or (@brokerType != "direct" and @brokerType != "text")
   puts "plase read usage note (-h)\n"
   puts "agents: #{agents}" if @verbose
   puts "brokerType: #{@brokerType}" if @verbose
+  puts
+  puts "mandatory parameters: -a, -t"
   exit
 end
 
+
+
+# checking for valid syntax 
+#if baseprice =~ #TODO
+
+
+
+# setting default values
 @scoring = false if disableScoring
 
 if @cpuMode == nil or (@cpuMode != "single" and @cpuMode != "pow")
-  @cpuMode = "pow"
+  @cpuMode = "single"
   puts "none or wrong CPU-mode: setting to '#{@cpuMode}'"
 end
 if @duration == 0
@@ -304,25 +295,49 @@ if @duration == 0
   puts "no duration set: setting to #{@duration}"
 end
 if @cpus == 0
-  @cpus = 5
+  @cpus = 32
   puts "no #cpus set: setting to #{@cpus}"
 end
-if @basePriceMin == 0
-  @basePriceMin = 10
-  puts "no basePriceMin set: setting to #{@basePriceMin}"
+if basePrice == nil
+  basePrice = "10:17"
+  puts "no basePrice set: setting to #{basePrice}"
 end
-if @basePriceMax == 0
-  @basePriceMax = 17
-  puts "no basePriceMax set: setting to #{@basePriceMax}"
+if timePrice == nil
+  timePrice = "0.1:2.0"
+  puts "no timePrice set: setting to #{timePrice}"
 end
-if @timePriceMin == 0
-  @timePriceMin = 0.1
-  puts "no basePriceMin set: setting to #{@timePriceMin}"
+if overAllocFee == nil
+  overAllocFee = "5:10"
+  puts "no overAllocFee set: setting to #{overAllocFee}"
 end
-if @timePriceMax == 0
-  @timePriceMax = 2.0
-  puts "no basePriceMax set: setting to #{@timePriceMax}"
+if bidProbability == nil
+  bidProbability = "1:1"
+  puts "no bidProbability set: setting to #{bidProbability}"
 end
+if rejectProbability == nil
+  rejectProbability = "0:0"
+  puts "no rejectProbability set: setting to #{rejectProbability}"
+end
+if abortProbability == nil
+  abortProbability = "0:0"
+  puts "no abortProbability set: setting to #{abortProbability}"
+end
+
+
+
+# settin ranges
+@basePriceMin = basePrice.split(":")[0].to_f
+@basePriceMax = basePrice.split(":")[1].to_f
+@timePriceMin = timePrice.split(":")[0].to_f
+@timePriceMax = timePrice.split(":")[1].to_f
+@bidProbabilityMin = bidProbability.split(":")[0].to_f
+@bidProbabilityMax = bidProbability.split(":")[1].to_f
+@rejectProbabilityMin = rejectProbability.split(":")[0].to_f
+@rejectProbabilityMax = rejectProbability.split(":")[1].to_f
+@abortProbabilityMin = abortProbability.split(":")[0].to_f
+@abortProbabilityMax = abortProbability.split(":")[1].to_f
+@overAllocMin = overAllocFee.split(":")[0].to_f
+@overAllocMax = overAllocFee.split(":")[1].to_f
 
 basedir=File.expand_path(ENV["CGWG_HOME"])
 puts "Assuming base directory #{basedir}\n"
@@ -331,17 +346,17 @@ puts ""
 
 
 # generate name if none is provided and append the extension
-if fileName == nil
-  fileName = "experiment_#{@brokerType}_#{agents}.xml"
+if @fileName == nil
+  @fileName = "experiment_#{@brokerType}_#{agents}.xml"
 else
-  fileName = "#{fileName}.xml"
+  @fileName = "#{@fileName}.xml"
 end
-fileName = File.expand_path("#{basedir}/var/#{fileName}")
-puts "File name: #{fileName}" if @verbose
+@fileName = File.expand_path("#{basedir}/var/#{@fileName}")
+puts "File name: #{@fileName}" if @verbose
 
 # check if file exists
-if File.exists?(fileName)
-  puts "File '#{fileName}' already exists."
+if File.exists?(@fileName) and not force
+  puts "File '#{@fileName}' already exists."
   puts "Exiting."
   exit
 end
@@ -349,7 +364,7 @@ end
 
 
 # build file
-File.open(fileName, "w") {|handle|
+File.open(@fileName, "w") {|handle|
   puts "Generate header ..." if @verbose
   handle.puts getHeader
   puts "Generate agents (#{agents}) ..." if @verbose
@@ -361,4 +376,4 @@ File.open(fileName, "w") {|handle|
   puts "Generate footer ..." if @verbose
   handle.puts getFooter
 }
-puts "file generated: #{fileName}"
+puts "file generated: #{@fileName}"

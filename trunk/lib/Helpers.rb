@@ -48,10 +48,10 @@ def genLublinCluster(clusterConfig)
     return workload
 end
 
-def genPoissonCluster(clusterConfig)
+def genPoissonCluster(clusterConfig, serialprob=0, maxJobSize=32)
   print "Generating workload using the poisson process model."
   print "ClusterConfig is: \n#{clusterConfig}"
-  poissonModel=PoissonWorkloadModel.new(clusterConfig);
+  poissonModel=PoissonWorkloadModel.new(clusterConfig, serialprob, maxJobSize);
 	workload=poissonModel.execute();
 	return workload;
 end
@@ -74,9 +74,15 @@ def addUserRuntimeEstimates(workload)
 end
 
 
-def cleanVarDirectory()
-    puts "Cleaning runtime directory #{@@config.runPath}"
-    `rm #{@@config.runPath}/*`
+def cleanVarDirectory(folder=nil)
+    if folder == nil
+      puts "Cleaning runtime directory #{@@config.runPath}"
+      `rm #{@@config.runPath}/*`
+    else
+      path = File.join(@@config.runPath, folder);
+      puts "Cleaning runtime directory #{path}"
+      `rm -r #{path}`
+    end
 end
 
 ###
