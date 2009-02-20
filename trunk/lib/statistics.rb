@@ -272,6 +272,16 @@ def generateUniformRandoms(amount, range=nil)
   end
 end
 
+# Generate simple uniformaly distributed random integers.
+def generateUniformIntegerRandoms(amount, range=nil)
+  values=generateUniformRandoms(amount, range)
+  out = Array.new()
+  values.each {|value|
+    out << value.to_i
+  }
+  return out
+end
+
 ###
 ## Helper function: Calculate the binary logarithm.
 #

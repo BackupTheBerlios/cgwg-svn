@@ -61,6 +61,21 @@ class Optparser
             opts.on("-f", "--force", "ignore existing output file") do |force|
                 options.force=force
             end
+            opts.on("-g", "--upper-bound FLOAT:FLOAT", "if agentType == bounded") do |ub|
+                options.ub=ub
+            end
+            opts.on("-i", "--lower-bound FLOAT:FLOAT", "if agentType == bounded") do |lb|
+                options.lb=lb
+            end
+            opts.on("-j", "--bundle-size INT", "if agentType == bounded") do |bs|
+                options.bs=bs
+            end
+            opts.on("-k", "--smooth-factor FLOAT", "if agentType == exp") do |sf|
+                options.sf=sf
+            end
+            opts.on("-l", "--smooth-length INT", "if agentType == exp") do |sl|
+                options.sl=sl
+            end
             opts.on("-m", "--cpu-mode STRING","single: (#CPUs = #cpus), pow: (#CPUs = 2^n where max(n) = #cpus)") do |cpumode|
                 options.cpumode=cpumode
             end
@@ -79,8 +94,11 @@ class Optparser
             opts.on("-s", "--disable-scoring", "disable scoring") do |s|
                 options.disablescoring=s
             end
-            opts.on("-t", "--type STRING","broker type (direct, text)") do |brokertype|
+            opts.on("-t", "--broker_type STRING","broker type (direct, text)") do |brokertype|
                 options.brokertype=brokertype 
+            end
+            opts.on("-u", "--agent_type STRING","agent type (if broker_type == text) (normal, exp, bounded, rulebased)") do |agenttype|
+                options.agenttype=agenttype 
             end
             opts.on("-v", "--verbose", "run verbosely") do |v|
                 options.verbose = v
@@ -136,7 +154,7 @@ def generateRandomDirect(amount)
   return randoms
 end
 
-def generateRandomText(amount)
+def generateRandomTextNormal(amount)
   randoms = mda(amount, 6)
   basePrices = generateUniformRandoms(amount, Range.new(@basePriceMin, @basePriceMax))
   timePrices = generateUniformRandoms(amount, Range.new(@timePriceMin, @timePriceMax))
@@ -151,6 +169,48 @@ def generateRandomText(amount)
     randoms[row][3] = round(bidProb[row], 2)
     randoms[row][4] = round(rejectProb[row], 2)
     randoms[row][5] = round(abortProb[row], 2)
+  }
+  return randoms
+end
+
+def generateRandomTextExp(amount)
+  randoms = mda(amount, 6)
+  smoothFactor = generateUniformRandoms(amount, Range.new(@smoothFactorMin, @smoothFactorMax))
+  smoothLength = generateUniformRandoms(amount, Range.new(@smoothLengthMin, @smoothLengthMax))
+  oversizedAllocFee = generateUniformRandoms(amount, Range.new(@overAllocMin, @overAllocMax))
+  bidProb = generateUniformRandoms(amount, Range.new(@bidProbabilityMin, @bidProbabilityMax))
+  rejectProb = generateUniformRandoms(amount, Range.new(@rejectProbabilityMin, @rejectProbabilityMax))
+  abortProb = generateUniformRandoms(amount, Range.new(@abortProbabilityMin, @abortProbabilityMax))
+  amount.times {|row|
+    randoms[row][0] = round(smoothFactor[row], 2)
+    randoms[row][1] = round(smoothLength[row], 0)
+    randoms[row][2] = round(oversizedAllocFee[row], 2)
+    randoms[row][3] = round(bidProb[row], 2)
+    randoms[row][4] = round(rejectProb[row], 2)
+    randoms[row][5] = round(abortProb[row], 2)
+  }
+  return randoms
+end
+
+def generateRandomTextBounded(amount)
+  randoms = mda(amount, 6)
+  upperBound = generateUniformRandoms(amount, Range.new(@upperBoundMin, @upperBoundMax))
+  lowerBound = generateUniformRandoms(amount, Range.new(@lowerBoundMin, @lowerBoundMax))
+  bundleSize = generateUniformIntegerRandoms(amount, Range.new(@bundleSizeMin, @bundleSizeMax))
+  changeRatio = generateGaussianRandoms(amount, 0.5, 1.0, Range.new(0.1, 0.9))
+  oversizedAllocFee = generateUniformRandoms(amount, Range.new(@overAllocMin, @overAllocMax))
+  bidProb = generateUniformRandoms(amount, Range.new(@bidProbabilityMin, @bidProbabilityMax))
+  rejectProb = generateUniformRandoms(amount, Range.new(@rejectProbabilityMin, @rejectProbabilityMax))
+  abortProb = generateUniformRandoms(amount, Range.new(@abortProbabilityMin, @abortProbabilityMax))
+  amount.times {|row|
+    randoms[row][0] = round(upperBound[row], 2)
+    randoms[row][1] = round(lowerBound[row], 2)
+    randoms[row][2] = bundleSize[row]
+    randoms[row][3] = round(changeRatio[row], 2)
+    randoms[row][4] = round(oversizedAllocFee[row], 2)
+    randoms[row][5] = round(bidProb[row], 2)
+    randoms[row][6] = round(rejectProb[row], 2)
+    randoms[row][7] = round(abortProb[row], 2)
   }
   return randoms
 end
@@ -213,7 +273,7 @@ END_OF_DIRECT_AGENTS
 end
 
 def getBiddingAgents(amount)
-  randNum = generateRandomText(amount)
+  randNum = generateRandomTextNormal(amount)
   agents = ""
   amount.times {|num|
     agents << <<-END_OF_BID_AGENTS
@@ -225,6 +285,58 @@ def getBiddingAgents(amount)
       <prop name="bidProbability" value="#{randNum[num][3]}"/>
       <prop name="rejectProbability" value="#{randNum[num][4]}"/>
       <prop name="abortProbability" value="#{randNum[num][5]}"/>
+    </agent>
+END_OF_BID_AGENTS
+  }
+  return agents
+end
+
+def getExpSmoothingAgents(amount)
+  randNum = generateRandomTextExp(amount)
+  agents = ""
+  amount.times {|num|
+    agents << <<-END_OF_BID_AGENTS
+    <agent name="bidder-#{num+1}" class="calana.agents.impl.ExpSmoothingBidAgent">
+      <cluster-ref name="cluster-1-1"/>
+      <prop name="smoothFactor" value="#{randNum[num][0]}"/>
+      <prop name="smoothLength" value="#{randNum[num][1]}"/>
+      <prop name="oversizedAllocationFee" value="#{randNum[num][2]}"/>
+      <prop name="bidProbability" value="#{randNum[num][3]}"/>
+      <prop name="rejectProbability" value="#{randNum[num][4]}"/>
+      <prop name="abortProbability" value="#{randNum[num][5]}"/>
+    </agent>
+END_OF_BID_AGENTS
+  }
+  return agents
+end
+
+def getBoundedBidAgents(amount)
+  randNum = generateRandomTextBounded(amount)
+  agents = ""
+  amount.times {|num|
+    agents << <<-END_OF_BID_AGENTS
+    <agent name="bidder-#{num+1}" class="calana.agents.impl.BoundedBidAgent">
+      <cluster-ref name="cluster-1-1"/>
+      <prop name="upperBound" value="#{randNum[num][0]}"/>
+      <prop name="lowerBound" value="#{randNum[num][1]}"/>
+      <prop name="bundleSize" value="#{randNum[num][2]}"/>
+      <prop name="changeRatio" value="#{randNum[num][3]}"/>
+      <prop name="oversizedAllocationFee" value="#{randNum[num][4]}"/>
+      <prop name="bidProbability" value="#{randNum[num][5]}"/>
+      <prop name="rejectProbability" value="#{randNum[num][6]}"/>
+      <prop name="abortProbability" value="#{randNum[num][7]}"/>
+    </agent>
+END_OF_BID_AGENTS
+  }
+  return agents
+end
+
+def getRuleBasedAgents(amount) #TODO
+  agents = ""
+  amount.times {|num|
+    agents << <<-END_OF_BID_AGENTS
+    <agent name="bidder-#{num+1}" class="calana.agents.impl.RuleBasedAgents">
+      <cluster-ref name="cluster-1-1"/>
     </agent>
 END_OF_BID_AGENTS
   }
@@ -256,9 +368,15 @@ overAllocFee = options.overalloc
 bidProbability = options.bp
 rejectProbability = options.rp
 abortProbability = options.ap
+upperBound = options.ub
+lowerBound = options.lb
+bundleSize = options.bs
+smoothFactor = options.sf
+smoothLength = options.sl
 @fileName = options.filename
 @scoring = true
 @brokerType = options.brokertype
+@agentType = options.agenttype
 @verbose = options.verbose
 @duration = options.duration.to_i
 @cpus = options.cpus.to_i
@@ -286,6 +404,10 @@ end
 # setting default values
 @scoring = false if disableScoring
 
+if @brokerType == "text" and (@agentType == nil or (@agentType != "exp" and @agentType != "bounded" and @agentType != "rulebased"))
+  @agentType = "normal"
+  puts "none or wrong agent type set: setting to '#{@agentType}'"
+end
 if @cpuMode == nil or (@cpuMode != "single" and @cpuMode != "pow")
   @cpuMode = "single"
   puts "none or wrong CPU-mode: setting to '#{@cpuMode}'"
@@ -322,6 +444,30 @@ if abortProbability == nil
   abortProbability = "0:0"
   puts "no abortProbability set: setting to #{abortProbability}"
 end
+if @agentType == "bounded"
+  if upperBound == nil
+    upperBound = "70:120"
+    puts "no upperBound set: setting to #{upperBound}"
+  end
+  if lowerBound == nil
+    lowerBound = "10:50"
+    puts "no lowerBound set: setting to #{lowerBound}"
+  end
+  if bundleSize == nil
+    bundleSize = "2:20"
+    puts "no bundleSize set: setting to #{bundleSize}"
+  end
+end
+if @agentType == "exp"
+  if smoothFactor == nil
+    smoothFactor = "0.05:0.3"
+    puts "no smoothFactor set: setting to #{smoothFactor}"
+  end
+  if smoothLength == nil
+    smoothLength = "2:20"
+    puts "no smoothLength set: setting to #{smoothLength}"
+  end
+end
 
 
 
@@ -338,6 +484,20 @@ end
 @abortProbabilityMax = abortProbability.split(":")[1].to_f
 @overAllocMin = overAllocFee.split(":")[0].to_f
 @overAllocMax = overAllocFee.split(":")[1].to_f
+if @agentType == "bounded"
+  @upperBoundMin = upperBound.split(":")[0].to_f
+  @upperBoundMax = upperBound.split(":")[1].to_f
+  @lowerBoundMin = lowerBound.split(":")[0].to_f
+  @lowerBoundMax = lowerBound.split(":")[1].to_f
+  @bundleSizeMin = bundleSize.split(":")[0].to_i
+  @bundleSizeMax = bundleSize.split(":")[1].to_i
+end
+if @agentType == "exp"
+  @smoothFactorMin = smoothFactor.split(":")[0].to_f
+  @smoothFactorMax = smoothFactor.split(":")[1].to_f
+  @smoothLengthMin = smoothLength.split(":")[0].to_i
+  @smoothLengthMax = smoothLength.split(":")[1].to_i
+end
 
 basedir=File.expand_path(ENV["CGWG_HOME"])
 puts "Assuming base directory #{basedir}\n"
@@ -347,7 +507,11 @@ puts ""
 
 # generate name if none is provided and append the extension
 if @fileName == nil
-  @fileName = "experiment_#{@brokerType}_#{agents}.xml"
+  if @brokerType == "text"
+    @fileName = "experiment_#{@brokerType}_#{@agentType}_#{agents}.xml"
+  else
+    @fileName = "experiment_#{@brokerType}_#{agents}.xml"
+  end
 else
   @fileName = "#{@fileName}.xml"
 end
@@ -371,7 +535,11 @@ File.open(@fileName, "w") {|handle|
   if @brokerType == "direct"
     handle.puts getDirectAgents(agents)
   else
-    handle.puts getBiddingAgents(agents)
+    if @agentType == "normal" then handle.puts getBiddingAgents(agents)
+    elsif @agentType == "bounded" then handle.puts getBoundedBidAgents(agents)
+    elsif @agentType == "exp" then handle.puts getExpSmoothingAgents(agents)
+    elsif @agentType == "rulebased" then handle.puts getRuleBasedAgents(agents)
+    end
   end
   puts "Generate footer ..." if @verbose
   handle.puts getFooter
