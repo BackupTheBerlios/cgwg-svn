@@ -98,7 +98,7 @@ end
 class Job
   attr_accessor :type, :responseTime, :jid, :price, :minprice, :maxprice, :pricePref,
     :perfPref, :runTime, :queueTime, :startTime, :endTime, :minfinishtime, :maxfinishtime,
-    :agent, :submitTime
+    :agent, :submitTime, :eventState
   def initialize(jid)
     @jid=jid
     @pricePref=0.0
@@ -108,7 +108,8 @@ class Job
   def check
     puts "job #{@jid}: negative queueTime: #{@queueTime}" if @queueTime < 0
     puts "job #{@jid}: negative runtime: #{@runTime}" if @runTime <= 0
-    puts "job #{@jid}: invalid responseTime: #{@responseTime}" if @responseTime < (@runTime + @queueTime)
+    puts "job #{@jid}: invalid responseTime: #{@responseTime}" if @eventState == "CLOSE" && @responseTime < (@runTime + @queueTime)
+    puts "job #{@jid}: invalid responseTime: is #{@responseTime} but should be 0" if @eventState == "KILLED" && @responseTime != 0
     puts "job #{@jid}: invalid preferences: #{@pricePref}-#{@perfPref}" if (@pricePref+@perfPref) != 1
   end
   def setPrefs(perfPref, pricePref)
@@ -118,11 +119,11 @@ class Job
   end
   def to_dataplot_format
     retval="#{@jid.to_f} #{pricePref} #{@price} #{(@price/@runTime)} "
-    retval+="#{@perfPref} #{@runTime} #{queueTime} #{@responseTime} #{@minprice} #{@maxprice}" 
+    retval+="#{@perfPref} #{@runTime} #{@queueTime} #{@responseTime} #{@minprice} #{@maxprice}" 
   end
   def to_R_format
     retval="#{@jid.to_f} #{pricePref} #{@price} #{(@price/@runTime)} #{@minprice} #{@maxprice} "
-    retval+="#{@perfPref} #{@submitTime} #{@runTime} #{queueTime} #{@responseTime} "
+    retval+="#{@perfPref} #{@submitTime} #{@runTime} #{@queueTime} #{@responseTime} "
   end
 end
 
@@ -656,17 +657,19 @@ def createReport(reportFileName, loadLevel)
     submitTime = fields[12].strip!
     runTime = fields[15].strip!
     responseTime = fields[19].strip!
+    enqueued = fields[13].strip!
     startTime = fields[14].strip!
     endTime = fields[16].strip!
     minfinishtime = fields[17].strip!
     maxfinishtime = fields[18].strip!
-    queueTime = responseTime.to_i - runTime.to_i
-    puts "Calculated negative queuetime, responsetime=#{responseTime}, runTime=#{runTime}" if queueTime < 0
+    queueTime = startTime.to_i - enqueued.to_i
+    puts "Calculated negative queuetime, enqueued=#{enqueued.to_i}, startTime=#{startTime.to_i}" if queueTime < 0
     price = fields[20].strip!
     minprice = fields[21].strip!
     maxprice = fields[22].strip!
     agent = fields[7].strip!
     prefs = fields[8].strip!
+    eventState = fields[9].strip!
     prefFields = prefs.split(";")
     #puts "PREF for job #{jid}: #{prefFields}"
     finishtimeField = prefFields[0];
@@ -692,6 +695,7 @@ def createReport(reportFileName, loadLevel)
     j.minfinishtime = minfinishtime.to_i
     j.maxfinishtime = maxfinishtime.to_i
     j.agent = agent
+    j.eventState = eventState
 
     if (context == SEQUENCE)
       puts "SEQUENCE: #{jid} #{submitTime} #{responseTime} #{price}" if $verbose
