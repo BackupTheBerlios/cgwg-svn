@@ -135,6 +135,64 @@ class RExperimentAnalysis
   end
 end
 
+class SA_Analysis
+  def initialize(path, datafile, loadlevel)
+    @workingdir=path
+    @datafile = File.expand_path(File.join(path, datafile))
+    @loadlevel = loadlevel
+    puts "Using data from file #{@datafile}" if $verbose
+    @runner = RRunner.new(path)
+  end
+  def plotSingleRun
+    methods.grep(/^plotSingleRun_/){|m|
+      self.send(m)
+    }
+    sleep(1)
+  end
+  def plotSingleRun_Energy
+    drawcmd=<<-END_OF_CMD
+      l<-length(data$Energy)
+      range<-1:l
+      plot(range, data$Energy, type="n",
+        main="Energy of the Solutions",
+        xlab="Iteration",
+        ylab="Absolute Energy"
+      )
+      points(range, data$Energy)
+    END_OF_CMD
+    outfile="sa-energy-"+@loadlevel.to_s
+    @runner.execute(@datafile, outfile, drawcmd)
+  end
+  def plotSingleRun_Temperature
+    drawcmd=<<-END_OF_CMD
+      l<-length(data$Temperature)
+      range<-1:l
+      plot(range, data$Temperature, type="n",
+        main="Temperature of the Solutions",
+        xlab="Iteration",
+        ylab="Temperature"
+      )
+      points(range, data$Temperature, pch=1)
+    END_OF_CMD
+    outfile="sa-temperature-"+@loadlevel.to_s
+    @runner.execute(@datafile, outfile, drawcmd)
+  end
+  def plotSingleRun_Accepted
+    drawcmd=<<-END_OF_CMD
+      l<-length(data$Accepted)
+      range<-1:l
+      plot(range, data$Accepted, type="n",
+        main="Number of Accepted Solutions",
+        xlab="Iteration",
+        ylab="# Accepted"
+      )
+      points(range, data$Accepted, pch=1)
+    END_OF_CMD
+    outfile="sa-accepted-"+@loadlevel.to_s
+    @runner.execute(@datafile, outfile, drawcmd)
+  end
+end
+
 class RRunner
   def initialize(workingdir)
     @workingdir = workingdir

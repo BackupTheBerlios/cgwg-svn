@@ -19,7 +19,38 @@
 ## Mixin for a real clone of a class instance.
 #
 module DeepClone
-    def deep_clone
-        return Marshal::load(Marshal.dump(self))
-    end
+  def deep_clone
+    return Marshal::load(Marshal.dump(self))
+  end
+end
+
+
+###
+## Add loglines to the reporter, then dump them later on.
+#
+class LogReporter
+  def initialize
+    @lines=Array.new
+    @header=""
+  end
+  def setHeader(header)
+    @header=header.to_s
+  end
+  def addLine(line)
+    @lines << (line.to_s)
+  end
+  def dumpToFile(filename)
+    File.open(filename, "w") { |file|
+      file.write(@header + "\n")
+      @lines.each{|line|
+        file.write(line + "\n")
+      }
+    }
+  end
+  def dumpToString()
+    retval = @header
+    @lines.each{|line|
+      retval += line + "\n"
+    }
+  end
 end

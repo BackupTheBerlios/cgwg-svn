@@ -587,7 +587,7 @@ class ReportCollection
   end
 end
 
-
+# TODO: MAke this more generic - loading of sa-scheduler result files.
 def createReport(reportFileName, loadLevel)
   reportFile=File.new(reportFileName, "r")
   reports = ReportCollection.new(loadLevel);

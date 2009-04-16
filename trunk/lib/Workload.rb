@@ -28,7 +28,7 @@ class AtomicJob
         :numberAllocatedProcessors, :averageCPUTimeUsed, :usedMemory,
         :reqNumProcessors, :wallTime, :reqMemory, :status, :userID, :groupID,
         :appID, :penalty, :queueID, :partitionID, :preceedingJobID, 
-        :timeAfterPreceedingJob
+        :timeAfterPreceedingJob, :startTime, :queueTime, :finishTime, :resourceID 
     def initialize
         # These are the default values as defined in the SWF definition,
         # see http://www.cs.huji.ac.il/labs/parallel/workload/swf.html
@@ -51,6 +51,12 @@ class AtomicJob
         @partitionID = -1
         @preceedingJobID = -1
         @timeAfterPreceedingJob = -1
+        # These attributes are needed for the ruby scheduler
+        # implementation
+        @queueTime = 0.0
+        @startTime = 0.0
+        @finishTime = 0.0
+        @resourceID = "N/A"
     end
     def writeSWFFormat
         retval = "#{@jobID}\t#{@submitTime}\t#{@waitTime}\t#{@runTime}\t"
@@ -136,8 +142,9 @@ class AtomicJob
     end
     # Human-readable data.
     def to_s
-      retval="Jid: #{@jobID.to_f} ST:#{@submitTime} RT:#{@runTime} WT:#{@wallTime} " 
-      retval+="NODES: #{@numberAllocatedProcessors}"
+      retval="Jid: #{@jobID.to_i} SUBT:#{"%.2f" % @submitTime} STARTT: #{"%.2f" % @startTime} "
+      retval+="RT:#{"%.2f" % @runTime} WT:#{"%.2f" % @wallTime} " 
+      retval+="NODES: #{@numberAllocatedProcessors} R: #{@resourceID}"
     end
 end
 
@@ -267,7 +274,7 @@ end
 #
 class Workload
   include DeepClone
-  attr_accessor :jobs, :clusterConfig, :tasks
+  attr_accessor :jobs, :clusterConfig, :tasks, :load
   def initialize(clusterConfig)
     @clusterConfig=clusterConfig
     @jobs=Array.new
@@ -407,7 +414,7 @@ class Workload
   def addTasks(additionalTasks)
     @tasks = @tasks | additionalTasks
   end
-  # adds an additional job to the workload.
+  # adds an additional job to the end of the workload.
   def addJob(aJob)
     @jobs.push(aJob)
   end
@@ -474,7 +481,6 @@ class Workload
       @tasks[i].id = i+1
     end
   end
-
   # calculate the mean runtime of this workload
   def calculateMeanRuntime
     aggRuntime = 0
@@ -592,6 +598,9 @@ class Workload
     return maxSubmitTime
   end
 
+  def size()
+    return @jobs.size
+  end
 end
 
 ###
@@ -665,6 +674,9 @@ class WorkloadCollection
         yield @workloads[key]
       end
     }
+  end
+  def getWorkload(loadlevel)
+    return @workloads[loadlevel]
   end
   def printWorkloadOverview
     keys=@workloads.keys
