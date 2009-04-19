@@ -30,6 +30,7 @@ require 'Helpers'
 #require 'Dataplot'
 require 'R'
 require 'Latex'
+require 'Scheduler'
 require 'optparse'
 require 'ostruct'
 
@@ -58,11 +59,14 @@ class Optparser
             opts.separator ""
             opts.separator "Specific options:"
             # Mandatory argument.
-            opts.on("-r", "--report FILE", "the report file in calanasim format") do |reportFile|
+            opts.on("-r", "--calana-report FILE", "the report file in calanasim format") do |reportFile|
                 options.reportfile=reportFile
             end
             opts.on("-t", "--trace FILE", "the trace file in calanasim format") do |reportFile|
                 options.tracefile=reportFile
+            end
+            opts.on("-s", "--sa-store FILE", "simulated annealing schedulde file") do |safile|
+                options.safile=safile
             end
             opts.on("-o", "--output directory","the output directory for the report files") do |outdir|
                 options.outdir=outdir
@@ -587,12 +591,36 @@ class ReportCollection
   end
 end
 
-# TODO: MAke this more generic - loading of sa-scheduler result files.
-def createReport(reportFileName, loadLevel)
+def createSAReport(reportFileName, loadLevel)
+  reports = ReportCollection.new(loadLevel);
+  schedule=Schedule.instanceFromFile(reportFileName);
+  schedule.eachJob{|scheduled_job|
+    #TODO: Complete the values here.
+    j = Job.new(scheduled_job.jobID)
+    j.submitTime = scheduled_job.submitTime.to_i
+    j.price = 0.0
+    j.minprice = 0.0
+    j.maxprice = 0.0
+    j.setPrefs(1.0, 0.0);
+    j.responseTime = 0.0
+    j.runTime = scheduled_job.runTime.to_i
+    j.queueTime = scheduled_job.queueTime.to_i
+    j.startTime = scheduled_job.startTime.to_i
+    j.endTime = scheduled_job.finishTime.to_i
+    j.minfinishtime = 0
+    j.maxfinishtime = 0
+    j.agent = scheduled_job.resourceID
+    j.eventState = "UNDEFINED"
+    reports.addJob(j)
+  }
+  reports.finalize()
+end
+
+def createCalanaReport(reportFileName, loadLevel)
   reportFile=File.new(reportFileName, "r")
   reports = ReportCollection.new(loadLevel);
 
-  print "Reading calanasim report file and converting.\n"
+  puts "Reading calanasim report file and converting."
   inExplanation = false;
   context = 0;
 
@@ -812,7 +840,7 @@ class UtilizationReport
 end
 
 
-def processTrace(traceFileName, loadLevel)
+def processCalanaTrace(traceFileName, loadLevel)
   queueLength = Hash.new();
   utilization = Hash.new();
 
@@ -961,11 +989,12 @@ options = Optparser.parse(ARGV)
 
 $reportFileName = options.reportfile
 $traceFileName = options.tracefile
+$saFileName = options.safile
 $outDir = options.outdir
 $load = options.load
 $verbose = options.verbose
 
-if ($reportFileName == nil and $traceFileName == nil) or
+if ($reportFileName == nil and $saFileName == nil and $traceFileName == nil) or
   $outDir == nil or $load == nil
   print "please read usage note (-h)\n"
   exit
@@ -974,10 +1003,14 @@ end
 puts "Using library path #{$:.join(":")}" if $verbose
 
 if ($reportFileName != nil)
-  createReport($reportFileName, $load)
-end
-if ($traceFileName != nil)
-  processTrace($traceFileName, $load)
+  createCalanaReport($reportFileName, $load)
+  if ($traceFileName != nil)
+    processCalanaTrace($traceFileName, $load)
+  end
+else
+  if ($saFileName != nil)
+    createSAReport($saFileName, $load)
+  end
 end
 
 

@@ -34,10 +34,22 @@ require 'Helpers'
 ## possible to remove a job from a queue.
 #
 class Resource
-  attr_accessor :name
+  attr_accessor :name, :queue
   def initialize(name)
     @queue = Array.new
     @name=name
+  end
+  def createClone()
+    retval=Array.new
+    retval << @name.clone
+    retval << @queue.clone
+  end
+  def Resource.instanceFromClone(clone)
+    name = clone[0]
+    queue = clone[1]
+    instance=Resource.new(name)
+    instance.queue=queue
+    return instance
   end
   def popRandomJob()
     raise "No job available - queue is empty" if @queue.empty?
@@ -168,6 +180,13 @@ class Resource
   def absoluteQuality
     return absoluteQueueTime
   end
+  def makespan()
+    maxFinishTime=0.0
+    @queue.each{|job|
+      maxFinishTime=[maxFinishTime, job.finishTime].max
+    }
+    return maxFinishTime
+  end
 end
 
 ###
@@ -187,18 +206,40 @@ class Schedule
     @workload=workload
     @resources=resources
   end
+  # writes the current schedule to the provided file path.
+  def saveToFile(solutionfileFullPath)
+    File.open(solutionfileFullPath, "w") {|file|
+      Marshal.dump(self, file)
+    }
+  end
+  # returns a schedule instance unmarshalled from the given file path.
+  def Schedule.instanceFromFile(solutionfileFullPath)
+    retval=nil;
+    File.open(solutionfileFullPath, "r") {|file|
+      retval=Marshal::load(file)
+    }
+    retval
+  end
   def getSolution
     retval=Array.new
     @resources.each{|resource|
-      retval << resource.clone
+      cloned=resource.createClone()
+      #puts "Cloned resource #{resource.name}: #{resource}"
+      retval << cloned
     }
     retval
   end
   def setSolution(newSolution)
-    @resources=newResources
+    @resources=Array.new
+    newSolution.each{|clone|
+      resource=Resource.instanceFromClone(clone)
+      #puts "setSolution: Restoring resource #{resource}"
+      @resources << resource
+    }
     # The solution only saves the queue assignments. recalculate the
     # schedules in order to update the workload.
     @resources.each{|resource|
+     # puts "setSolution: Rescheduling #{resource.name}"
       resource.reSchedule();
     }
   end 
@@ -222,11 +263,6 @@ class Schedule
     end
   end
   # creates an initial solution for the scheduling problem.
-  def initialSolution
-    #initialSolutionFirstResource()
-    #initialSolutionRoundRobinResource()
-    initialSolutionRandomResource()
-  end
   def initialSolutionFirstResource
     firstResource=@resources[0]
     @workload.eachJob{|job|
@@ -257,6 +293,27 @@ class Schedule
     @resources.each{|resource|
       resource.sanityCheck()
     }
+  end
+  def eachJob
+    jobs=collectSchedule()
+    jobs.each { |p| yield p }
+  end
+  def makespan()
+    maxFinishTime=0.0
+    @resources.each{|resource|
+      maxFinishTime=[maxFinishTime, resource.makespan].max
+    }
+    return maxFinishTime
+  end
+  def absQueueTime
+    absqueuetime=0.0
+    @resources.each{|resource|
+      absqueuetime += resource.absoluteQueueTime()
+    }
+    return absqueuetime
+  end
+  def avgQueueTime
+    return (absQueueTime.to_f / @workload.size().to_f)
   end
   def assessSchedule
     #return assessAverageQualitySchedule
@@ -303,7 +360,7 @@ class Schedule
     }
     retval
   end
-  def renderToTable
+    def renderToTable
     retval = renderResourceString 
     retval += renderSchedule
   end
@@ -319,6 +376,7 @@ class GeometricCoolingSchedule
     @maxTemp=maxTemp
     @minTemp=minTemp
     @alpha=alpha
+    @current= maxTemp
   end
   def getTemperatures()
     retval=Array.new
@@ -328,6 +386,54 @@ class GeometricCoolingSchedule
       current=@alpha * current
     end
     retval
+  end
+  def nextTemperature(ignoreme)
+    if (@current >= @minTemp)
+      @current=@alpha * @current
+      return @current
+    else
+      return nil
+    end
+  end
+end
+
+class HeatingAndGeometricCoolingSchedule
+  def initialize(successrate, minTemp, startTemp, alpha)
+    raise "successrate must be in [0,1[!" unless (successrate >= 0 and successrate < 1)
+    raise "minTemp must be greater than zero!" unless minTemp > 0
+    raise "alpha must be in ]0,1[!" unless (alpha > 0 and alpha < 1)
+    @successrate=successrate
+    @heating = true;
+    @startTemp=startTemp
+    @minTemp=minTemp
+    @alpha=alpha
+    @current= startTemp
+  end
+  def getTemperatures()
+    retval=Array.new
+    current=@startTemp
+    while( current >= @minTemp )
+      retval << current
+      current=@alpha * current
+    end
+    retval
+  end
+  def nextTemperature(currentrate)
+    if @heating
+      if (currentrate >= @successrate)
+        @heating = false;
+      else
+        @current=@current / @alpha
+      end
+      return @current
+    else
+      if (@current >= @minTemp)
+        @current=@alpha * @current
+        return @current
+      else
+        return nil
+      end
+    end
   end
 end
 

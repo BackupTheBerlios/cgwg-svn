@@ -68,6 +68,9 @@ class Optparser
       opts.on("-l", "--loadlevel FLOAT","the load level to work on.") do |loadlevel|
         options.loadlevel=loadlevel
       end
+      opts.on("-nhs", "--noheatingschedule","should the heating phase be skipped?") do |nhs|
+        options.noheating=nhs
+      end
       # Boolean switch.
       opts.on("-v", "--verbose", "Run verbosely") do |v|
         options.verbose = v
@@ -90,6 +93,13 @@ options = Optparser.parse(ARGV)
 outdir = options.outdir    
 storePath = options.store
 loadlevel = options.loadlevel.to_f
+if (options.noheating)
+  puts "Disabling heating before cooldown."
+  noheating = true
+else
+  puts "Will heat before cooling down."
+  noheating = false
+end
 $verbose = options.verbose
 
 if storePath == nil or outdir == nil
@@ -102,19 +112,13 @@ if loadlevel == nil
   exit
 end
 
-Signal.trap(:TERM) do
-  puts "Received SIGTERM: Terminating..."
-  exit
-end
-Signal.trap(:KILL) do 
-  puts "Received SIGKILL: Killed..."
-  exit
-end
-
 puts "# Simulated Annealing Scheduler"
 logfile = "sa-log-#{loadlevel}.txt"
-logfileFullPath = File.expand_path(File.join(outdir, "sa-log-#{loadlevel}.txt"))
+logfileFullPath = File.expand_path(File.join(outdir, logfile))
 puts "# Using logfile #{logfileFullPath}"
+solutionfile = "sa-schedule-#{loadlevel}.bin"
+solutionfileFullPath = File.expand_path(File.join(outdir, solutionfile))
+puts "# Using solution file #{solutionfileFullPath}"
 
 puts "# Unmarshalling the store #{storePath}"
 store=File.new(storePath, "r");
@@ -156,22 +160,24 @@ reporter.setHeader("Temperature\tEnergy\tAccepted");
 ###
 ## Start optimization
 #
-coolingSchedule=GeometricCoolingSchedule.new(0.1, 100, 0.9);
-tempSteps=coolingSchedule.getTemperatures()
-schedule.initialSolution()
+if (noheating) 
+  coolingSchedule=GeometricCoolingSchedule.new(0.1, 100, 0.9);
+else
+  coolingSchedule=HeatingAndGeometricCoolingSchedule.new(0.5, 0.1, 100, 0.9);
+end
+schedule.initialSolutionRoundRobinResource()
 puts "# Initial solution:"
 puts schedule.to_s
 oldEnergy=schedule.assessSchedule();
 puts "# Initial energy: #{oldEnergy}"
-tempSteps.each { |temperature|
+accepted=0;
+while (temperature = coolingSchedule.nextTemperature(accepted.to_f/maxIteration))
   accepted=0;
-  puts "# Beginning new MC loop with #{maxIteration} iterations."
   for i in 0..maxIteration do
-    oldSolution=schedule.deep_clone();
+    oldSolution=schedule.getSolution();
     oldEnergy=schedule.assessSchedule();
     schedule.permutateJobs()
     newEnergy=schedule.assessSchedule();
-    #puts "\n### Compare: newEnergy=#{newEnergy}, oldEnergy=#{oldEnergy}" if $verbose
     if (oldEnergy < newEnergy)
       # The old solution was better than the current one - probabilistic
       # acceptance.
@@ -184,8 +190,7 @@ tempSteps.each { |temperature|
         accepted+=1;
       else
         #puts "Restoring old solution" if $verbose
-        schedule=oldSolution
-        #schedule.setSolution(oldSolution)
+        schedule.setSolution(oldSolution)
       end
     else
       #puts "Found better solution - already current state." if $verbose
@@ -193,13 +198,14 @@ tempSteps.each { |temperature|
     end
   end
   currentEnergy=schedule.assessSchedule
-  schedule.sanityCheck()
-  puts "# Temperature: #{temperature}, best energy: #{currentEnergy}, accepted: #{accepted}"
+  #schedule.sanityCheck()
+  puts "# Temperature: #{temperature}, best energy: #{currentEnergy}, accepted: #{accepted}/#{maxIteration}"
   reporter.addLine("#{temperature}\t#{currentEnergy}\t#{accepted}");
-}
+end
 reporter.dumpToFile(logfileFullPath);
 
-puts "# Final solution:"
-puts schedule.to_s
+#puts "# Final solution:"
+#puts schedule.to_s
 
-puts "Saving solution to file #{solutionFile}"
+puts "Saving solution to file #{solutionfileFullPath}"
+schedule.saveToFile(solutionfileFullPath)
