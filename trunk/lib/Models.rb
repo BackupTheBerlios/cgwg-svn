@@ -199,7 +199,7 @@ class PoissonWorkloadModel
      (0..@workloadsize-1).each{|jobID|
        job=generateNextJob(jobID);
        retval.addJob(job);
-       puts "Generated job: #{job}"
+       puts "Generated job: #{job}" if $verbose
      } 
      return retval
   end

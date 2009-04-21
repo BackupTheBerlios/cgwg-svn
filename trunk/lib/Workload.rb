@@ -550,7 +550,7 @@ class Workload
   ## Calculate load level of this workload using the sample method
   # 
   def calculateLoadLevel()
-    puts "calculating load level for #{self}"
+    puts "calculating load level for #{self}" if $verbose
     capacity = @clusterConfig.nodes
     @events=Array.new
     @jobs.each{|job|
@@ -681,19 +681,37 @@ class WorkloadCollection
   def getWorkload(loadlevel)
     return @workloads[loadlevel]
   end
+  # returns a schedule instance unmarshalled from the given file path.
+  def WorkloadCollection.instanceFromFile(workloadCollectionFile)
+    retval=nil;
+    File.open(workloadCollectionFile, "r") {|file|
+      retval=Marshal::load(file)
+    }
+    retval
+  end
+
   def printWorkloadOverview
+    puts to_s
+  end
+  def getLoadlevels
+    keys=@workloads.keys
+    keys.sort!
+  end
+  def to_s
+    retval=""
     keys=@workloads.keys
     keys.sort!
     keys.each{ |key|
       workload=@workloads[key]
-      #@workloads.each{|slot, workload|
       slotValue="nil"
       if workload != nil
         slotValue=workload.calculateLoadLevel()
       end
-      print "Slot #{key} : #{slotValue} \n"
+      retval += "Slot #{key}: load #{slotValue} \n"
     }
+    return retval
   end
+    
 end
 
 # Provides various analysis methods for workloads.
