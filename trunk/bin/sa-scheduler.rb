@@ -27,8 +27,6 @@ end
 
 
 require 'rubygems'
-#gem 'builder' #we need xml builder
-#require 'builder/xmlmarkup'
 require 'Models'
 require 'Workload'
 require 'Helpers'
@@ -68,6 +66,9 @@ class Optparser
       opts.on("-l", "--loadlevel FLOAT","the load level to work on.") do |loadlevel|
         options.loadlevel=loadlevel
       end
+      opts.on("-r", "--resource-definition FILE","the resource definition file to use.") do |rfile|
+        options.resourcefile=rfile
+      end
       opts.on("-nhs", "--noheatingschedule","should the heating phase be skipped?") do |nhs|
         options.noheating=nhs
       end
@@ -93,6 +94,7 @@ options = Optparser.parse(ARGV)
 outdir = options.outdir    
 storePath = options.store
 loadlevel = options.loadlevel.to_f
+resourceDefinitionFile = options.resourcefile
 if (options.noheating)
   puts "Disabling heating before cooldown."
   noheating = true
@@ -102,8 +104,13 @@ else
 end
 $verbose = options.verbose
 
-if storePath == nil or outdir == nil
+if storePath == nil or outdir == nil or resourceDefinitionFile == nil
   puts "please read usage note (-h)"
+  exit
+end
+
+if not File.readable?(File.expand_path(resourceDefinitionFile))
+  puts "Cannot read resource definition file: #{resourceDefinitionFile}"
   exit
 end
 
@@ -146,12 +153,14 @@ if $verbose
   }
 end
 
-resourceSet=Array.new
-1.upto(nodes) {|i|
-  puts "Generating resource no. #{i}"
-  resource=Resource.new("Resource-"+i.to_s)
-  resourceSet.push(resource)
-}
+# Prevent over-defining methods by loading the code in another class.
+class ExternalResourceCode
+end
+x = ExternalResourceCode.new
+resourceDefinitionFile = 'bin/sa-resourcedef-template.rb'
+resourceDefinitionFilePath = File.expand_path(resourceDefinitionFile)
+x.instance_eval(File.open(resourceDefinitionFilePath).read)
+resourceSet = x.generateResourceSet(nodes)
 
 schedule=Schedule.new(workload, resourceSet)
 reporter=LogReporter.new()

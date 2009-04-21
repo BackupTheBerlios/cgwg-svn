@@ -28,7 +28,8 @@ class AtomicJob
         :numberAllocatedProcessors, :averageCPUTimeUsed, :usedMemory,
         :reqNumProcessors, :wallTime, :reqMemory, :status, :userID, :groupID,
         :appID, :penalty, :queueID, :partitionID, :preceedingJobID, 
-        :timeAfterPreceedingJob, :startTime, :queueTime, :finishTime, :resourceID 
+        :timeAfterPreceedingJob, :startTime, :queueTime, :finishTime, :resourceID,
+        :price
     def initialize
         # These are the default values as defined in the SWF definition,
         # see http://www.cs.huji.ac.il/labs/parallel/workload/swf.html
@@ -57,6 +58,7 @@ class AtomicJob
         @startTime = 0.0
         @finishTime = 0.0
         @resourceID = "N/A"
+        @price = 0.0
     end
     def writeSWFFormat
         retval = "#{@jobID}\t#{@submitTime}\t#{@waitTime}\t#{@runTime}\t"
@@ -144,6 +146,7 @@ class AtomicJob
     def to_s
       retval="Jid: #{@jobID.to_i} SUBT:#{"%.2f" % @submitTime} STARTT: #{"%.2f" % @startTime} "
       retval+="RT:#{"%.2f" % @runTime} WT:#{"%.2f" % @wallTime} " 
+      retval+="P:#{"%.2f" % @price} "
       retval+="NODES: #{@numberAllocatedProcessors} R: #{@resourceID}"
     end
 end

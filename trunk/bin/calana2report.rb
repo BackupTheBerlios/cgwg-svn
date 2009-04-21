@@ -598,11 +598,13 @@ def createSAReport(reportFileName, loadLevel)
     #TODO: Complete the values here.
     j = Job.new(scheduled_job.jobID)
     j.submitTime = scheduled_job.submitTime.to_i
-    j.price = 0.0
-    j.minprice = 0.0
-    j.maxprice = 0.0
+    j.price = scheduled_job.price
+    j.minprice = scheduled_job.price
+    j.maxprice = scheduled_job.price
     j.setPrefs(1.0, 0.0);
-    j.responseTime = 0.0
+    # Preference is stored with the user. Read userID from atomicjob,
+    # then ask workload which user corresponds to it.
+    j.responseTime = scheduled_job.finishTime.to_i - scheduled_job.startTime.to_i
     j.runTime = scheduled_job.runTime.to_i
     j.queueTime = scheduled_job.queueTime.to_i
     j.startTime = scheduled_job.startTime.to_i

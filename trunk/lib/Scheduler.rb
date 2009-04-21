@@ -29,25 +29,45 @@ require 'Helpers'
 #require 'ruby-debug'
 
 ###
+## Describes how a resource calculates prices.
+#
+class ConstantPricingStructure
+  attr_accessor :pricePerSecond, :pricingType
+  def initialize(pricePerSecond)
+    @pricePerSecond = pricePerSecond
+    @pricingType=:ConstantPricing
+  end
+  def calculatePrice(runtime)
+    return (@pricePerSecond * runtime)
+  end
+  def to_s
+    "#{@pricingType}(pricePerSecond: #{@pricePerSecond})"
+  end
+end
+
+###
 ## A resource is capable of executing a job. It maintains a queue and
 ## appends jobs to the local queue when they are submitted. It is also
 ## possible to remove a job from a queue.
 #
 class Resource
-  attr_accessor :name, :queue
-  def initialize(name)
+  attr_accessor :name, :queue, :pricingStructure
+  def initialize(name, pricingStructure)
     @queue = Array.new
     @name=name
+    @pricingStructure=pricingStructure
   end
   def createClone()
     retval=Array.new
     retval << @name.clone
     retval << @queue.clone
+    retval << @pricingStructure.clone
   end
   def Resource.instanceFromClone(clone)
     name = clone[0]
     queue = clone[1]
-    instance=Resource.new(name)
+    pricingStructure = clone[2]
+    instance=Resource.new(name, pricingStructure)
     instance.queue=queue
     return instance
   end
@@ -116,8 +136,7 @@ class Resource
         end
         job.queueTime = job.startTime - job.submitTime
         job.finishTime = job.startTime+job.runTime
-        # TODO: runtime or submittime?
-        #freetime=job.submitTime + job.runTime
+        job.price=@pricingStructure.calculatePrice(job.runTime)
         freetime=job.startTime + job.runTime
       }
     end
@@ -154,7 +173,7 @@ class Resource
     return @queue.size
   end
   def to_s
-    retval = "Resource #{name} (#{size} jobs, QT (abs/avg): #{absoluteQueueTime}/#{averageQueueTime})\n"
+    retval = "Resource #{name}: #{@pricingStructure.to_s}: #{size} jobs, QT (abs/avg): #{absoluteQueueTime}/#{averageQueueTime}, total price: #{totalPrice}\n"
     if $verbose
       retval += "Current queue:\n"
       @queue.each {|job|
@@ -186,6 +205,13 @@ class Resource
       maxFinishTime=[maxFinishTime, job.finishTime].max
     }
     return maxFinishTime
+  end
+  def totalPrice()
+    totalPrice=0.0
+    @queue.each{|job|
+      totalPrice+=job.price
+    }
+    return totalPrice
   end
 end
 
