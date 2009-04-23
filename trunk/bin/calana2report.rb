@@ -154,21 +154,21 @@ class LoadQTReport
     
     def addJob(job)
         @cumulativeQueueTime += job.queueTime.to_f 
-        if job.perfPref.to_f <= 0.25
+        @jobCounter += 1
+        if job.perfPref.to_f < 0.5
             puts "LowPerfPref: #{job.queueTime.to_f}\t#{@lowQueueTime}" if $verbose
             @lowQueueTime += job.queueTime.to_f
             @lowCounter += 1
         end
-        if job.perfPref.to_f >= 0.75
+        if job.perfPref.to_f >= 0.5
             puts "HighPerfPref: #{job.queueTime.to_f}\t#{@highQueueTime}" if $verbose
             @highQueueTime += job.queueTime.to_f
             @highCounter += 1
         end
-        @jobCounter += 1
     end
     
     def finalize()
-        art=lowPerfPref=highPerfPref=0;
+        aqt=lowPerfPref=highPerfPref=0;
         aqt = (@cumulativeQueueTime.to_f / @jobCounter.to_f) unless @jobCounter==0;
         lowPerfPref = (@lowQueueTime.to_f / @lowCounter.to_f) unless @lowCounter==0;
         highPerfPref = (@highQueueTime.to_f / @highCounter.to_f) unless @highCounter==0;
@@ -201,6 +201,7 @@ class LoadARTReport
     
     def addJob(job)
         @cumulativeResponseTime += job.responseTime.to_f 
+        @jobCounter += 1
         if job.perfPref.to_f <= 0.25
             puts "LowPerfPref: #{job.responseTime.to_f}\t#{@lowResponseTime}" if $verbose
             @lowResponseTime += job.responseTime.to_f
@@ -211,7 +212,6 @@ class LoadARTReport
             @highResponseTime += job.responseTime.to_f
             @highCounter += 1
         end
-        @jobCounter += 1
     end
     
     def finalize()
@@ -594,6 +594,7 @@ end
 def createSAReport(reportFileName, loadLevel)
   reports = ReportCollection.new(loadLevel);
   schedule=Schedule.instanceFromFile(reportFileName);
+  workload=schedule.workload
   schedule.eachJob{|scheduled_job|
     #TODO: Complete the values here.
     j = Job.new(scheduled_job.jobID)
@@ -601,9 +602,12 @@ def createSAReport(reportFileName, loadLevel)
     j.price = scheduled_job.price
     j.minprice = scheduled_job.price
     j.maxprice = scheduled_job.price
-    j.setPrefs(1.0, 0.0);
     # Preference is stored with the user. Read userID from atomicjob,
     # then ask workload which user corresponds to it.
+    userID = scheduled_job.userID
+    user=workload.getUserByID(userID)
+    j.setPrefs(user.perfPreference, user.pricePreference)
+    puts "User #{userID}: perf=#{user.perfPreference}, price=#{user.pricePreference}"
     j.responseTime = scheduled_job.finishTime.to_i - scheduled_job.startTime.to_i
     j.runTime = scheduled_job.runTime.to_i
     j.queueTime = scheduled_job.queueTime.to_i

@@ -337,6 +337,8 @@ def runGeneralScripts()
         "Average Response Time vs. Load (with perfPref settings)",
         "Load", "ART", names)
 
+    gnuPlot2Lines("load-QT.txt", "load-QT.eps", 
+        "Average Queue Time vs. Load", "Load", "QueueTime", 1,2)
     names = Array.new
     names << "Queuetime" << "Queuetime (perfPref <= 0.25)" 
     names << "Queuetime (perfPref >= 0.75)"

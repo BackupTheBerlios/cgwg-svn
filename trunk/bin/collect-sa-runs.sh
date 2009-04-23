@@ -1,9 +1,10 @@
 #!/bin/bash
 LOAD="0.75"
-PARAMS="-s var/testworkload/workload-wcollection.bin -l $LOAD"
+PARAMS="-s var/serial-u10j100l100r3/workload-wcollection.bin -l $LOAD"
 #PARAMS="-s var/serial-u10j100l100r3/workload-wcollection.bin -l $LOAD"
 MAXRUNS=5
 OUTDIR="var/collecting"
+RESOURCES="bin/sa-resourcedef-template.rb"
 ENERGYFILE="energies.txt"
 RUBY_BIN=ruby1.9
 SA_BIN=bin/sa-scheduler.rb
@@ -12,8 +13,8 @@ echo "Using commandline parameters $PARAMS"
 echo "Adding output directory parameter $OUTDIR"
 
 for ((run=0; run < $MAXRUNS; run+=1)); do
-  echo "Run no. $run: $RUBY_BIN $SA_BIN $PARAMS -o $OUTDIR"
-  $RUBY_BIN $SA_BIN $PARAMS -o $OUTDIR
+  echo "Run no. $run: $RUBY_BIN $SA_BIN $PARAMS -o $OUTDIR -r $RESOURCES"
+  $RUBY_BIN $SA_BIN $PARAMS -o $OUTDIR -r $RESOURCES
   logfile=$OUTDIR/sa-log-$LOAD.txt
   mv $logfile $logfile.$run
   binfile=$OUTDIR/sa-schedule-$LOAD.bin

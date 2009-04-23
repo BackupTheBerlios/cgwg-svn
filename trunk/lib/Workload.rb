@@ -303,6 +303,9 @@ class Workload
     }
     @jobs.compact!               # remove all nil elements
   end
+  def getUserByID(userID)
+    return @users[userID]
+  end
   def writeSWFFormat()
     retval=""
     @jobs.each{|job|

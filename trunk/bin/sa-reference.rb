@@ -69,9 +69,6 @@ class Optparser
       opts.on("-r", "--resource-definition FILE","the resource definition file to use.") do |rfile|
         options.resourcefile=rfile
       end
-      opts.on("-nhs", "--noheatingschedule","should the heating phase be skipped?") do |nhs|
-        options.noheating=nhs
-      end
       # Boolean switch.
       opts.on("-v", "--verbose", "Run verbosely") do |v|
         options.verbose = v
@@ -95,13 +92,6 @@ outdir = options.outdir
 storePath = options.store
 loadlevel = options.loadlevel.to_f
 resourceDefinitionFile = options.resourcefile
-if (options.noheating)
-  puts "Disabling heating before cooldown."
-  noheating = true
-else
-  puts "Will heat before cooling down."
-  noheating = false
-end
 $verbose = options.verbose
 
 if storePath == nil or outdir == nil or resourceDefinitionFile == nil
@@ -142,7 +132,7 @@ end
 
 nodes=workload.clusterConfig.nodes
 jobCount=workload.size()
-maxIteration=(workload.size()).to_i
+maxIteration=(workload.size()*0.1).to_i
 puts "# Using workload with real load #{workload.load} and #{nodes} nodes."
 puts "# The workload contains #{jobCount} jobs - using #{maxIteration} iterations per MC loop."
 
@@ -164,57 +154,69 @@ resourceSet = x.generateResourceSet(nodes)
 
 schedule=Schedule.new(workload, resourceSet)
 reporter=LogReporter.new()
-reporter.setHeader("Temperature\tEnergy\tAccepted");
+reporter.setHeader("Round\tEnergy");
 
 ###
 ## Start optimization
 #
-if (noheating) 
-  coolingSchedule=GeometricCoolingSchedule.new(0.1, 100, 0.9);
-else
-  coolingSchedule=HeatingAndGeometricCoolingSchedule.new(0.5, 0.1, 100, 0.9);
-end
+#if (noheating) 
+#  coolingSchedule=GeometricCoolingSchedule.new(0.1, 100, 0.9);
+#else
+#  coolingSchedule=HeatingAndGeometricCoolingSchedule.new(0.5, 0.1, 100, 0.9);
+#end
 schedule.initialSolutionRoundRobinResource()
 puts "# Initial solution:"
 puts schedule.to_s
 oldEnergy=schedule.assessSchedule();
 puts "# Initial energy: #{oldEnergy}"
 accepted=0;
-while (temperature = coolingSchedule.nextTemperature(accepted.to_f/maxIteration))
-  accepted=0;
-  for i in 0..maxIteration do
-    oldSolution=schedule.getSolution();
-    oldEnergy=schedule.assessSchedule();
+totalIterations = workload.size * workload.size
+puts "Doing #{totalIterations} in total."
+backJumpIterations = (workload.size*2).to_i
+noImprovementCounter = 0
+bestLocalSolution = schedule.getSolution();
+bestLocalEnergy = schedule.assessSchedule();
+for round in  (0..totalIterations)
+  oldSolution=schedule.getSolution();
+  oldEnergy=schedule.assessSchedule();
+  if (noImprovementCounter == backJumpIterations)
+    # We're stuck in a local minimum, try to jump out of it.
+    noImprovementCounter = 0;
+    puts "attempting to escape from local minimum."
+    # load the best solution so far.
+    schedule.setSolution(bestLocalSolution)
+    if (oldEnergy < bestLocalEnergy)
+      bestLocalSolution = oldSolution; # remember this one
+      bestLocalEnergy = oldEnergy; # remember this one
+    end
+    0.upto(3) {|i|
+      schedule.permutateJobs()
+    }
+  else
+    # continue on this path.
     schedule.permutateJobs()
     newEnergy=schedule.assessSchedule();
     if (oldEnergy < newEnergy)
-      # The old solution was better than the current one - probabilistic
-      # acceptance.
-      deltaEnergy = newEnergy - oldEnergy
-      probability = Math.exp(-deltaEnergy/temperature)
-      chance=rand()
-      #puts "oldEnergy < newEnergy: chance=#{chance}, probability=#{probability}" if $verbose
-      if (probability > chance)
-        #puts "Accepting new solution, although its worse." if $verbose
-        accepted+=1;
-      else
-        #puts "Restoring old solution" if $verbose
-        schedule.setSolution(oldSolution)
-      end
+      # The old solution was better than the current one 
+      #puts "Restoring old solution" if $verbose
+      schedule.setSolution(oldSolution)
+      noImprovementCounter += 1
     else
-      #puts "Found better solution - already current state." if $verbose
-      accepted+=1;
+      puts "Found better solution - already current state." if $verbose
     end
   end
   currentEnergy=schedule.assessSchedule
-  #schedule.sanityCheck()
-  puts "# Temperature: #{temperature}, best energy: #{currentEnergy}, accepted: #{accepted}/#{maxIteration}"
-  reporter.addLine("#{temperature}\t#{currentEnergy}\t#{accepted}");
+  puts "# round #{round}, best energy: #{currentEnergy}"
+  reporter.addLine("#{round}\t#{currentEnergy}");
 end
 reporter.dumpToFile(logfileFullPath);
 
+schedule.sanityCheck()
 #puts "# Final solution:"
 #puts schedule.to_s
+
+schedule.setSolution(bestLocalSolution)
+puts "best solution has energy #{schedule.assessSchedule}"
 
 puts "Saving solution to file #{solutionfileFullPath}"
 schedule.saveToFile(solutionfileFullPath)
