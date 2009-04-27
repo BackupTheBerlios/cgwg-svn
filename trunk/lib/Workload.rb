@@ -60,6 +60,11 @@ class AtomicJob
         @resourceID = "N/A"
         @price = 0.0
     end
+    def writeAsciiFormat
+      retval="#{@jobID.to_i}\t#{"%.2f" % @submitTime}\t"
+      retval+="#{"%.2f" % @runTime}\t#{"%.2f" % @wallTime}\t" 
+      retval+="#{@numberAllocatedProcessors}"
+    end
     def writeSWFFormat
         retval = "#{@jobID}\t#{@submitTime}\t#{@waitTime}\t#{@runTime}\t"
         retval += "#{@numberAllocatedProcessors}\t#{@averageCPUTimeUsed}\t"

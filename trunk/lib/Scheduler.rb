@@ -62,6 +62,7 @@ class Resource
     retval << @name.clone
     retval << @queue.clone
     retval << @pricingStructure.clone
+    retval.freeze
   end
   def Resource.instanceFromClone(clone)
     name = clone[0]
@@ -470,7 +471,7 @@ if __FILE__ == $0
   # This would normally come from the command line - hardcoded for
   # testing here. The Workload is assumed to be stored in
   # var/testworkload.
-  storePath="var/testworkload/workload-wcollection.bin"
+  storePath="var/serial-u10j100l100r3/workload-wcollection.bin"
   loadlevel=0.75
   puts "# Unmarshalling the store #{storePath}"
   store=File.new(storePath, "r");
@@ -485,38 +486,38 @@ if __FILE__ == $0
     exit
   end
 
-  puts "# Using workload with real load #{workload.load} and #{workload.clusterConfig.nodes} nodes."
+  nodes=workload.clusterConfig.nodes
 
-  if $verbose
-    puts "Printing workload:"
-    workload.eachJob{|job|
-      puts job
-    }
+  puts "# Using workload with real load #{workload.load} and #{nodes} nodes."
+
+#  if $verbose
+#    puts "Printing workload:"
+#    workload.eachJob{|job|
+#      puts job
+#    }
+#  end
+  # Prevent over-defining methods by loading the code in another class.
+  class ExternalResourceCode
   end
-
-  # todo: generate this from the workload itself.
-  resource1=Resource.new("Resource1")
-  resource2=Resource.new("Resource2")
-  resource3=Resource.new("Resource3")
-
-  resourceSet=Array.new
-  resourceSet.push(resource1)
-  resourceSet.push(resource2)
-  resourceSet.push(resource3)
-
+  x = ExternalResourceCode.new
+  resourceDefinitionFile = 'bin/sa-resourcedef-template.rb'
+  resourceDefinitionFilePath = File.expand_path(resourceDefinitionFile)
+  x.instance_eval(File.open(resourceDefinitionFilePath).read)
+  resourceSet = x.generateResourceSet(nodes)
   schedule=Schedule.new(workload, resourceSet)
-  schedule.initialSolution
+  schedule.initialSolutionRoundRobinResource
   initialEnergy=schedule.assessSchedule();
   puts "Found initial energy of #{initialEnergy}"
 
-  for i in 0..2 do
-    backup=schedule.deep_clone()
+  for i in 0..100 do
+    backup=schedule.getSolution()
     schedule.permutateJobs();
-    schedule=backup;
+    schedule.setSolution(backup);
     newEnergy=schedule.assessSchedule
     schedule.sanityCheck()
     if (newEnergy != initialEnergy)
       puts "Shit, they differ: newEnergy=#{newEnergy}, initialEnergy=#{initialEnergy}"
+      exit
     else
       puts "Check."
     end

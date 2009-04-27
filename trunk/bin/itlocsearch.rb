@@ -27,6 +27,7 @@ end
 
 
 require 'rubygems'
+#require 'ruby-debug'
 require 'Models'
 require 'Workload'
 require 'Helpers'
@@ -177,46 +178,61 @@ noImprovementCounter = 0
 bestLocalSolution = schedule.getSolution();
 bestLocalEnergy = schedule.assessSchedule();
 for round in  (0..totalIterations)
-  oldSolution=schedule.getSolution();
-  oldEnergy=schedule.assessSchedule();
+  currentSolution=schedule.getSolution();
+  currentEnergy=schedule.assessSchedule();
   if (noImprovementCounter == backJumpIterations)
     # We're stuck in a local minimum, try to jump out of it.
     noImprovementCounter = 0;
-    puts "attempting to escape from local minimum."
-    # load the best solution so far.
-    schedule.setSolution(bestLocalSolution)
-    if (oldEnergy < bestLocalEnergy)
-      bestLocalSolution = oldSolution; # remember this one
-      bestLocalEnergy = oldEnergy; # remember this one
+    puts "\n\n\n"
+    puts "attempting to escape from local minimum: currentE #{currentEnergy}, bestLocal #{bestLocalEnergy}"
+    if (currentEnergy < bestLocalEnergy) # remember this one
+      puts "overwriting current best solution."
+      bestLocalSolution = schedule.getSolution()
+      bestLocalEnergy = schedule.assessSchedule(); 
+    else
+      puts "restoring best solution."
     end
-    0.upto(3) {|i|
+    # load the best solution so far.
+    puts "Schedule before swap: E=#{schedule.assessSchedule()}"
+    puts schedule.renderResourceString()
+    schedule.setSolution(bestLocalSolution)
+    schedule=schedule.deep_clone()
+    puts "Schedule after swap: E=#{schedule.assessSchedule()}"
+    puts schedule.renderResourceString()
+    puts "after: currentE #{currentEnergy}, bestLocal #{bestLocalEnergy}"
+    if (bestLocalEnergy != schedule.assessSchedule())
+      puts "HA!"
+      exit
+    end
+    puts "Doing 3 permutations."
+    1.upto(3) {|i|
       schedule.permutateJobs()
     }
+    puts "\n\n\n"
   else
     # continue on this path.
     schedule.permutateJobs()
     newEnergy=schedule.assessSchedule();
-    if (oldEnergy < newEnergy)
-      # The old solution was better than the current one 
-      #puts "Restoring old solution" if $verbose
-      schedule.setSolution(oldSolution)
+    if (currentEnergy < newEnergy)
+      # The current solution was better than the new one 
+      #puts "Restoring current solution" if $verbose
+      schedule.setSolution(currentSolution)
       noImprovementCounter += 1
     else
       puts "Found better solution - already current state." if $verbose
     end
   end
-  currentEnergy=schedule.assessSchedule
-  puts "# round #{round}, best energy: #{currentEnergy}"
+  # Print status each 100 iterations
+  if (round % 100) == 0
+    puts "# round #{round}/#{totalIterations}, schedule energy #{schedule.assessSchedule()}"
+    puts "# round #{round}/#{totalIterations}, best energy #{bestLocalEnergy}, current energy #{currentEnergy}"
+  end
   reporter.addLine("#{round}\t#{currentEnergy}");
 end
 reporter.dumpToFile(logfileFullPath);
 
-schedule.sanityCheck()
-#puts "# Final solution:"
-#puts schedule.to_s
-
 schedule.setSolution(bestLocalSolution)
+schedule.sanityCheck()
 puts "best solution has energy #{schedule.assessSchedule}"
-
 puts "Saving solution to file #{solutionfileFullPath}"
 schedule.saveToFile(solutionfileFullPath)
