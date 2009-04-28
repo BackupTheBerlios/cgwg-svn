@@ -50,6 +50,14 @@ void Schedule::propagateJobsToResources() {
   }
 }
 
+void Schedule::removeAllJobs() {
+  std::vector<scheduler::Resource::Ptr> resourceList = _resources->getAllResources();
+  std::vector<scheduler::Resource::Ptr>::iterator it; 
+  for(  it = resourceList.begin(); it < resourceList.end(); it++) {
+	(*it)->removeAllJobs();
+  }
+}
+
 void Schedule::processSchedule() {
   std::vector<scheduler::Resource::Ptr> resourceList = _resources->getAllResources();
   std::vector<scheduler::Resource::Ptr>::iterator it; 
@@ -57,3 +65,4 @@ void Schedule::processSchedule() {
 	(*it)->reSchedule();
   }
 }
+

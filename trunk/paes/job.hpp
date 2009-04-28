@@ -24,8 +24,6 @@ namespace scheduler {
 	  const double getRunTime() const { return _run_time; }
 	  const double getWallTime() const { return _wall_time; }
 	  const unsigned int getSize() const { return _size; }
-	 // void setResource(const scheduler::Resource::IDType& resource) { _resource=resource;}
-	 // const scheduler::Resource::IDType getResource() const { return _resource; }
 	  const std::string str() const;
 
 	private:
@@ -36,7 +34,6 @@ namespace scheduler {
 	  double _run_time;
 	  double _wall_time;
 	  unsigned int _size;
-//	  scheduler::Resource::IDType _resource;
   };
 
 }

@@ -34,10 +34,10 @@ std::vector<scheduler::Resource::Ptr> ResourcePool::getAllResources() {
 
 const std::string ResourcePool::str() {
   std::ostringstream oss;
-  oss << "Resourcepool of " << _resources.size() <<" resources:" << std::endl;
+  oss << "Resourcepool of " << _resources.size() <<" resources:"; 
   ResourceIteratorType it;
   for (it=_resources.begin(); it != _resources.end(); it++) {
-	oss << (*it).second->str() << std::endl;
+	oss << std::endl << (*it).second->str();
   }
   return oss.str();
 }

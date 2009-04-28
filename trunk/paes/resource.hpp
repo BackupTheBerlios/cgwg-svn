@@ -24,6 +24,7 @@ namespace scheduler {
 
 	  virtual void addJob(const scheduler::Job::Ptr& job) = 0;
 	  virtual void reSchedule()=0;
+	  virtual void removeAllJobs()=0;
 
 
 	private:

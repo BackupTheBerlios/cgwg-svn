@@ -104,9 +104,11 @@ int main (int argc, char** argv) {
   std::string allocationTable(schedule->getAllocationTable());
   std::cout << allocationTable << std::endl;
   schedule->propagateJobsToResources();
-  std::cout << "Current state:" << std::endl;
   std::cout << resources->str() << std::endl;
   schedule->processSchedule(); 
+  std::cout << resources->str() << std::endl;
+  schedule->removeAllJobs();
+  std::cout << resources->str() << std::endl;
   return 0;
 }
 

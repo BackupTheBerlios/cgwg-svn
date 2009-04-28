@@ -21,6 +21,7 @@ namespace scheduler {
 	  void randomSchedule();
 	  void propagateJobsToResources();
 	  void processSchedule();
+	  void removeAllJobs();
 
 	private:
 	  Schedule (const Schedule& original);
