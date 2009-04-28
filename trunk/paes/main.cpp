@@ -1,10 +1,15 @@
 #include <iostream>
 #include <unistd.h>
+#include <vector>
 
 #include <common.hpp>
 #include <workload.hpp>
 #include <job.hpp>
+#include <simpleresource.hpp>
+#include <resourcepool.hpp>
+#include <schedule.hpp>
 #include <workload-factory.hpp>
+#include <random.hpp>
 
 void printHelp() {
   std::cout << "PAES Scheduler" << std::endl;
@@ -67,11 +72,41 @@ int main (int argc, char** argv) {
   }
 
 
+  // Load Workload.
   scheduler::FileWorkloadFactory fwFactory(inputfile);
   scheduler::Workload::Ptr workload=fwFactory.parseWorkload();
   if (verbose)
 	std::cout << workload->str() << std::endl;
+  else {
+	std::cout << "Workload contains job ids: "<<std::endl;
+	std::vector<scheduler::Job::IDType> jobIDs=workload->getJobIDs();
+	std::vector<scheduler::Job::IDType>::iterator it;
+	for( it = jobIDs.begin(); it < jobIDs.end(); it++) {
+	  std::cout << *it << " ";
+	}
+	std::cout << std::endl;
+  }
 
+  // Build Resources.
+  scheduler::ResourcePool::Ptr resources(new scheduler::ResourcePool());
+  std::cout << "Creating 3 simple resources." << std::endl;
+  for(unsigned int i=0; i<3; i++) {
+	std::ostringstream oss;
+	oss << "Resource-" << i;
+	scheduler::SimpleResource::Ptr resource(new scheduler::SimpleResource(i, oss.str()));
+	resources->add(resource);
+  }
+
+  // Build the schedule
+  scheduler::Schedule::Ptr schedule(new scheduler::Schedule(workload, resources));
+  std::cout << "Created " << schedule->str() << std::endl;
+  schedule->randomSchedule();
+  std::string allocationTable(schedule->getAllocationTable());
+  std::cout << allocationTable << std::endl;
+  schedule->propagateJobsToResources();
+  std::cout << "Current state:" << std::endl;
+  std::cout << resources->str() << std::endl;
+  schedule->processSchedule(); 
   return 0;
 }
 

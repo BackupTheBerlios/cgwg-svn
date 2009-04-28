@@ -14,12 +14,12 @@ scheduler::Workload::Ptr FileWorkloadFactory::parseWorkload() {
   std::ifstream myfile (_filename.c_str());
   if (myfile.is_open()) {
 	while (! myfile.eof() ) {
-	  getline (myfile,line);
+	  getline(myfile,line);
 	  // first, ignore all lines starting with '#'
 	  if (line[0] == '#')
 		continue;
 	  std::istringstream iss(line, std::istringstream::in);
-	  unsigned int jobid;
+	  scheduler::Job::IDType jobid;
 	  iss >> jobid;
 	  double submit_time;
 	  iss >> submit_time;
@@ -30,12 +30,15 @@ scheduler::Workload::Ptr FileWorkloadFactory::parseWorkload() {
 	  unsigned int size;
 	  iss >> size;
 	  scheduler::Job::Ptr job(new scheduler::Job(jobid, submit_time, run_time, wall_time, size));
-	  retval->add(job);
-	  //std::cout << job->str() << std::endl;
+	  if (!myfile.eof()) { 
+		// check for eof again - otherwise, we might duplicate the last job again,
+		retval->add(job);
+		//std::cout << job->str() << std::endl;
+	  }
 	}
 	myfile.close();
   } else {
-	std::cerr << "Unable to open file" << std::endl; 
+	std::cerr << "Unable to open file, aborting" << std::endl; 
 	exit(-1);
   }
   return retval;
