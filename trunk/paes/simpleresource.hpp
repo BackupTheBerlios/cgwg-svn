@@ -21,6 +21,7 @@ namespace scheduler {
 	  void addJob(const scheduler::Job::Ptr& job);
 	  void removeAllJobs();
 	  void reSchedule();
+	  bool sanityCheck();
 	  const double getTotalQueueTime() { return _totalQueueTime; };
 	  const double getTotalPrice() { return _totalPrice; };
 

@@ -22,6 +22,7 @@ namespace scheduler {
 	  std::vector<scheduler::Resource::Ptr> getAllResources();
 	  const std::string str();
 	  const size_t size() { return _resources.size(); };
+	  bool sanityCheck();
 
 	private:
 	  ResourcePool (const ResourcePool& original);

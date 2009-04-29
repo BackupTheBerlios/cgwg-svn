@@ -55,3 +55,36 @@ void SimpleResource::reSchedule() {
   }
 }
 
+bool SimpleResource::sanityCheck() {
+    bool success=true;
+    if (_allocations.size() >= 2) {
+	  std::map<scheduler::Job::IDType, scheduler::Allocation::Ptr>::iterator it;
+	  it=_allocations.begin();
+	  scheduler::Allocation::Ptr precursor=(*it).second;
+	  for (it=(++it); it != _allocations.end(); it++) {
+		scheduler::Allocation::Ptr current=(*it).second;
+		//std::cout << "Precursor: " << precursor->str() << ", current " << current->str() << std::endl;
+		if (current->getStartTime() < _jobs[(*it).first]->getSubmitTime()) {
+		  std::cout << "Start time before submit time!" << std::endl;
+		  std::cout << "Precursor: " << precursor->str() << ", current " << current->str() << std::endl;
+		  success=false;
+		}
+		if (current->getStartTime() < precursor->getFinishTime()) {
+		  std::cout << "Start time before previous job finish time!" << std::endl;
+		  std::cout << "Precursor: " << precursor->str() << ", current " << current->str() << std::endl;
+		  success=false;
+		}
+		if (_jobs[(*it).first]->getSubmitTime() < _jobs[precursor->getJobID()]->getSubmitTime()) {
+		  std::cout << "submit time before previous submit time!" << std::endl;
+		  std::cout << "Precursor: " << precursor->str() << ", current " << current->str() << std::endl;
+		  success=false;
+		}
+		precursor=current;
+	  }
+	}	
+	if (success)
+	  std::cout << "Sanity check successful." << std::endl;
+	else
+	  std::cout << "Sanity FAIL" << std::endl;
+	return success;
+}

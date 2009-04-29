@@ -107,8 +107,10 @@ int main (int argc, char** argv) {
   std::cout << resources->str() << std::endl;
   schedule->processSchedule(); 
   std::cout << resources->str() << std::endl;
+  resources->sanityCheck();
   schedule->removeAllJobs();
   std::cout << resources->str() << std::endl;
+  resources->sanityCheck();
   return 0;
 }
 

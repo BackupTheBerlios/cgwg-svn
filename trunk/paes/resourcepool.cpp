@@ -41,3 +41,14 @@ const std::string ResourcePool::str() {
   }
   return oss.str();
 }
+
+bool ResourcePool::sanityCheck() {
+  bool success=true;
+  std::vector<scheduler::Resource::Ptr> resourceList = getAllResources();
+  std::vector<scheduler::Resource::Ptr>::iterator it; 
+  for(  it = resourceList.begin(); it < resourceList.end(); it++) {
+	if (! (*it)->sanityCheck())
+	  success = false;
+  }
+  return success;
+}
