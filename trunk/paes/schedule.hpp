@@ -14,7 +14,8 @@ namespace scheduler {
 	  typedef std::pair<scheduler::Job::IDType, scheduler::SimpleResource::IDType> SchedulePairType;
 	  Schedule (const scheduler::Workload::Ptr& workload,
 		  const scheduler::ResourcePool::Ptr& resources) : 
-		_workload(workload),  _resources(resources),  _schedule() {};
+		_workload(workload),  _resources(resources),  _schedule(), _tainted(true) {};
+	  Schedule (const Schedule& original); 
 	  virtual ~Schedule() {};
 	  const std::string str();
 	  const std::string getAllocationTable();
@@ -22,13 +23,15 @@ namespace scheduler {
 	  void propagateJobsToResources();
 	  void processSchedule();
 	  void removeAllJobs();
+	  const double getTotalQueueTime();
+	  const double getTotalPrice();
 
 	private:
-	  Schedule (const Schedule& original);
 	  Schedule& operator= (const Schedule& rhs);
 	  scheduler::Workload::Ptr _workload;
 	  scheduler::ResourcePool::Ptr _resources;
 	  std::vector<SchedulePairType> _schedule;
+	  bool _tainted;
   };
 
 }

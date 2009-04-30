@@ -13,8 +13,8 @@ namespace scheduler {
 	  typedef std::tr1::shared_ptr<SimpleResource> Ptr;
 	  typedef unsigned int IDType;
 	  SimpleResource (IDType resourceID, const std::string& resourceName): 
-			Resource (resourceID, resourceName), _jobs(), _allocations(),
-			_totalQueueTime(0.0), _totalPrice(0.0) {};
+			Resource (resourceID, resourceName), _jobs(), _allocations() {};
+	  SimpleResource (const SimpleResource& original);
 	  virtual ~SimpleResource() {};
 
 	  const std::string str();
@@ -22,16 +22,15 @@ namespace scheduler {
 	  void removeAllJobs();
 	  void reSchedule();
 	  bool sanityCheck();
-	  const double getTotalQueueTime() { return _totalQueueTime; };
-	  const double getTotalPrice() { return _totalPrice; };
+	  void clear();
+
+	  const double getTotalQueueTime();
+	  const double getTotalPrice(); 
 
 	private:
-	  SimpleResource (const SimpleResource& original);
 	  SimpleResource& operator= (const SimpleResource& rhs);
 	  std::map<scheduler::Job::IDType, scheduler::Job::Ptr> _jobs;
 	  std::map<scheduler::Job::IDType, scheduler::Allocation::Ptr> _allocations;
-	  double _totalQueueTime;
-	  double _totalPrice;
   };
 }
 

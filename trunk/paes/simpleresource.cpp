@@ -1,34 +1,50 @@
 #include "simpleresource.hpp"
 #include <sstream>
-
+#include <taintedstateexception.hpp>
 
 using namespace scheduler;
+
+SimpleResource::SimpleResource (const SimpleResource& original) : 
+  Resource (original.getResourceID(), original.getResourceName()), 
+  _jobs(original._jobs), 
+  _allocations(original._allocations)
+{ }
 
 const std::string SimpleResource::str() {
   std::ostringstream oss;
   oss << "Simple resource " << getResourceName() << "(id: " << getResourceID() << ")";
   oss << ", " << _jobs.size() << " jobs";
   oss << " total QT: " << _totalQueueTime << ", total price: " << _totalPrice;
+  if (_tainted)
+	oss << ", tainted.";
+  else
+	oss << ", not tainted.";
   return oss.str();
 }
 
-// TODO: mark the current state as tainted...
 void SimpleResource::addJob(const scheduler::Job::Ptr& job) {
   Job::IDType currentID(job->getJobID());
   _jobs[currentID]=job;
+  _tainted=true;
 }
 
 void SimpleResource::removeAllJobs() {
   _jobs.clear();
+  clear();
+}
+
+void SimpleResource::clear() {
   _allocations.clear();
   _totalQueueTime = _totalPrice = 0.0;
+  _tainted=false;
 }
 
 //TODO: The schedule can be built more efficiently during addJob.
 void SimpleResource::reSchedule() {
-  std::cout << "Rescheduling " << getResourceName() << std::endl;
+  //std::cout << "Rescheduling " << getResourceName() << std::endl;
   // The jobs are sorted by the map, so we get increasing job ids automatically.
   double freetime=0.0;
+  _totalQueueTime = _totalPrice = 0.0;
   // 2. Calculate the allocation times
   std::map<scheduler::Job::IDType, scheduler::Job::Ptr>::iterator it;
   for (it=_jobs.begin(); it != _jobs.end(); it++) {
@@ -53,6 +69,7 @@ void SimpleResource::reSchedule() {
 	//std::cout << "generated "<< allocation->str() << std::endl;
 	_allocations[currentID]=allocation;
   }
+  _tainted=false;
 }
 
 bool SimpleResource::sanityCheck() {
@@ -87,4 +104,18 @@ bool SimpleResource::sanityCheck() {
 	else
 	  std::cout << "Sanity FAIL" << std::endl;
 	return success;
+}
+
+const double SimpleResource::getTotalQueueTime() {
+  if (! _tainted)
+	return _totalQueueTime;
+  else
+	throw TaintedStateException("Tainted: No up-to-date total QT available.");
+}
+
+const double SimpleResource::getTotalPrice() {
+  if (! _tainted)
+	return _totalPrice;
+  else
+	throw TaintedStateException("Tainted: No up-to-date total price available.");
 }
