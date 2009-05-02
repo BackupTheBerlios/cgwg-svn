@@ -15,6 +15,7 @@ namespace scheduler	{
 	  void add(scheduler::Job::Ptr job);
 	  const scheduler::Job::IDType getMinJobID();
 	  const scheduler::Job::IDType getMaxJobID();
+	  const scheduler::Job::IDType getRandomJobID();
 	  std::vector<scheduler::Job::IDType> getJobIDs();
 	  const size_t size() { return _jobs.size(); };
 	  const std::string str();

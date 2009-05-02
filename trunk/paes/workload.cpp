@@ -1,4 +1,5 @@
 #include "workload.hpp"
+#include <random.hpp>
 #include <sstream>
 
 using namespace scheduler;
@@ -46,6 +47,11 @@ const scheduler::Job::IDType Workload::getMaxJobID() {
   return retval;
 }
 
+const scheduler::Job::IDType Workload::getRandomJobID() {
+  util::RNG& rng=util::RNG::instance();
+  return rng.uniform_derivate_ranged_int(getMinJobID(), getMaxJobID());
+}
+ 
 scheduler::Job::Ptr Workload::getJobByID(const scheduler::Job::IDType& id) {
   Job::Ptr retval(_jobs[id]);
   return retval;

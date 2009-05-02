@@ -13,6 +13,7 @@ namespace scheduler {
 	  virtual ~ScheduleArchive() {};
 
 	  void addSchedule(const scheduler::Schedule::Ptr schedule);
+	  const std::string getLogLines();
 	  const std::string str();
 
 	private:

@@ -18,6 +18,7 @@ namespace scheduler {
 	  const std::string str();
 	  const std::string getAllocationTable();
 	  void randomSchedule();
+	  void mutate();
 	  void propagateJobsToResources();
 	  void processSchedule();
 	  void removeAllJobs();

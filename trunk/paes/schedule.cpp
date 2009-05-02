@@ -42,6 +42,24 @@ void Schedule::randomSchedule() {
   _tainted=true;
 }
 
+/**
+ * Mutates the current schedule by assigning a random job to a different
+ * resource.
+ */
+void Schedule::mutate() {
+  scheduler::Job::IDType mutationJobID=_workload->getRandomJobID();
+  scheduler::Resource::IDType oldResourceID=_schedule[mutationJobID].second;
+  scheduler::Resource::IDType newResourceID;
+  do {
+	newResourceID=_resources->getRandomResourceID();
+  } while (newResourceID == oldResourceID);
+  std::cout << "Job " << mutationJobID << ": Swapping resource " << oldResourceID << " to " << newResourceID << std::endl;
+  _schedule[mutationJobID].second = newResourceID;
+  propagateJobsToResources();
+  _tainted=true;
+}
+
+
 const std::string Schedule::str() {
   std::ostringstream oss;
   oss << "Schedule: " << _workload->size() << " jobs, "<< _resources->size() << " resources.";
@@ -102,7 +120,6 @@ void Schedule::processSchedule() {
 
 
 const double Schedule::getTotalQueueTime() {
-  std::cout << "Requested QT" << std::endl;
   if (_tainted) {
 	// update the resources
 	processSchedule();

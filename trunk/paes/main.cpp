@@ -155,13 +155,18 @@ int main (int argc, char** argv) {
   std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
   std::cout << "Total QT: " << scheduleCopy->getTotalQueueTime() << ", price: " << scheduleCopy->getTotalPrice() << std::endl;
   std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
-  //std::string allocationTable(scheduleCopy->getAllocationTable());
-  //std::cout << allocationTable << std::endl;
+
+  std::cout << scheduleCopy->getAllocationTable() << std::endl;
+  scheduleCopy->mutate();
+  std::cout << scheduleCopy->getAllocationTable() << std::endl;
 
   std::cout << "Archive: " << archive->str() << std::endl;
   archive->addSchedule(schedule);
   archive->addSchedule(scheduleCopy);
   std::cout << "Archive: " << archive->str() << std::endl;
+
+  std::cout << "Loglines from archive:" << std::endl;
+  std::cout << archive->getLogLines() << std::endl;
 
   //util::ReportWriter::Ptr reporter(new util::ReportWriter("foo.txt"));
   //reporter->addHeaderLine("headerfoo");
