@@ -1,4 +1,5 @@
 #include "schedule.hpp"
+#include <random.hpp>
 #include <sstream>
 #include <utility>
 
@@ -47,14 +48,16 @@ void Schedule::randomSchedule() {
  * resource.
  */
 void Schedule::mutate() {
-  scheduler::Job::IDType mutationJobID=_workload->getRandomJobID();
-  scheduler::Resource::IDType oldResourceID=_schedule[mutationJobID].second;
+  util::RNG& rng=util::RNG::instance();
+  size_t jobIndex = rng.uniform_derivate_ranged_int(0, _schedule.size()-1);
+  scheduler::Resource::IDType oldResourceID=_schedule[jobIndex].second;
   scheduler::Resource::IDType newResourceID;
   do {
 	newResourceID=_resources->getRandomResourceID();
   } while (newResourceID == oldResourceID);
-  std::cout << "Job " << mutationJobID << ": Swapping resource " << oldResourceID << " to " << newResourceID << std::endl;
-  _schedule[mutationJobID].second = newResourceID;
+  std::cout << "Jobindex " << jobIndex << ": Swapping resource " << oldResourceID << " to " << newResourceID << std::endl;
+  _schedule[jobIndex].second = newResourceID;
+  //TODO: Do this only for the old and new resource - the others are not tainted.
   propagateJobsToResources();
   _tainted=true;
 }
@@ -84,6 +87,7 @@ const std::string Schedule::getAllocationTable() {
 }
 
 void Schedule::propagateJobsToResources() {
+  removeAllJobs();
   std::vector<Schedule::SchedulePairType>::iterator it;
   for(  it = _schedule.begin(); it < _schedule.end(); it++) {
 	scheduler::Job::IDType jobID=(*it).first;

@@ -21,7 +21,8 @@ namespace scheduler {
 		_resourceID(original.getResourceID()), 
 		_resourceName(original.getResourceName()), 
 		_tainted(original._tainted),
-		_totalQueueTime(0.0), _totalPrice(0.0) {}; 
+		_totalQueueTime(original._totalQueueTime), 
+		_totalPrice(original._totalPrice) {}; 
 	  virtual ~Resource() {};
 	  virtual const std::string str() = 0;
 	  const IDType getResourceID() const { return _resourceID; };
