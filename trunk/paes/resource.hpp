@@ -20,7 +20,7 @@ namespace scheduler {
 	  Resource (const Resource& original) :
 		_resourceID(original.getResourceID()), 
 		_resourceName(original.getResourceName()), 
-		_tainted(true),
+		_tainted(original._tainted),
 		_totalQueueTime(0.0), _totalPrice(0.0) {}; 
 	  virtual ~Resource() {};
 	  virtual const std::string str() = 0;

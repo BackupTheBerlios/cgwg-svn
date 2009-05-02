@@ -12,9 +12,7 @@ namespace scheduler {
 	public:
 	  typedef std::tr1::shared_ptr<Schedule> Ptr;
 	  typedef std::pair<scheduler::Job::IDType, scheduler::SimpleResource::IDType> SchedulePairType;
-	  Schedule (const scheduler::Workload::Ptr& workload,
-		  const scheduler::ResourcePool::Ptr& resources) : 
-		_workload(workload),  _resources(resources),  _schedule(), _tainted(true) {};
+	  Schedule (const scheduler::Workload::Ptr& workload, const scheduler::ResourcePool::Ptr& resources);
 	  Schedule (const Schedule& original); 
 	  virtual ~Schedule() {};
 	  const std::string str();
@@ -32,6 +30,8 @@ namespace scheduler {
 	  scheduler::ResourcePool::Ptr _resources;
 	  std::vector<SchedulePairType> _schedule;
 	  bool _tainted;
+	  double _totalQueueTime;
+	  double _totalPrice;
   };
 
 }

@@ -5,7 +5,7 @@
 using namespace scheduler;
 
 SimpleResource::SimpleResource (const SimpleResource& original) : 
-  Resource (original.getResourceID(), original.getResourceName()), 
+  Resource (original), 
   _jobs(original._jobs), 
   _allocations(original._allocations)
 { }

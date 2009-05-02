@@ -5,16 +5,30 @@
 
 using namespace scheduler;
 
+Schedule::Schedule (const scheduler::Workload::Ptr& workload,
+	const scheduler::ResourcePool::Ptr& resources) : 
+  _workload(workload),  
+  _resources(resources),  
+  _schedule(), 
+  _tainted(true),
+  _totalQueueTime(0.0),
+  _totalPrice(0.0)
+{ }
+
 /**
  * Copy constructor - copies the exact state of the current schedule,
  * assigns jobs to the resources.
  */
 Schedule::Schedule (const Schedule& original) :
-		_workload(original._workload),  
-		_resources(original._resources),  
-		_schedule(original._schedule) {
-  propagateJobsToResources();
-  _tainted=false;
+  _workload(original._workload),  
+  _resources(original._resources),  
+  _schedule(original._schedule),
+  _tainted(original._tainted),
+  _totalQueueTime(original._totalQueueTime),
+  _totalPrice(original._totalPrice)
+{
+  //propagateJobsToResources();
+  //_tainted=false;
 }
 
 void Schedule::randomSchedule() {
@@ -60,7 +74,7 @@ void Schedule::propagateJobsToResources() {
 	scheduler::Resource::Ptr resource = _resources->getResourceByID(resourceID);
 	resource->addJob(job);
   }
-  _tainted=false;
+  _tainted=true;
 }
 
 void Schedule::removeAllJobs() {
@@ -73,36 +87,33 @@ void Schedule::removeAllJobs() {
 }
 
 void Schedule::processSchedule() {
+  _totalQueueTime=_totalPrice=0.0;
   std::vector<scheduler::Resource::Ptr> resourceList = _resources->getAllResources();
   std::vector<scheduler::Resource::Ptr>::iterator it; 
   for(  it = resourceList.begin(); it < resourceList.end(); it++) {
-	(*it)->reSchedule();
+	if ((*it)->isTainted()) {
+	  (*it)->reSchedule();
+	}
+	_totalQueueTime += (*it)->getTotalQueueTime();
+	_totalPrice += (*it)->getTotalPrice();
   }
+  _tainted=false;
 }
 
 
 const double Schedule::getTotalQueueTime() {
-  double retval=0.0;
-  std::vector<scheduler::Resource::Ptr> resourceList = _resources->getAllResources();
-  std::vector<scheduler::Resource::Ptr>::iterator it; 
-  for(  it = resourceList.begin(); it < resourceList.end(); it++) {
-	if ((*it)->isTainted()) {
-	  (*it)->reSchedule();
-	}
-	retval += (*it)->getTotalQueueTime();
+  std::cout << "Requested QT" << std::endl;
+  if (_tainted) {
+	// update the resources
+	processSchedule();
   }
-  return retval;
+  return _totalQueueTime;
 }
 
 const double Schedule::getTotalPrice() {
-  double retval=0.0;
-  std::vector<scheduler::Resource::Ptr> resourceList = _resources->getAllResources();
-  std::vector<scheduler::Resource::Ptr>::iterator it; 
-  for(  it = resourceList.begin(); it < resourceList.end(); it++) {
-	if ((*it)->isTainted()) {
-	  (*it)->reSchedule();
-	}
-	retval += (*it)->getTotalPrice();
+  if (_tainted) {
+	// update the resources
+	processSchedule();
   }
-  return retval;
+  return _totalPrice;
 }
