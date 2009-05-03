@@ -19,11 +19,13 @@ namespace scheduler {
 	  const std::string getAllocationTable();
 	  void randomSchedule();
 	  void mutate();
+	  void update();
 	  void propagateJobsToResources();
 	  void processSchedule();
 	  void removeAllJobs();
 	  const double getTotalQueueTime();
 	  const double getTotalPrice();
+	  const bool isTainted() { return _tainted; };
 
 	private:
 	  Schedule& operator= (const Schedule& rhs);

@@ -122,11 +122,15 @@ void Schedule::processSchedule() {
   _tainted=false;
 }
 
+void Schedule::update() {
+  propagateJobsToResources();
+  processSchedule();
+}
 
 const double Schedule::getTotalQueueTime() {
   if (_tainted) {
 	// update the resources
-	processSchedule();
+	update();
   }
   return _totalQueueTime;
 }
@@ -134,7 +138,7 @@ const double Schedule::getTotalQueueTime() {
 const double Schedule::getTotalPrice() {
   if (_tainted) {
 	// update the resources
-	processSchedule();
+	update();
   }
   return _totalPrice;
 }

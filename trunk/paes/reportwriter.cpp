@@ -10,7 +10,7 @@ void ReportWriter::addReportLine(const std::string& line) {
 }
 
 void ReportWriter::addHeaderLine(const std::string& line) {
-  _reportLines.push_back(line);
+  _reportHeader.push_back(line);
 }
 void ReportWriter::writeReport() {
   std::cout << "Saving report to file " << _outfile << std::endl;

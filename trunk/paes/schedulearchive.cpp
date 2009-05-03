@@ -13,9 +13,8 @@ const std::string ScheduleArchive::getLogLines() {
   oss << "QT\tPrice" << std::endl;
   std::vector<scheduler::Schedule::Ptr>::iterator it;
   for(  it = _archive.begin(); it < _archive.end(); it++) {
-	scheduler::Schedule::Ptr current=(*it);
-	oss << current->getTotalQueueTime() << "\t";
-	oss << current->getTotalPrice() << std::endl;
+	oss << (*it)->getTotalQueueTime() << "\t";
+	oss << (*it)->getTotalPrice() << std::endl;
   }
   return oss.str();
 }

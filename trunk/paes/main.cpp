@@ -107,72 +107,72 @@ int main (int argc, char** argv) {
   std::cout << "# schedule: " << schedule->str() << std::endl;
   std::cout << "Total QT: " << schedule->getTotalQueueTime() << ", price: " << schedule->getTotalPrice() << std::endl;
 
-  std::cout << "# Random schedule " << std::endl;
+  std::cout << "# Generating Random schedule " << std::endl;
   schedule->randomSchedule();
-  std::cout << "# resources " << resources->str() << std::endl;
-  std::cout << "# schedule: " << schedule->str() << std::endl;
-  //std::cout << "Total QT: "  <<schedule->getTotalQueueTime() << ", price: " << schedule->getTotalPrice() << std::endl;
-
-  std::cout << "schedule: propagate" << std::endl;
+  schedule->processSchedule(); 
   schedule->propagateJobsToResources();
-  std::cout << "# resources " << resources->str() << std::endl;
-  std::cout << "# schedule: " << schedule->str() << std::endl;
-
-  std::cout << "# process schedule + make copy" << std::endl;
-  schedule->processSchedule(); 
-  std::cout << "# resources " << resources->str() << std::endl;
-  std::cout << "# schedule: " << schedule->str() << std::endl;
-  std::cout << "Total QT: " << schedule->getTotalQueueTime() << ", price: " << schedule->getTotalPrice() << std::endl;
- // resources->sanityCheck();
-  
-  std::cout << "# make copy" << std::endl;
-  scheduler::Schedule::Ptr scheduleCopy(new scheduler::Schedule(*schedule));
-  std::cout << "# resources " << resources->str() << std::endl;
-  std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
-
-  std::cout << "# remove all jobs from schedule" << std::endl;
-  schedule->removeAllJobs();
-  std::cout << "# resources " << resources->str() << std::endl;
-  std::cout << "# schedule: " << schedule->str() << std::endl;
-  std::cout << "Total QT: " << schedule->getTotalQueueTime() << ", price: " << schedule->getTotalPrice() << std::endl;
-  std::cout << "# schedule: " << schedule->str() << std::endl;
   resources->sanityCheck();
-  
-  std::cout << "--- Copy of schedule" << std::endl;
-  std::cout << "# resources " << resources->str() << std::endl;
-  std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
-  std::cout << "Total QT: " << scheduleCopy->getTotalQueueTime() << ", price: " << scheduleCopy->getTotalPrice() << std::endl;
-  //scheduleCopy->propagateJobsToResources();
-  
-  std::cout << "scheduleCopy: propagate" << std::endl;
-  scheduleCopy->propagateJobsToResources();
-  std::cout << "# resources " <<  resources->str() << std::endl;
-  std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
+  std::cout << "# schedule: " << schedule->str() << std::endl;
+  std::cout << "Total QT: "  <<schedule->getTotalQueueTime() << ", price: " << schedule->getTotalPrice() << std::endl;
 
-  std::cout << "scheduleCopy: process" << std::endl;
-  schedule->processSchedule(); 
-  std::cout << "# resources " <<  resources->str() << std::endl;
-  std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
-  std::cout << "Total QT: " << scheduleCopy->getTotalQueueTime() << ", price: " << scheduleCopy->getTotalPrice() << std::endl;
-  std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
+ // std::cout << "schedule: propagate" << std::endl;
+ // std::cout << "# resources " << resources->str() << std::endl;
+ // std::cout << "# schedule: " << schedule->str() << std::endl;
 
-  std::cout << scheduleCopy->getAllocationTable() << std::endl;
-  scheduleCopy->mutate();
-  std::cout << scheduleCopy->getAllocationTable() << std::endl;
+ // std::cout << "# process schedule + make copy" << std::endl;
+ // std::cout << "# resources " << resources->str() << std::endl;
+ // std::cout << "# schedule: " << schedule->str() << std::endl;
+ // std::cout << "Total QT: " << schedule->getTotalQueueTime() << ", price: " << schedule->getTotalPrice() << std::endl;
+ // 
+ // std::cout << "# make copy" << std::endl;
+ // scheduler::Schedule::Ptr scheduleCopy(new scheduler::Schedule(*schedule));
+ // std::cout << "# resources " << resources->str() << std::endl;
+ // std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
+
+ // std::cout << "# remove all jobs from schedule" << std::endl;
+ // schedule->removeAllJobs();
+ // std::cout << "# resources " << resources->str() << std::endl;
+ // std::cout << "# schedule: " << schedule->str() << std::endl;
+ // std::cout << "Total QT: " << schedule->getTotalQueueTime() << ", price: " << schedule->getTotalPrice() << std::endl;
+ // std::cout << "# schedule: " << schedule->str() << std::endl;
+ // resources->sanityCheck();
+ // 
+ // std::cout << "--- Copy of schedule" << std::endl;
+ // std::cout << "# resources " << resources->str() << std::endl;
+ // std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
+ // std::cout << "Total QT: " << scheduleCopy->getTotalQueueTime() << ", price: " << scheduleCopy->getTotalPrice() << std::endl;
+ // //scheduleCopy->propagateJobsToResources();
+ // 
+ // std::cout << "scheduleCopy: propagate" << std::endl;
+ // scheduleCopy->propagateJobsToResources();
+ // std::cout << "# resources " <<  resources->str() << std::endl;
+ // std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
+
+ // std::cout << "scheduleCopy: process" << std::endl;
+ // schedule->processSchedule(); 
+ // std::cout << "# resources " <<  resources->str() << std::endl;
+ // std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
+ // std::cout << "Total QT: " << scheduleCopy->getTotalQueueTime() << ", price: " << scheduleCopy->getTotalPrice() << std::endl;
+ // std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
 
   std::cout << "Archive: " << archive->str() << std::endl;
   archive->addSchedule(schedule);
-  archive->addSchedule(scheduleCopy);
-  std::cout << "Archive: " << archive->str() << std::endl;
+  for( unsigned int i = 0; i < 10; i += 1) {
+	scheduler::Schedule::Ptr scheduleCopy(new scheduler::Schedule(*schedule));
+	scheduleCopy->mutate();
+	//std::cout << "Total QT: " << scheduleCopy->getTotalQueueTime() << ", price: " << scheduleCopy->getTotalPrice() << std::endl;
+	archive->addSchedule(scheduleCopy);
+  }
 
+  std::cout << "Archive: " << archive->str() << std::endl;
   std::cout << "Loglines from archive:" << std::endl;
   std::cout << archive->getLogLines() << std::endl;
 
-  //util::ReportWriter::Ptr reporter(new util::ReportWriter("foo.txt"));
-  //reporter->addHeaderLine("headerfoo");
-  //reporter->addReportLine("line1)");
-  //reporter->addReportLine("line2)");
-  //reporter->writeReport();
+  util::ReportWriter::Ptr reporter(new util::ReportWriter(outputfile));
+  std::string headerLine("experiment from input file ");
+  reporter->addHeaderLine(headerLine + inputfile);
+  reporter->addReportLine(archive->getLogLines());
+  reporter->writeReport();
   return 0;
 }
 
