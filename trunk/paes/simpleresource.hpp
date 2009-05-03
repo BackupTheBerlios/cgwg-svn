@@ -12,8 +12,8 @@ namespace scheduler {
 	public:
 	  typedef std::tr1::shared_ptr<SimpleResource> Ptr;
 	  typedef unsigned int IDType;
-	  SimpleResource (IDType resourceID, const std::string& resourceName): 
-			Resource (resourceID, resourceName), _jobs(), _allocations() {};
+	  SimpleResource (IDType resourceID, const std::string& resourceName, scheduler::PricingPlan::Ptr pricingPlan): 
+			Resource (resourceID, resourceName, pricingPlan), _jobs(), _allocations() {};
 	  SimpleResource (const SimpleResource& original);
 	  virtual ~SimpleResource() {};
 

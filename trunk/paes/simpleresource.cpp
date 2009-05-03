@@ -12,13 +12,14 @@ SimpleResource::SimpleResource (const SimpleResource& original) :
 
 const std::string SimpleResource::str() {
   std::ostringstream oss;
-  oss << "Simple resource " << getResourceName() << "(id: " << getResourceID() << ")";
+  oss << "# Simple resource " << getResourceName() << "(id: " << getResourceID() << ")";
   oss << ", " << _jobs.size() << " jobs";
   oss << " total QT: " << _totalQueueTime << ", total price: " << _totalPrice;
   if (_tainted)
-	oss << ", tainted.";
+	oss << ", tainted, ";
   else
-	oss << ", not tainted.";
+	oss << ", not tainted, ";
+  oss << _pricingPlan->str();
   return oss.str();
 }
 
@@ -61,7 +62,7 @@ void SimpleResource::reSchedule() {
 	queuetime = starttime - current->getSubmitTime();
 	_totalQueueTime += queuetime;
 	finishtime = starttime + current->getRunTime();
-	price=1.0;
+	price=_pricingPlan->getPrice(current);
 	_totalPrice += price;
 	freetime=starttime + current->getRunTime();
 	// Create a new allocation for this job

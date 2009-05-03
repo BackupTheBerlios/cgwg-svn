@@ -20,14 +20,14 @@ namespace scheduler {
 	  void randomSchedule();
 	  void mutate();
 	  void update();
-	  void propagateJobsToResources();
-	  void processSchedule();
 	  void removeAllJobs();
 	  const double getTotalQueueTime();
 	  const double getTotalPrice();
 	  const bool isTainted() { return _tainted; };
 
 	private:
+	  void propagateJobsToResources();
+	  void processSchedule();
 	  Schedule& operator= (const Schedule& rhs);
 	  scheduler::Workload::Ptr _workload;
 	  scheduler::ResourcePool::Ptr _resources;

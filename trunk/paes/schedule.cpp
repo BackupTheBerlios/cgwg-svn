@@ -55,7 +55,7 @@ void Schedule::mutate() {
   do {
 	newResourceID=_resources->getRandomResourceID();
   } while (newResourceID == oldResourceID);
-  std::cout << "Jobindex " << jobIndex << ": Swapping resource " << oldResourceID << " to " << newResourceID << std::endl;
+  //std::cout << "Jobindex " << jobIndex << ": Swapping resource " << oldResourceID << " to " << newResourceID << std::endl;
   _schedule[jobIndex].second = newResourceID;
   //TODO: Do this only for the old and new resource - the others are not tainted.
   propagateJobsToResources();

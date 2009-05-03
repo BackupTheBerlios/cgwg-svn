@@ -3,6 +3,7 @@
 
 #include <common.hpp>
 #include <job.hpp>
+#include <pricingplan.hpp>
 
 namespace scheduler {
  // class Job;
@@ -14,15 +15,17 @@ namespace scheduler {
 	  typedef std::tr1::shared_ptr<Resource> Ptr;
 	  typedef unsigned int IDType;
 	  static const IDType RESOURCEID_MAX = UINT_MAX;
-	  Resource (IDType resourceID, const std::string& resourceName) :  
+	  Resource (IDType resourceID, const std::string& resourceName, 
+		  scheduler::PricingPlan::Ptr pricingPlan) :  
 		_resourceID(resourceID), _resourceName(resourceName), _tainted(true),
-		_totalQueueTime(0.0), _totalPrice(0.0) {}; 
+		_totalQueueTime(0.0), _totalPrice(0.0), _pricingPlan(pricingPlan) {}; 
 	  Resource (const Resource& original) :
 		_resourceID(original.getResourceID()), 
 		_resourceName(original.getResourceName()), 
 		_tainted(original._tainted),
 		_totalQueueTime(original._totalQueueTime), 
-		_totalPrice(original._totalPrice) {}; 
+		_totalPrice(original._totalPrice),
+		_pricingPlan(original._pricingPlan) {}; 
 	  virtual ~Resource() {};
 	  virtual const std::string str() = 0;
 	  const IDType getResourceID() const { return _resourceID; };
@@ -45,6 +48,7 @@ namespace scheduler {
 	  bool _tainted;
 	  double _totalQueueTime;
 	  double _totalPrice;
+	  scheduler::PricingPlan::Ptr _pricingPlan;
   };
 
 }

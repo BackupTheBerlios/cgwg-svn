@@ -11,6 +11,8 @@
 #include <workload-factory.hpp>
 #include <reportwriter.hpp>
 #include <schedulearchive.hpp>
+#include <linearpricing.hpp>
+
 
 void printHelp() {
   std::cout << "PAES Scheduler" << std::endl;
@@ -94,7 +96,8 @@ int main (int argc, char** argv) {
   for(unsigned int i=0; i<3; i++) {
 	std::ostringstream oss;
 	oss << "Resource-" << i;
-	scheduler::SimpleResource::Ptr resource(new scheduler::SimpleResource(i, oss.str()));
+	scheduler::PricingPlan::Ptr simplePricing(new scheduler::LinearPricing(0.1*(i+1)));
+	scheduler::SimpleResource::Ptr resource(new scheduler::SimpleResource(i, oss.str(), simplePricing));
 	resources->add(resource);
   }
 
@@ -109,8 +112,7 @@ int main (int argc, char** argv) {
 
   std::cout << "# Generating Random schedule " << std::endl;
   schedule->randomSchedule();
-  schedule->processSchedule(); 
-  schedule->propagateJobsToResources();
+  schedule->update(); 
   resources->sanityCheck();
   std::cout << "# schedule: " << schedule->str() << std::endl;
   std::cout << "Total QT: "  <<schedule->getTotalQueueTime() << ", price: " << schedule->getTotalPrice() << std::endl;
@@ -164,13 +166,15 @@ int main (int argc, char** argv) {
 	archive->addSchedule(scheduleCopy);
   }
 
-  std::cout << "Archive: " << archive->str() << std::endl;
-  std::cout << "Loglines from archive:" << std::endl;
-  std::cout << archive->getLogLines() << std::endl;
+//  std::cout << "Archive: " << archive->str() << std::endl;
+//  std::cout << "Loglines from archive:" << std::endl;
+//  std::cout << archive->getLogLines() << std::endl;
 
   util::ReportWriter::Ptr reporter(new util::ReportWriter(outputfile));
   std::string headerLine("experiment from input file ");
   reporter->addHeaderLine(headerLine + inputfile);
+  std::string resourceInfo(resources->str());
+  reporter->addHeaderLine(resourceInfo);
   reporter->addReportLine(archive->getLogLines());
   reporter->writeReport();
   return 0;
