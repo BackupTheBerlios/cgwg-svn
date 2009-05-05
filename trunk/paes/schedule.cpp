@@ -99,6 +99,26 @@ void Schedule::propagateJobsToResources() {
   _tainted=true;
 }
 
+scheduler::Schedule::DOMINATION Schedule::compare(const Schedule::Ptr& other) {
+  if (_tainted) {
+	// update the resources
+	update();
+  }
+  if (_totalPrice < other->getTotalPrice()) {
+	if (_totalQueueTime < other->getTotalQueueTime()) {
+	  return DOMINATES; // we dominate other
+	} else {
+	  return NO_DOMINATION; // no one dominates the other
+	}
+  } else { // _totalPrice >= other.getTotalPrice()
+	if (_totalQueueTime >= other->getTotalQueueTime()) {
+	  return IS_DOMINATED; // the other dominates us
+	} else {
+	  return NO_DOMINATION; // no one dominates the other
+	}
+  }
+}
+
 void Schedule::removeAllJobs() {
   std::vector<scheduler::Resource::Ptr> resourceList = _resources->getAllResources();
   std::vector<scheduler::Resource::Ptr>::iterator it; 

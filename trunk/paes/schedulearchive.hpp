@@ -15,6 +15,11 @@ namespace scheduler {
 	  void addSchedule(const scheduler::Schedule::Ptr schedule);
 	  const std::string getLogLines();
 	  const std::string str();
+	  /**
+	   * Returns true if at least one schedule in the archive dominates
+	   * the schedule parameter.
+	   */
+	  bool dominates(const scheduler::Schedule::Ptr& schedule);
 
 	private:
 	  ScheduleArchive (const ScheduleArchive& original);

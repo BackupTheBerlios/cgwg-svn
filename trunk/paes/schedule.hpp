@@ -10,6 +10,9 @@
 namespace scheduler {
   class Schedule {
 	public:
+	  enum DOMINATION {
+		DOMINATES, IS_DOMINATED, NO_DOMINATION
+	  } my_Domination;
 	  typedef std::tr1::shared_ptr<Schedule> Ptr;
 	  typedef std::pair<scheduler::Job::IDType, scheduler::SimpleResource::IDType> SchedulePairType;
 	  Schedule (const scheduler::Workload::Ptr& workload, const scheduler::ResourcePool::Ptr& resources);
@@ -18,6 +21,14 @@ namespace scheduler {
 	  const std::string str();
 	  const std::string getAllocationTable();
 	  void randomSchedule();
+	  /**
+	   * Compares this schedule to another one.
+	   * returns 
+	   *	DOMINATES if this one dominates the other
+	   *	IS_DOMINATED if other dominates this one
+	   *	NO_DOMINATION otherwise.
+	   */
+	  DOMINATION compare(const Schedule::Ptr& other);
 	  void mutate();
 	  void update();
 	  void removeAllJobs();

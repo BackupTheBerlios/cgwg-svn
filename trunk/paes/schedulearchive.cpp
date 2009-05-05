@@ -19,6 +19,14 @@ const std::string ScheduleArchive::getLogLines() {
   return oss.str();
 }
 
+bool ScheduleArchive::dominates(const scheduler::Schedule::Ptr& schedule) {
+  std::vector<scheduler::Schedule::Ptr>::iterator it;
+  for(  it = _archive.begin(); it < _archive.end(); it++) {
+	if ((*it)->compare(schedule) == scheduler::Schedule::DOMINATES)
+	  return true;
+  }
+  return false;
+}
 const std::string ScheduleArchive::str() {
   std::ostringstream oss;
   oss << "ScheduleArchive contains " << _archive.size() << " schedules.";

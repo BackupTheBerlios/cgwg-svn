@@ -27,6 +27,7 @@ int main (int argc, char** argv) {
   char *inputfile = NULL;
   char *outputfile = NULL;
   int c;
+  long MAX_ITERATION=10;
 
   opterr = 0;
   while ((c = getopt (argc, argv, "hvi:o:")) != -1)
@@ -104,72 +105,51 @@ int main (int argc, char** argv) {
   // Archive for the schedules.
   scheduler::ScheduleArchive::Ptr archive(new scheduler::ScheduleArchive());
 
-  // Build the schedule
-  scheduler::Schedule::Ptr schedule(new scheduler::Schedule(workload, resources));
-  std::cout << "Created " << schedule->str() << std::endl;
-  std::cout << "# schedule: " << schedule->str() << std::endl;
-  std::cout << "Total QT: " << schedule->getTotalQueueTime() << ", price: " << schedule->getTotalPrice() << std::endl;
-
+  // 1. generate initial random solution c and add it to the archive
+  scheduler::Schedule::Ptr current(new scheduler::Schedule(workload, resources));
   std::cout << "# Generating Random schedule " << std::endl;
-  schedule->randomSchedule();
-  schedule->update(); 
+  current->randomSchedule();
+  current->update(); 
   resources->sanityCheck();
-  std::cout << "# schedule: " << schedule->str() << std::endl;
-  std::cout << "Total QT: "  <<schedule->getTotalQueueTime() << ", price: " << schedule->getTotalPrice() << std::endl;
+  archive->addSchedule(current);
 
- // std::cout << "schedule: propagate" << std::endl;
- // std::cout << "# resources " << resources->str() << std::endl;
- // std::cout << "# schedule: " << schedule->str() << std::endl;
-
- // std::cout << "# process schedule + make copy" << std::endl;
- // std::cout << "# resources " << resources->str() << std::endl;
- // std::cout << "# schedule: " << schedule->str() << std::endl;
- // std::cout << "Total QT: " << schedule->getTotalQueueTime() << ", price: " << schedule->getTotalPrice() << std::endl;
- // 
- // std::cout << "# make copy" << std::endl;
- // scheduler::Schedule::Ptr scheduleCopy(new scheduler::Schedule(*schedule));
- // std::cout << "# resources " << resources->str() << std::endl;
- // std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
-
- // std::cout << "# remove all jobs from schedule" << std::endl;
- // schedule->removeAllJobs();
- // std::cout << "# resources " << resources->str() << std::endl;
- // std::cout << "# schedule: " << schedule->str() << std::endl;
- // std::cout << "Total QT: " << schedule->getTotalQueueTime() << ", price: " << schedule->getTotalPrice() << std::endl;
- // std::cout << "# schedule: " << schedule->str() << std::endl;
- // resources->sanityCheck();
- // 
- // std::cout << "--- Copy of schedule" << std::endl;
- // std::cout << "# resources " << resources->str() << std::endl;
- // std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
- // std::cout << "Total QT: " << scheduleCopy->getTotalQueueTime() << ", price: " << scheduleCopy->getTotalPrice() << std::endl;
- // //scheduleCopy->propagateJobsToResources();
- // 
- // std::cout << "scheduleCopy: propagate" << std::endl;
- // scheduleCopy->propagateJobsToResources();
- // std::cout << "# resources " <<  resources->str() << std::endl;
- // std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
-
- // std::cout << "scheduleCopy: process" << std::endl;
- // schedule->processSchedule(); 
- // std::cout << "# resources " <<  resources->str() << std::endl;
- // std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
- // std::cout << "Total QT: " << scheduleCopy->getTotalQueueTime() << ", price: " << scheduleCopy->getTotalPrice() << std::endl;
- // std::cout << "# scheduleCopy: " << scheduleCopy->str() << std::endl;
-
-  std::cout << "Archive: " << archive->str() << std::endl;
-  archive->addSchedule(schedule);
-  for( unsigned int i = 0; i < 10; i += 1) {
-	scheduler::Schedule::Ptr scheduleCopy(new scheduler::Schedule(*schedule));
-	scheduleCopy->mutate();
-	//std::cout << "Total QT: " << scheduleCopy->getTotalQueueTime() << ", price: " << scheduleCopy->getTotalPrice() << std::endl;
-	archive->addSchedule(scheduleCopy);
+  for( long iteration = 0; iteration < MAX_ITERATION; iteration += 1) {
+	// 2. mutate c to produce m and evaluate m
+	scheduler::Schedule::Ptr mutation(new scheduler::Schedule(*current));
+	mutation->mutate();
+	std::cout << "# schedule: " << current->str() << std::endl;
+	std::cout << "Total QT: "  << current->getTotalQueueTime() << ", price: " << current->getTotalPrice() << std::endl;
+	std::cout << "# mutation: " << mutation->str() << std::endl;
+	std::cout << "Total QT: "  << mutation->getTotalQueueTime() << ", price: " << mutation->getTotalPrice() << std::endl;
+	int compare=mutation->compare(current);
+	if (compare == scheduler::Schedule::IS_DOMINATED) {
+	  std::cout << "Schedule dominates the mutation - discarding mutation." << std::endl;
+	} else if (compare == scheduler::Schedule::DOMINATES) {
+	  std::cout << "Mutation dominates current schedule - replacing current + adding to archive." << std::endl;
+	  current = mutation;
+	  archive->addSchedule(mutation);
+	} else if (compare == scheduler::Schedule::NO_DOMINATION) {
+	  std::cout << "No decideable domination - comparing mutation to archive." << std::endl;
+	  // if mutation is dominated by any member of the archive - discard it.
+	  if (archive->dominates(mutation))
+		std::cout << "Archive dominates mutation - discarding mutation." << std::endl;
+	  else 
+		std::cout << "Running test routine." << std::endl;
+	}
   }
 
-//  std::cout << "Archive: " << archive->str() << std::endl;
-//  std::cout << "Loglines from archive:" << std::endl;
-//  std::cout << archive->getLogLines() << std::endl;
 
+  //
+  //  for( unsigned int i = 0; i < 10; i += 1) {
+  //	scheduler::Schedule::Ptr scheduleCopy(new scheduler::Schedule(*current));
+  //	scheduleCopy->mutate();
+  //	//std::cout << "Total QT: " << scheduleCopy->getTotalQueueTime() << ", price: " << scheduleCopy->getTotalPrice() << std::endl;
+  //	archive->addSchedule(scheduleCopy);
+  //  }
+  //
+
+  // dump the archive to disk.
+  std::cout << "Archive: " << archive->str() << std::endl;
   util::ReportWriter::Ptr reporter(new util::ReportWriter(outputfile));
   std::string headerLine("experiment from input file ");
   reporter->addHeaderLine(headerLine + inputfile);
@@ -177,6 +157,7 @@ int main (int argc, char** argv) {
   reporter->addHeaderLine(resourceInfo);
   reporter->addReportLine(archive->getLogLines());
   reporter->writeReport();
+
   return 0;
 }
 

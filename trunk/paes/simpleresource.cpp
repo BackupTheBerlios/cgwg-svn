@@ -101,9 +101,9 @@ bool SimpleResource::sanityCheck() {
 	  }
 	}	
 	if (success)
-	  std::cout << "Sanity check successful." << std::endl;
+	  std::cout << "Simple Resource "<< getResourceName() <<": Sanity check successful." << std::endl;
 	else
-	  std::cout << "Sanity FAIL" << std::endl;
+	  std::cout << "Simple Resource "<< getResourceName() << ": Sanity FAIL" << std::endl;
 	return success;
 }
 
