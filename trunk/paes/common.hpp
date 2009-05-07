@@ -6,6 +6,8 @@
 #include <string.h>
 #include <iostream>
 
+// Include global compile-time configuration
+#include "config.hpp"
 
 #endif /* PAES_COMMON_HPP */
 

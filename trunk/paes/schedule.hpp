@@ -2,6 +2,7 @@
 #define PAES_SCHEDULE_HPP 1
 #include <common.hpp>
 #include <vector>
+#include <bitset>
 #include <simpleresource.hpp>
 #include <resourcepool.hpp>
 #include <workload.hpp>
@@ -15,6 +16,7 @@ namespace scheduler {
 	  } my_Domination;
 	  typedef std::tr1::shared_ptr<Schedule> Ptr;
 	  typedef std::pair<scheduler::Job::IDType, scheduler::SimpleResource::IDType> SchedulePairType;
+	  typedef std::bitset<config::NUM_LOCATION_BITS> LocationType;
 	  Schedule (const scheduler::Workload::Ptr& workload, const scheduler::ResourcePool::Ptr& resources);
 	  Schedule (const Schedule& original); 
 	  virtual ~Schedule() {};
@@ -43,6 +45,7 @@ namespace scheduler {
 	  scheduler::Workload::Ptr _workload;
 	  scheduler::ResourcePool::Ptr _resources;
 	  std::vector<SchedulePairType> _schedule;
+	  LocationType _location;
 	  bool _tainted;
 	  double _totalQueueTime;
 	  double _totalPrice;

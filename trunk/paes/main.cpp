@@ -123,7 +123,7 @@ int main (int argc, char** argv) {
 	std::cout << "Total QT: "  << mutation->getTotalQueueTime() << ", price: " << mutation->getTotalPrice() << std::endl;
 	int compare=mutation->compare(current);
 	if (compare == scheduler::Schedule::IS_DOMINATED) {
-	  std::cout << "Schedule dominates the mutation - discarding mutation." << std::endl;
+	  std::cout << "Current schedule dominates the mutation - discarding mutation." << std::endl;
 	} else if (compare == scheduler::Schedule::DOMINATES) {
 	  std::cout << "Mutation dominates current schedule - replacing current + adding to archive." << std::endl;
 	  current = mutation;
