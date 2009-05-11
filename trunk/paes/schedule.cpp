@@ -70,6 +70,7 @@ const std::string Schedule::str() {
 	oss << " (tainted)";
   else
 	oss << " (not tainted)";
+  oss << ", location: " << getLocation();
   return oss.str();
 }
 
@@ -111,12 +112,24 @@ scheduler::Schedule::DOMINATION Schedule::compare(const Schedule::Ptr& other) {
 	  return NO_DOMINATION; // no one dominates the other
 	}
   } else { // _totalPrice >= other.getTotalPrice()
-	if (_totalQueueTime >= other->getTotalQueueTime()) {
+	if (_totalQueueTime > other->getTotalQueueTime()) {
 	  return IS_DOMINATED; // the other dominates us
 	} else {
 	  return NO_DOMINATION; // no one dominates the other
 	}
   }
+}
+
+bool Schedule::dominates(const Schedule::Ptr& other) {
+  return (compare(other) == scheduler::Schedule::DOMINATES);
+}
+
+bool Schedule::equals(const Schedule::Ptr& other) {
+  if (other->getTotalQueueTime() == getTotalQueueTime() && 
+	  other->getTotalPrice() == getTotalPrice())
+	return true;
+  else
+	return false;
 }
 
 void Schedule::removeAllJobs() {

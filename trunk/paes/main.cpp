@@ -19,6 +19,7 @@ void printHelp() {
   std::cout << "Mandatory commandline parameters:" << std::endl;
   std::cout << " -i <FILE>: Specify input file" << std::endl;
   std::cout << " -o <FILE>: Specify output file" << std::endl;
+  std::cout << " -v: Verbose output" << std::endl;
 }
 
 int main (int argc, char** argv) {
@@ -27,7 +28,8 @@ int main (int argc, char** argv) {
   char *inputfile = NULL;
   char *outputfile = NULL;
   int c;
-  long MAX_ITERATION=10;
+  long MAX_ITERATION=10000;
+  size_t ARCHIVE_SIZE=100;
 
   opterr = 0;
   while ((c = getopt (argc, argv, "hvi:o:")) != -1)
@@ -103,7 +105,7 @@ int main (int argc, char** argv) {
   }
 
   // Archive for the schedules.
-  scheduler::ScheduleArchive::Ptr archive(new scheduler::ScheduleArchive());
+  scheduler::ScheduleArchive::Ptr archive(new scheduler::ScheduleArchive(ARCHIVE_SIZE));
 
   // 1. generate initial random solution c and add it to the archive
   scheduler::Schedule::Ptr current(new scheduler::Schedule(workload, resources));
@@ -111,40 +113,68 @@ int main (int argc, char** argv) {
   current->randomSchedule();
   current->update(); 
   resources->sanityCheck();
-  archive->addSchedule(current);
+  archive->archiveSchedule(current);
 
   for( long iteration = 0; iteration < MAX_ITERATION; iteration += 1) {
 	// 2. mutate c to produce m and evaluate m
 	scheduler::Schedule::Ptr mutation(new scheduler::Schedule(*current));
 	mutation->mutate();
-	std::cout << "# schedule: " << current->str() << std::endl;
-	std::cout << "Total QT: "  << current->getTotalQueueTime() << ", price: " << current->getTotalPrice() << std::endl;
-	std::cout << "# mutation: " << mutation->str() << std::endl;
-	std::cout << "Total QT: "  << mutation->getTotalQueueTime() << ", price: " << mutation->getTotalPrice() << std::endl;
+	if(verbose) {
+	  std::cout << "# schedule: " << current->str() << std::endl;
+	  std::cout << "Total QT: "  << current->getTotalQueueTime() << ", price: " << current->getTotalPrice() << std::endl;
+	  std::cout << "# mutation: " << mutation->str() << std::endl;
+	  std::cout << "Total QT: "  << mutation->getTotalQueueTime() << ", price: " << mutation->getTotalPrice() << std::endl;
+	}
 	int compare=mutation->compare(current);
+	// First, compare the current solution to the mutation.
 	if (compare == scheduler::Schedule::IS_DOMINATED) {
-	  std::cout << "Current schedule dominates the mutation - discarding mutation." << std::endl;
+	  if (verbose)
+		std::cout << "(1) Current schedule dominates the mutation - discarding mutation." << std::endl;
+	  ;;
 	} else if (compare == scheduler::Schedule::DOMINATES) {
-	  std::cout << "Mutation dominates current schedule - replacing current + adding to archive." << std::endl;
+	  if (verbose)
+		std::cout << "(2) Mutation dominates current schedule - replacing current + adding to archive." << std::endl;
 	  current = mutation;
-	  archive->addSchedule(mutation);
+	  archive->archiveSchedule(mutation); 
+	  archive->updateAllLocations();
 	} else if (compare == scheduler::Schedule::NO_DOMINATION) {
-	  std::cout << "No decideable domination - comparing mutation to archive." << std::endl;
+	  if (verbose)
+		std::cout << "(3) No decideable domination - comparing mutation to archive." << std::endl;
 	  // if mutation is dominated by any member of the archive - discard it.
-	  if (archive->dominates(mutation))
-		std::cout << "Archive dominates mutation - discarding mutation." << std::endl;
-	  else 
-		std::cout << "Running test routine." << std::endl;
+	  if (archive->dominates(mutation)) {
+		if (verbose)
+		  std::cout << "(3a) Archive dominates mutation - discarding mutation." << std::endl;
+		;;
+	  } else {
+		// Unclear if we should add this solution.
+		if (verbose)
+		  std::cout << "(3b) Running test routine." << std::endl;
+		// archive solution
+		archive->archiveSchedule(mutation); 
+		// update grid
+		archive->updateAllLocations();
+		// if mutation dominates the archive or is in less crowded grid location than current
+		// replace current with mutation.
+		if (verbose)
+		  std::cout << "(3b) Current population: " << archive->getPopulationStr();
+		unsigned long current_population = archive->getPopulationCount(current->getLocation());
+		unsigned long mutation_population = archive->getPopulationCount(mutation->getLocation());
+		if (archive->isDominated(mutation) || mutation_population < current_population) {
+		  if (verbose)
+			std::cout << "(3b) Replacing current solution with mutation." << std::endl;
+		  current = mutation;
+		} 
+	  }
 	}
   }
 
-
+  //archive->updateAllLocations()
   //
   //  for( unsigned int i = 0; i < 10; i += 1) {
   //	scheduler::Schedule::Ptr scheduleCopy(new scheduler::Schedule(*current));
   //	scheduleCopy->mutate();
   //	//std::cout << "Total QT: " << scheduleCopy->getTotalQueueTime() << ", price: " << scheduleCopy->getTotalPrice() << std::endl;
-  //	archive->addSchedule(scheduleCopy);
+  //	archive->archiveSchedule(scheduleCopy);
   //  }
   //
 

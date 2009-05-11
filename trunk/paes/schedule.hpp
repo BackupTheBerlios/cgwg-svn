@@ -17,6 +17,7 @@ namespace scheduler {
 	  typedef std::tr1::shared_ptr<Schedule> Ptr;
 	  typedef std::pair<scheduler::Job::IDType, scheduler::SimpleResource::IDType> SchedulePairType;
 	  typedef std::bitset<config::NUM_LOCATION_BITS> LocationType;
+	  typedef std::bitset<config::LOCATION_DIMENSION_SIZE> LocationDimensionType;
 	  Schedule (const scheduler::Workload::Ptr& workload, const scheduler::ResourcePool::Ptr& resources);
 	  Schedule (const Schedule& original); 
 	  virtual ~Schedule() {};
@@ -31,12 +32,16 @@ namespace scheduler {
 	   *	NO_DOMINATION otherwise.
 	   */
 	  DOMINATION compare(const Schedule::Ptr& other);
+	  bool dominates(const Schedule::Ptr& other);
+	  bool equals(const Schedule::Ptr& other);
 	  void mutate();
 	  void update();
 	  void removeAllJobs();
 	  const double getTotalQueueTime();
 	  const double getTotalPrice();
 	  const bool isTainted() { return _tainted; };
+	  LocationType getLocation() { return _location; };
+	  void setLocation(LocationType location) { _location=location; };
 
 	private:
 	  void propagateJobsToResources();
