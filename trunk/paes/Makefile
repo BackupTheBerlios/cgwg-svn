@@ -13,9 +13,13 @@ all: $(SOURCES) $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
 
+# GCC autodepend-fu
 .cpp.o:
-	$(CC) $(CFLAGS) $< -o $@
-
+	$(CC) $(CFLAGS) -MD $< -o $@
+	@sed -i 's,\($*\.o\)[ :]*\(.*\),$@ : $$\(wildcard \2\)\n\1 : \2,g' $*.d
+	
+.PHONY: clean
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE)
+	rm -f $(OBJECTS) $(EXECUTABLE) *.d
 
+-include $(SOURCES:.cpp=.d)

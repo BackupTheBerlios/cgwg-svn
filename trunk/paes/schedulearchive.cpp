@@ -54,7 +54,7 @@ void ScheduleArchive::archiveSchedule(const scheduler::Schedule::Ptr schedule) {
 		addSchedule(schedule);
 	  } else {
 		// Compare locations & replace a solution from the most crowded space.
-		std::cout << "*** Using location pressure to replace an existing solution." << std::endl;
+		//std::cout << "*** Using location pressure to replace an existing solution." << std::endl;
 		unsigned long maxPopulation=0;
 		std::vector<scheduler::Schedule::Ptr>::iterator it;
 		std::vector<scheduler::Schedule::Ptr>::iterator replace;
@@ -66,7 +66,7 @@ void ScheduleArchive::archiveSchedule(const scheduler::Schedule::Ptr schedule) {
 			replace=it;
 		  }
 		}
-		std::cout << "*** replacing " << (*replace)->str() << ", max population: " << maxPopulation << std::endl;
+		//std::cout << "*** replacing " << (*replace)->str() << ", max population: " << maxPopulation << std::endl;
 		_archive->erase(replace);
 		addSchedule(schedule);
 	  }
