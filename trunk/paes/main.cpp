@@ -1,6 +1,8 @@
 #include <iostream>
 #include <unistd.h>
 #include <vector>
+#include <sstream>
+#include <sys/stat.h>
 
 #include <common.hpp>
 #include <workload.hpp>
@@ -18,7 +20,7 @@ void printHelp() {
   std::cout << "PAES Scheduler" << std::endl;
   std::cout << "Mandatory commandline parameters:" << std::endl;
   std::cout << " -i <FILE>: Specify input file" << std::endl;
-  std::cout << " -o <FILE>: Specify output file" << std::endl;
+  std::cout << " -o <DIR>: Specify output directory" << std::endl;
   std::cout << " -v: Verbose output" << std::endl;
 }
 
@@ -26,10 +28,9 @@ int main (int argc, char** argv) {
   // Parse the commandline parameters using getopt
   bool verbose=false;
   char *inputfile = NULL;
-  char *outputfile = NULL;
+  char *outputdir = NULL;
   int c;
-  long MAX_ITERATION=10000;
-  size_t ARCHIVE_SIZE=100;
+  unsigned long MAX_ITERATION=100000;
 
   opterr = 0;
   while ((c = getopt (argc, argv, "hvi:o:")) != -1)
@@ -45,7 +46,7 @@ int main (int argc, char** argv) {
 		inputfile = optarg;
 		break;
 	  case 'o':
-		outputfile = optarg;
+		outputdir = optarg;
 		break;
 	  case '?':
 		if (optopt == 'i')
@@ -70,11 +71,18 @@ int main (int argc, char** argv) {
 	std::cout << "Using input file " << inputfile << std::endl;
   }
 
-  if (outputfile == NULL) {
-	std::cerr << "No output file specified - aborting." << std::endl;
+  if (outputdir == NULL) {
+	std::cerr << "No output directory specified - aborting." << std::endl;
 	exit(-1);
   } else {
-	std::cout << "Writing results to " << outputfile << std::endl;
+	// Test if the directory exists.
+	struct stat st;
+	if(stat(outputdir,&st) == 0)
+	  std::cout << "Writing results to " << outputdir << std::endl;
+	else {
+	  std::cout << "Output directory \"" << outputdir << "\" not existent - aborting." << std::endl;
+	  exit(-2);
+	}
   }
 
 
@@ -105,7 +113,7 @@ int main (int argc, char** argv) {
   }
 
   // Archive for the schedules.
-  scheduler::ScheduleArchive::Ptr archive(new scheduler::ScheduleArchive(ARCHIVE_SIZE));
+  scheduler::ScheduleArchive::Ptr archive(new scheduler::ScheduleArchive(config::ARCHIVE_SIZE));
 
   // 1. generate initial random solution c and add it to the archive
   scheduler::Schedule::Ptr current(new scheduler::Schedule(workload, resources));
@@ -115,7 +123,18 @@ int main (int argc, char** argv) {
   resources->sanityCheck();
   archive->archiveSchedule(current);
 
-  for( long iteration = 0; iteration < MAX_ITERATION; iteration += 1) {
+  // prepare reporting
+  unsigned long archivedSolutions=0;
+  unsigned long report_interval = MAX_ITERATION / 3;
+  std::cout << "Will dump intermediate report every "<<report_interval << " iterations." << std::endl;
+  std::ostringstream iteration_oss;
+  iteration_oss << outputdir << "/runtime-report.txt";
+  util::ReportWriter::Ptr iterationReporter(new util::ReportWriter(iteration_oss.str()));
+  iterationReporter->addHeaderLine("Reporting runtime information below");
+  iterationReporter->addReportLine("it\tacc\tsize");
+
+  // Main loop
+  for( unsigned long iteration = 0; iteration < MAX_ITERATION; iteration += 1) {
 	// 2. mutate c to produce m and evaluate m
 	scheduler::Schedule::Ptr mutation(new scheduler::Schedule(*current));
 	mutation->mutate();
@@ -135,8 +154,10 @@ int main (int argc, char** argv) {
 	  if (verbose)
 		std::cout << "(2) Mutation dominates current schedule - replacing current + adding to archive." << std::endl;
 	  current = mutation;
-	  archive->archiveSchedule(mutation); 
-	  archive->updateAllLocations();
+	  if (archive->archiveSchedule(mutation)) {
+		archive->updateAllLocations();
+		archivedSolutions++;
+	  }
 	} else if (compare == scheduler::Schedule::NO_DOMINATION) {
 	  if (verbose)
 		std::cout << "(3) No decideable domination - comparing mutation to archive." << std::endl;
@@ -150,9 +171,11 @@ int main (int argc, char** argv) {
 		if (verbose)
 		  std::cout << "(3b) Running test routine." << std::endl;
 		// archive solution
-		archive->archiveSchedule(mutation); 
+		if (archive->archiveSchedule(mutation)) {
+		  archivedSolutions++; 
 		// update grid
-		archive->updateAllLocations();
+		  archive->updateAllLocations();
+		}
 		// if mutation dominates the archive or is in less crowded grid location than current
 		// replace current with mutation.
 		if (verbose)
@@ -163,30 +186,66 @@ int main (int argc, char** argv) {
 		  if (verbose)
 			std::cout << "(3b) Replacing current solution with mutation." << std::endl;
 		  current = mutation;
+		  archivedSolutions++;
 		} 
 	  }
 	}
+	// Create reports.
+	if ((iteration % 1000) == 0) {
+	  // print some stats.
+	  std::cout << "Iteration "<< iteration << ": archived " << archivedSolutions;
+	  std::cout << "/1000, archive size " << archive->size() << std::endl;
+	  std::ostringstream logLine;
+	  logLine << iteration << "\t" << archivedSolutions << "\t" << archive->size();
+	  iterationReporter->addReportLine(logLine.str());
+	  archivedSolutions=0;
+	}
+	if ((iteration % report_interval) == 0) {
+	  std::cout << "Generating intermediate reports." << std::endl;
+	  std::ostringstream filename_oss;
+	  filename_oss << outputdir << "/intermediate-" << iteration << ".txt";
+	  util::ReportWriter::Ptr absReporter(new util::ReportWriter(filename_oss.str()));
+	  std::string headerLine("intermediate results");
+	  absReporter->addHeaderLine(headerLine);
+	  std::string resourceInfo(resources->str());
+	  absReporter->addHeaderLine(resourceInfo);
+	  std::ostringstream oss1;
+	  oss1 << "Workload file: " << inputfile;
+	  absReporter->addHeaderLine(oss1.str());
+	  std::ostringstream oss2;
+	  oss2 << "Workload size: " << workload->size();
+	  absReporter->addHeaderLine(oss2.str());
+	  absReporter->addReportLine(archive->getAbsLogLines());
+	  absReporter->writeReport();
+	}
+
   }
 
-  //archive->updateAllLocations()
-  //
-  //  for( unsigned int i = 0; i < 10; i += 1) {
-  //	scheduler::Schedule::Ptr scheduleCopy(new scheduler::Schedule(*current));
-  //	scheduleCopy->mutate();
-  //	//std::cout << "Total QT: " << scheduleCopy->getTotalQueueTime() << ", price: " << scheduleCopy->getTotalPrice() << std::endl;
-  //	archive->archiveSchedule(scheduleCopy);
-  //  }
-  //
-
+  iterationReporter->writeReport();
   // dump the archive to disk.
-  std::cout << "Archive: " << archive->str() << std::endl;
-  util::ReportWriter::Ptr reporter(new util::ReportWriter(outputfile));
+  //std::cout << "Archive: " << archive->str() << std::endl;
+  util::ReportWriter::Ptr absReporter(new util::ReportWriter(std::string(outputdir)+"/absolute-results.txt"));
   std::string headerLine("experiment from input file ");
-  reporter->addHeaderLine(headerLine + inputfile);
+  absReporter->addHeaderLine(headerLine + inputfile);
   std::string resourceInfo(resources->str());
-  reporter->addHeaderLine(resourceInfo);
-  reporter->addReportLine(archive->getLogLines());
-  reporter->writeReport();
+  absReporter->addHeaderLine(resourceInfo);
+  std::ostringstream oss1;
+  oss1 << "Workload file: " << inputfile;
+  absReporter->addHeaderLine(oss1.str());
+  std::ostringstream oss2;
+  oss2 << "Workload size: " << workload->size();
+  absReporter->addHeaderLine(oss2.str());
+  absReporter->addReportLine(archive->getAbsLogLines());
+  absReporter->writeReport();
+
+  util::ReportWriter::Ptr relReporter(new util::ReportWriter(std::string(outputdir)+"/relative-results.txt"));
+  relReporter->addHeaderLine(headerLine + inputfile);
+  relReporter->addHeaderLine(resourceInfo);
+  relReporter->addHeaderLine(oss1.str());
+  relReporter->addHeaderLine(oss2.str());
+  relReporter->addReportLine(archive->getRelLogLines(workload->size()));
+  relReporter->writeReport();
+
 
   return 0;
 }

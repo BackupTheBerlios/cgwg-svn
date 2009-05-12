@@ -12,18 +12,20 @@ void ScheduleArchive::addSchedule(const scheduler::Schedule::Ptr schedule) {
   _tainted=true;
 }
 
-void ScheduleArchive::archiveSchedule(const scheduler::Schedule::Ptr schedule) {
+bool ScheduleArchive::archiveSchedule(const scheduler::Schedule::Ptr schedule) {
+  bool retval=false;
   // Check if the new schedule is a duplicate - ignore it.
   std::vector<scheduler::Schedule::Ptr>::iterator it;
   for(  it = _archive->begin(); it < _archive->end(); it++) {
 	if ((*it)->equals(schedule)) {
 	  //std::cout << "*** Attempt to add duplicate schedule to archive, ignoring " << schedule->str() << std::endl;
-	  return;
+	  return false;
 	}
   }
-  if (_archive->size() == 0) // If archive is empty: add and exit.
+  if (_archive->size() == 0) { // If archive is empty: add and exit.
 	addSchedule(schedule);
-  else {
+	retval=false;
+  } else {
 	//std::cout << "*** Assessing schedule." << std::endl;
 	// Check if the new solution dominates any of the archived solutions.
 	std::vector<scheduler::Schedule::Ptr>* newArchive=new std::vector<scheduler::Schedule::Ptr>();
@@ -44,6 +46,7 @@ void ScheduleArchive::archiveSchedule(const scheduler::Schedule::Ptr schedule) {
 	  _archive=newArchive;
 	  // The new schedule dominated at least one solution - add it to the archive.
 	  addSchedule(schedule);
+	  retval=true;
 	} else {
 	  // no archived solution was dominated by the new one - free memory.
 	  //std::cout << "*** No archived solution was dominated by the new one." << std::endl;
@@ -70,8 +73,10 @@ void ScheduleArchive::archiveSchedule(const scheduler::Schedule::Ptr schedule) {
 		_archive->erase(replace);
 		addSchedule(schedule);
 	  }
+	  retval=false;
 	}
   }
+  return retval;
 }
 
 bool sortSchedulePredicate(const scheduler::Schedule::Ptr a, const scheduler::Schedule::Ptr b) {
@@ -84,7 +89,19 @@ bool sortSchedulePredicate(const scheduler::Schedule::Ptr a, const scheduler::Sc
   }
 }
 
-const std::string ScheduleArchive::getLogLines() {
+const std::string ScheduleArchive::getRelLogLines(const size_t& size) {
+  std::sort(_archive->begin(), _archive->end(), sortSchedulePredicate);
+  std::ostringstream oss;
+  oss << "QT\tPrice" << std::endl;
+  std::vector<scheduler::Schedule::Ptr>::iterator it;
+  for(  it = _archive->begin(); it < _archive->end(); it++) {
+	oss << ((*it)->getTotalQueueTime()/size) << "\t";
+	oss << ((*it)->getTotalPrice()/size) << std::endl;
+  }
+  return oss.str();
+}
+
+const std::string ScheduleArchive::getAbsLogLines() {
   std::sort(_archive->begin(), _archive->end(), sortSchedulePredicate);
   std::ostringstream oss;
   oss << "QT\tPrice" << std::endl;

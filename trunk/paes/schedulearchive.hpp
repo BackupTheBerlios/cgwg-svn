@@ -17,10 +17,14 @@ namespace scheduler {
 	  virtual ~ScheduleArchive() {
 		delete(_archive);
 	  };
-
-	  void archiveSchedule(const scheduler::Schedule::Ptr schedule);
-	  const std::string getLogLines();
+	  /**
+	   * returns true if the schedule dominated to the archive,
+	   */
+	  bool archiveSchedule(const scheduler::Schedule::Ptr schedule);
+	  const std::string getRelLogLines(const size_t& workloadsize);
+	  const std::string getAbsLogLines();
 	  const std::string str();
+	  const size_t size() { return _archive->size(); };
 	  const double getMaxQueueTime();
 	  const double getMaxPrice();
 	  const double getMinQueueTime();
