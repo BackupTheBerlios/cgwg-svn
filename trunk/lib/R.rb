@@ -180,14 +180,13 @@ class PAES_Analysis
   def plotSingleRun_Runtime
     basename="runtime-report"
     drawcmd=<<-END_OF_CMD
-      l<-length(data$it)
+      l<-length(data$acc)
       range<-1:l
       plot(range, data$acc, type="n",
         main="Runtime development",
         xlab="Iteration",
-        ylab="accepted, size"
+        ylab="accepted"
       )
-      points(range, data$size, type="l", lty=1)
       points(range, data$acc, type="b", pch=1)
     END_OF_CMD
     infile=File.join(@workingdir, basename+".txt")
@@ -196,12 +195,33 @@ class PAES_Analysis
     puts "outfile: #{outfile}"
     @runner.execute(infile, outfile, drawcmd)
   end
+  def plotSingleRun_Runtime_Distance
+    basename="runtime-report"
+    drawcmd=<<-END_OF_CMD
+      l<-length(data$distance)
+      range<-1:l
+      plot(range, data$distance, type="n",
+        main="Runtime development",
+        xlab="Iteration",
+        ylab="distance"
+      )
+      points(range, data$distance, type="l", lty=2)
+    END_OF_CMD
+    infile=File.join(@workingdir, basename+".txt")
+    outfile=basename+"-distance.eps"
+    puts "infile: #{infile}"
+    puts "outfile: #{outfile}"
+    @runner.execute(infile, outfile, drawcmd)
+  end
+
   def plotSingleRun_ParetoSchedules_Intermediates
     # Search for all intermediate-* files in the data directory
     Dir.foreach(@workingdir) {|file|
-      puts "checking #{file}"
+      #puts "checking #{file}"
       if file =~ /^intermediate-/
-        plotIntermediate(file)
+        if not file =~ /.eps$/
+          plotIntermediate(file)
+        end
       end
     }
   end

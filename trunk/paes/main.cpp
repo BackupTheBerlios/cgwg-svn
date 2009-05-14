@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <vector>
 #include <sstream>
+#include <math.h>
 #include <sys/stat.h>
 
 #include <common.hpp>
@@ -30,7 +31,7 @@ int main (int argc, char** argv) {
   char *inputfile = NULL;
   char *outputdir = NULL;
   int c;
-  unsigned long MAX_ITERATION=100000;
+  unsigned long MAX_ITERATION=10000000;
 
   opterr = 0;
   while ((c = getopt (argc, argv, "hvi:o:")) != -1)
@@ -131,9 +132,10 @@ int main (int argc, char** argv) {
   iteration_oss << outputdir << "/runtime-report.txt";
   util::ReportWriter::Ptr iterationReporter(new util::ReportWriter(iteration_oss.str()));
   iterationReporter->addHeaderLine("Reporting runtime information below");
-  iterationReporter->addReportLine("it\tacc\tsize");
+  iterationReporter->addReportLine("it\tacc\tsize\tdistance");
 
   // Main loop
+  double prev_distance=0.0;
   for( unsigned long iteration = 0; iteration < MAX_ITERATION; iteration += 1) {
 	// 2. mutate c to produce m and evaluate m
 	scheduler::Schedule::Ptr mutation(new scheduler::Schedule(*current));
@@ -193,10 +195,15 @@ int main (int argc, char** argv) {
 	// Create reports.
 	if ((iteration % 1000) == 0) {
 	  // print some stats.
+	  double current_distance=archive->getDistance();
+	  std::cout.precision(16);
 	  std::cout << "Iteration "<< iteration << ": archived " << archivedSolutions;
-	  std::cout << "/1000, archive size " << archive->size() << std::endl;
+	  std::cout << "/1000, archive size " << archive->size() << ", distance: " << current_distance;
+	  std::cout << ", delta distance (%): " << (fabs(current_distance - prev_distance)/current_distance) << std::endl;
+	  prev_distance=current_distance;
+
 	  std::ostringstream logLine;
-	  logLine << iteration << "\t" << archivedSolutions << "\t" << archive->size();
+	  logLine << iteration << "\t" << archivedSolutions << "\t" << archive->size() << "\t" << archive->getDistance();
 	  iterationReporter->addReportLine(logLine.str());
 	  archivedSolutions=0;
 	}

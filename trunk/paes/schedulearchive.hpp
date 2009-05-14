@@ -29,6 +29,11 @@ namespace scheduler {
 	  const double getMaxPrice();
 	  const double getMinQueueTime();
 	  const double getMinPrice();
+	  /**
+	   * Returns the distance of the Pareto front to the coordinate
+	   * system.
+	   */
+	  const double getDistance();
 	  void updateAllLocations();
 	  /**
 	   * Returns true if at least one schedule in the archive dominates
@@ -45,6 +50,7 @@ namespace scheduler {
 	private:
 	  void updateMinMaxValues ();
 	  void addSchedule(const scheduler::Schedule::Ptr schedule);
+	  unsigned long getMaxPopulationCount();
 	  scheduler::Schedule::LocationType encodeDimensions(
 		  const scheduler::Schedule::LocationDimensionType& priceDimension,
 		  const scheduler::Schedule::LocationDimensionType& queueTimeDimension);

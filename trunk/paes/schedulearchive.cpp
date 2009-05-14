@@ -2,7 +2,10 @@
 #include <sstream>
 #include <algorithm>
 #include <float.h>
+#include <cmath>
 #include <taintedstateexception.hpp>
+#include <random.hpp>
+
 
 using namespace scheduler;
 
@@ -24,7 +27,6 @@ bool ScheduleArchive::archiveSchedule(const scheduler::Schedule::Ptr schedule) {
   }
   if (_archive->size() == 0) { // If archive is empty: add and exit.
 	addSchedule(schedule);
-	retval=false;
   } else {
 	//std::cout << "*** Assessing schedule." << std::endl;
 	// Check if the new solution dominates any of the archived solutions.
@@ -46,7 +48,6 @@ bool ScheduleArchive::archiveSchedule(const scheduler::Schedule::Ptr schedule) {
 	  _archive=newArchive;
 	  // The new schedule dominated at least one solution - add it to the archive.
 	  addSchedule(schedule);
-	  retval=true;
 	} else {
 	  // no archived solution was dominated by the new one - free memory.
 	  //std::cout << "*** No archived solution was dominated by the new one." << std::endl;
@@ -58,25 +59,53 @@ bool ScheduleArchive::archiveSchedule(const scheduler::Schedule::Ptr schedule) {
 	  } else {
 		// Compare locations & replace a solution from the most crowded space.
 		//std::cout << "*** Using location pressure to replace an existing solution." << std::endl;
-		unsigned long maxPopulation=0;
+		unsigned long maxPopulation=getMaxPopulationCount();
+		std::vector<unsigned long> removeCandidates;
+		retval=true;
 		std::vector<scheduler::Schedule::Ptr>::iterator it;
-		std::vector<scheduler::Schedule::Ptr>::iterator replace;
-		for(  it = _archive->begin(); it < _archive->end(); it++) {
+		unsigned long currentIndex = 0;
+		for(  it = _archive->begin(); it != _archive->end(); it++) {
 		  scheduler::Schedule::LocationType location=(*it)->getLocation();
 		  unsigned long population=getPopulationCount(location);
-		  if (population > maxPopulation) {
-			maxPopulation = population;
-			replace=it;
-		  }
+		  if (population == maxPopulation)
+			removeCandidates.push_back(currentIndex);
+		  ++currentIndex;
 		}
+		// Select a schedule to replace
+		util::RNG& rng=util::RNG::instance();
+		unsigned long replaceIndex=rng.uniform_derivate_ranged_int(0, removeCandidates.size());
+		//std::cout << "Replacing candidate no. " << removeCandidates[replaceIndex] << std::endl;
+		_archive->erase(_archive->begin() + removeCandidates[replaceIndex]);
+		//for(it = _archive->begin(); it != _archive->end();) {
+		//  scheduler::Schedule::LocationType location=(*it)->getLocation();
+		//  unsigned long population=getPopulationCount(location);
+		//  if (population == maxPopulation) {
+		//	it = _archive->erase(it);
+		//	break;
+		//  } else
+		//	++it;
+		//}
+
 		//std::cout << "*** replacing " << (*replace)->str() << ", max population: " << maxPopulation << std::endl;
-		_archive->erase(replace);
+		//_archive->erase(replace);
 		addSchedule(schedule);
 	  }
-	  retval=false;
 	}
   }
   return retval;
+}
+
+unsigned long ScheduleArchive::getMaxPopulationCount() {
+  unsigned long maxPopulation=0;
+  std::vector<scheduler::Schedule::Ptr>::iterator it;
+  for(  it = _archive->begin(); it < _archive->end(); it++) {
+	scheduler::Schedule::LocationType location=(*it)->getLocation();
+	unsigned long population=getPopulationCount(location);
+	if (population > maxPopulation) {
+	  maxPopulation = population;
+	}
+  }
+  return maxPopulation;
 }
 
 bool sortSchedulePredicate(const scheduler::Schedule::Ptr a, const scheduler::Schedule::Ptr b) {
@@ -87,6 +116,22 @@ bool sortSchedulePredicate(const scheduler::Schedule::Ptr a, const scheduler::Sc
   } else {
 	return false;
   }
+}
+
+const double ScheduleArchive::getDistance() {
+  double total_area=0.0;
+  double prev_price=getMinPrice();
+  double prev_qt=getMinQueueTime();
+  std::sort(_archive->begin(), _archive->end(), sortSchedulePredicate);
+  std::vector<scheduler::Schedule::Ptr>::iterator it;
+  for(  it = _archive->begin(); it < _archive->end(); it++) {
+	double deltaPrice=fabs(prev_price - (*it)->getTotalPrice());
+	double deltaQT= fabs(((*it)->getTotalQueueTime() - prev_qt));
+	total_area += ((deltaQT * (*it)->getTotalPrice()) + (deltaQT * (deltaPrice/2)));
+	prev_qt=(*it)->getTotalQueueTime();
+	prev_price=(*it)->getTotalPrice();
+  }
+  return total_area;
 }
 
 const std::string ScheduleArchive::getRelLogLines(const size_t& size) {
@@ -150,29 +195,29 @@ void ScheduleArchive::updateMinMaxValues () {
 }
 
 
-const double ScheduleArchive::getMaxQueueTime() {
-  if (_tainted)
-	updateMinMaxValues();
-  return _maxQueueTime;
-}
+  const double ScheduleArchive::getMaxQueueTime() {
+	if (_tainted)
+	  updateMinMaxValues();
+	return _maxQueueTime;
+  }
 
-const double ScheduleArchive::getMaxPrice() {
-  if (_tainted)
-	updateMinMaxValues();
-  return _maxPrice;
-}
+  const double ScheduleArchive::getMaxPrice() {
+	if (_tainted)
+	  updateMinMaxValues();
+	return _maxPrice;
+  }
 
-const double ScheduleArchive::getMinQueueTime() {
-  if (_tainted)
-	updateMinMaxValues();
-  return _minQueueTime;
-}
+  const double ScheduleArchive::getMinQueueTime() {
+	if (_tainted)
+	  updateMinMaxValues();
+	return _minQueueTime;
+  }
 
-const double ScheduleArchive::getMinPrice() {
-  if (_tainted)
-	updateMinMaxValues();
-  return _minPrice;
-}
+  const double ScheduleArchive::getMinPrice() {
+	if (_tainted)
+	  updateMinMaxValues();
+	return _minPrice;
+  }
 
 scheduler::Schedule::LocationDimensionType ScheduleArchive::calculateLocation(
 	const double& current, const double& min, const double& max) {
@@ -184,7 +229,7 @@ scheduler::Schedule::LocationDimensionType ScheduleArchive::calculateLocation(
   for( unsigned int i = 0; i < config::LOCATION_DIMENSION_SIZE; i += 1) {
 	location <<= 1;
 	double center=lBound + ((uBound - lBound) / 2.0);
-//	std::cout << "current=" << current <<", lBound=" << lBound << ", center=" << center <<", uBound=" << uBound;
+	//	std::cout << "current=" << current <<", lBound=" << lBound << ", center=" << center <<", uBound=" << uBound;
 	if (current >= center) {
 	  location[0]=1;
 	  lBound=center;
@@ -192,7 +237,7 @@ scheduler::Schedule::LocationDimensionType ScheduleArchive::calculateLocation(
 	  location[0]=0;
 	  uBound=center;
 	}
-//	std::cout << ", location=" << location << std::endl;
+	//	std::cout << ", location=" << location << std::endl;
   }
   return location;
 }
@@ -200,14 +245,12 @@ scheduler::Schedule::LocationDimensionType ScheduleArchive::calculateLocation(
 scheduler::Schedule::LocationType ScheduleArchive::encodeDimensions(
 	const scheduler::Schedule::LocationDimensionType& priceDimension,
 	const scheduler::Schedule::LocationDimensionType& queueTimeDimension) {
-  scheduler::Schedule::LocationType retval;
-  scheduler::Schedule::LocationType dummy;
-  retval = priceDimension.to_ulong();
-  dummy = queueTimeDimension.to_ulong();
-  retval <<= config::LOCATION_DIMENSION_SIZE;
-  retval |= dummy;
+  //TODO: What is the maximum size?
+  std::string foo = priceDimension.to_string();
+  std::string bar = queueTimeDimension.to_string();
+  std::string retval( foo + bar);
   //std::cout << "price: "<<priceDimension << " qt: " << queueTimeDimension << " => combined: " << retval << std::endl; 
-  return retval;
+  return scheduler::Schedule::LocationType(retval);
 }
 
 
@@ -232,7 +275,7 @@ std::string ScheduleArchive::getPopulationStr() {
   oss << "location -> count" << std::endl;
   std::map<std::string, unsigned long>::iterator it;
   for ( it=_population.begin() ; it != _population.end(); it++ )
-    oss << (*it).first << " -> " << (*it).second << std::endl;
+	oss << (*it).first << " -> " << (*it).second << std::endl;
   return oss.str();
 }
 
