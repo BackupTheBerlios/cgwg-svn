@@ -2,8 +2,11 @@
 #include <unistd.h>
 #include <vector>
 #include <sstream>
+#include <stdio.h>
 #include <math.h>
 #include <sys/stat.h>
+#include <sys/types.h> /* various type definitions, like pid_t           */
+#include <signal.h>    /* signal name macros, and the signal() prototype */
 
 #include <common.hpp>
 #include <workload.hpp>
@@ -25,14 +28,26 @@ void printHelp() {
   std::cout << " -v: Verbose output" << std::endl;
 }
 
+/* first, here is the signal handler */
+void catch_int(int sig_num) {
+  /* re-set the signal handler again to catch_int, for next time */
+  signal(SIGINT, catch_int);
+  /* and print the message */
+  std::cout << "Don't you dare!" << std::endl;
+}
+
+
+
+
 int main (int argc, char** argv) {
   // Parse the commandline parameters using getopt
   bool verbose=false;
   char *inputfile = NULL;
   char *outputdir = NULL;
   int c;
-  unsigned long MAX_ITERATION=10000000;
+  unsigned long MAX_ITERATION=100000;
 
+  signal(SIGINT, catch_int);
   opterr = 0;
   while ((c = getopt (argc, argv, "hvi:o:")) != -1)
 	switch (c) {
@@ -175,7 +190,7 @@ int main (int argc, char** argv) {
 		// archive solution
 		if (archive->archiveSchedule(mutation)) {
 		  archivedSolutions++; 
-		// update grid
+		  // update grid
 		  archive->updateAllLocations();
 		}
 		// if mutation dominates the archive or is in less crowded grid location than current
