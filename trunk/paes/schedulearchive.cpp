@@ -283,20 +283,21 @@ const unsigned long ScheduleArchive::getPopulationCount(scheduler::Schedule::Loc
   return _population[location.to_string()];
 }
 
-const std::string ScheduleArchive::str() {
-  std::ostringstream oss;
-  oss << "ScheduleArchive contains " << _archive->size() << " schedules." << std::endl;
-  oss << " - QT (min/max): "<< getMinQueueTime() << "/" << getMaxQueueTime() << std::endl;
-  oss << " - Price (min/max): " << getMinPrice() << "/" << getMaxPrice() << std::endl;
-  if (_tainted)
-	oss << " - tainted." << std::endl;
-  else
-	oss << " - not tainted." << std::endl;
-  std::vector<scheduler::Schedule::Ptr>::iterator it;
-  for(  it = _archive->begin(); it < _archive->end(); it++) {
-	oss << " * L: " << (*it)->getLocation();
-	oss << ", QT: " << (*it)->getTotalQueueTime();
-	oss << ", P: " << (*it)->getTotalPrice() << std::endl;
-  }
-  return oss.str();
-}
+//const std::string ScheduleArchive::str() {
+//  std::ostringstream oss;
+//  oss << "ScheduleArchive contains " << _archive->size() << " schedules." << std::endl;
+//  oss << " - QT (min/max): "<< getMinQueueTime() << "/" << getMaxQueueTime() << std::endl;
+//  oss << " - Price (min/max): " << getMinPrice() << "/" << getMaxPrice() << std::endl;
+//  if (_tainted)
+//	oss << " - tainted." << std::endl;
+//  else
+//	oss << " - not tainted." << std::endl;
+//  std::vector<scheduler::Schedule::Ptr>::iterator it;
+//  for(  it = _archive->begin(); it < _archive->end(); it++) {
+//	oss << " * L: " << (*it)->getLocation();
+//	oss << ", QT: " << (*it)->getTotalQueueTime();
+//	oss << ", P: " << (*it)->getTotalPrice() << std::endl;
+//  }
+//  //return oss.str();
+//  return std::string("foobar.");
+//}

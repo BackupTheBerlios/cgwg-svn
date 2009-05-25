@@ -24,7 +24,7 @@ namespace scheduler {
 	  bool archiveSchedule(const scheduler::Schedule::Ptr schedule);
 	  const std::string getRelLogLines();
 	  const std::string getAbsLogLines();
-	  const std::string str();
+//	  const std::string str();
 	  const size_t size() { return _archive->size(); };
 	  const double getMaxQueueTime();
 	  const double getMaxPrice();

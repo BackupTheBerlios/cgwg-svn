@@ -10,6 +10,7 @@
 
 #include <common.hpp>
 #include <workload.hpp>
+#include <random.hpp>
 #include <job.hpp>
 #include <simpleresource.hpp>
 #include <resourcepool.hpp>
@@ -30,6 +31,7 @@ void printHelp() {
   std::cout << "Mandatory commandline parameters:" << std::endl;
   std::cout << " -i <FILE>: Specify input file" << std::endl;
   std::cout << " -o <DIR>: Specify output directory" << std::endl;
+  std::cout << " -s <UINT>: Specify RNG seed value" << std::endl;
   std::cout << " -v: Verbose output" << std::endl;
 }
 
@@ -52,13 +54,15 @@ void catch_int(int sig_num) {
 	  std::cout << "SIGINT - shutting down." << std::endl;
 	  break;
 	case SIGSEGV:
-	  std::cout << "SIGSEGV - shutting down." << std::endl;
+	  std::cout << "SIGSEGV - attempting to save data." << std::endl;
 	  break;
 	default:
 	  std::cout << "UNKNOWN: " << sig_num << std::endl;
 	  break;
   }
   saveResults();
+  util::RNG& rng=util::RNG::instance();
+  std::cout << "RNG seed value was " << rng.get_seed() << std::endl;
   exit(-2);
 }
 
@@ -73,12 +77,13 @@ int main (int argc, char** argv) {
   bool verbose=false;
   char *inputfile = NULL;
   char *outputdir = NULL;
+  char *rng_seed_str = NULL;
   int c;
 
   register_inthandlers();
 
   opterr = 0;
-  while ((c = getopt (argc, argv, "hvi:o:")) != -1)
+  while ((c = getopt (argc, argv, "hvi:o:s:")) != -1)
 	switch (c) {
 	  case 'h':
 		printHelp();
@@ -93,10 +98,15 @@ int main (int argc, char** argv) {
 	  case 'o':
 		outputdir = optarg;
 		break;
+	  case 's':
+		rng_seed_str = optarg;
+		break;
 	  case '?':
 		if (optopt == 'i')
 		  fprintf (stderr, "Option -%c requires an argument.\n", optopt);
 		else if (optopt == 'o')
+		  fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+		else if (optopt == 's')
 		  fprintf (stderr, "Option -%c requires an argument.\n", optopt);
 		else if (isprint (optopt))
 		  fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -130,6 +140,24 @@ int main (int argc, char** argv) {
 	}
   }
 
+  if (rng_seed_str == NULL) {
+	std::cout << "Using random RNG seed: ";
+	util::RNG& rng=util::RNG::instance();
+	std::cout << rng.get_seed() << std::endl;
+  } else {
+//	unsigned int seed_value=atoi(rng_seed_str);
+	unsigned int seed_value=0;
+	std::istringstream convertStream(rng_seed_str);
+  
+	if (convertStream>>seed_value) {
+	  util::RNG& rng=util::RNG::instance();
+	  rng.set_seed(seed_value);
+	  std::cout << "RNG seed value set to " << rng.get_seed() << std::endl;
+	} else {
+	  std::cout << "Cannot convert seed value " << rng_seed_str << " to uint. Abort." << std::endl;
+	  exit(-10);
+	}
+  }
 
   // Load Workload.
   scheduler::FileWorkloadFactory fwFactory(inputfile);
@@ -237,9 +265,8 @@ int main (int argc, char** argv) {
 		  std::cout << "(3b) Running test routine." << std::endl;
 		// archive solution
 		if (archive->archiveSchedule(mutation)) {
-		  archivedSolutions++; 
-		  // update grid
 		  archive->updateAllLocations();
+		  //archivedSolutions++; 
 		}
 		// if mutation dominates the archive or is in less crowded grid location than current
 		// replace current with mutation.
@@ -251,7 +278,7 @@ int main (int argc, char** argv) {
 		  if (verbose)
 			std::cout << "(3b) Replacing current solution with mutation." << std::endl;
 		  current = mutation;
-		  archivedSolutions++;
+		  //archivedSolutions++;
 		} 
 	  }
 	}
@@ -259,8 +286,8 @@ int main (int argc, char** argv) {
 	if ((iteration % 1000) == 0) {
 	  // print some stats.
 	  double current_distance=archive->getDistance();
-	  std::cout.precision(16);
-	  std::cout << "Iteration "<< iteration << ": archived " << archivedSolutions;
+	  std::cout.precision(32);
+	  std::cout << "Iteration "<< iteration << ": dominant " << archivedSolutions;
 	  std::cout << "/1000, archive size " << archive->size() << ", distance: " << current_distance;
 	  std::cout << ", delta distance (%): " << (fabs(current_distance - prev_distance)/current_distance) << std::endl;
 	  prev_distance=current_distance;

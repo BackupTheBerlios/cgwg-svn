@@ -2,6 +2,8 @@
 #include <cstdlib>
 #include <ctime>
 #include <limits.h>
+#include <iostream>
+
 
 using namespace util;
 
@@ -15,11 +17,11 @@ double RNG::uniform_deviate ( int seed ) {
 }
 
 unsigned int RNG::uniform_derivate_int() {
-  return uniform_deviate ( rand() ) * 10;
+  return (unsigned int) uniform_deviate ( rand() ) * 10;
 }
 
 unsigned int RNG::uniform_derivate_ranged_int(unsigned int min, unsigned int max) {
-  return (min + uniform_deviate ( rand() ) * ((max+1) - min));
+  return (unsigned int) (min + uniform_deviate ( rand() ) * ((max+1) - min));
 }
 
 void RNG::time_seed() {
@@ -31,6 +33,15 @@ void RNG::time_seed() {
   for ( i = 0; i < sizeof now; i++ )
 	seed = seed * ( UCHAR_MAX + 2U ) + p[i];
 
-  srand ( seed );
+  set_seed(seed);
 }
 
+unsigned int RNG::get_seed() {
+  return _seed;
+}
+
+void RNG::set_seed(unsigned int seed) {
+  //std::cout << "RNG: setting seed value to " << seed << std::endl;
+  _seed=seed;
+  srand(_seed);
+}
