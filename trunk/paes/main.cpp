@@ -19,6 +19,11 @@
 #include <schedulearchive.hpp>
 #include <linearpricing.hpp>
 
+// Global variables
+util::ReportWriter::Ptr iterationReporter;
+util::ReportWriter::Ptr absReporter;
+util::ReportWriter::Ptr relReporter;
+scheduler::ScheduleArchive::Ptr archive;
 
 void printHelp() {
   std::cout << "PAES Scheduler" << std::endl;
@@ -28,16 +33,40 @@ void printHelp() {
   std::cout << " -v: Verbose output" << std::endl;
 }
 
-/* first, here is the signal handler */
-void catch_int(int sig_num) {
-  /* re-set the signal handler again to catch_int, for next time */
-  signal(SIGINT, catch_int);
-  /* and print the message */
-  std::cout << "Don't you dare!" << std::endl;
+void saveResults() {
+  absReporter->addReportLine(archive->getAbsLogLines());
+  relReporter->addReportLine(archive->getRelLogLines());
+  absReporter->writeReport();
+  relReporter->writeReport();
+  iterationReporter->writeReport();
 }
 
+/* signal handler */
+void catch_int(int sig_num) {
+  /* re-set the signal handler again to catch_int, for next time */
+  signal(sig_num, catch_int);
+  /* and print the message */
+  std::cout << "Caught signal ";
+  switch (sig_num) {
+	case SIGINT:
+	  std::cout << "SIGINT - shutting down." << std::endl;
+	  break;
+	case SIGSEGV:
+	  std::cout << "SIGSEGV - shutting down." << std::endl;
+	  break;
+	default:
+	  std::cout << "UNKNOWN: " << sig_num << std::endl;
+	  break;
+  }
+  saveResults();
+  exit(-2);
+}
 
-
+/* Registers our routine as signal handler */
+void register_inthandlers() {
+  signal(SIGINT, catch_int);
+  signal(SIGSEGV, catch_int);
+}
 
 int main (int argc, char** argv) {
   // Parse the commandline parameters using getopt
@@ -45,9 +74,9 @@ int main (int argc, char** argv) {
   char *inputfile = NULL;
   char *outputdir = NULL;
   int c;
-  unsigned long MAX_ITERATION=100000;
 
-  signal(SIGINT, catch_int);
+  register_inthandlers();
+
   opterr = 0;
   while ((c = getopt (argc, argv, "hvi:o:")) != -1)
 	switch (c) {
@@ -129,7 +158,7 @@ int main (int argc, char** argv) {
   }
 
   // Archive for the schedules.
-  scheduler::ScheduleArchive::Ptr archive(new scheduler::ScheduleArchive(config::ARCHIVE_SIZE));
+  archive = scheduler::ScheduleArchive::Ptr (new scheduler::ScheduleArchive(config::ARCHIVE_SIZE, workload->size()));
 
   // 1. generate initial random solution c and add it to the archive
   scheduler::Schedule::Ptr current(new scheduler::Schedule(workload, resources));
@@ -141,17 +170,36 @@ int main (int argc, char** argv) {
 
   // prepare reporting
   unsigned long archivedSolutions=0;
-  unsigned long report_interval = MAX_ITERATION / 3;
+  unsigned long report_interval = config::MAX_ITERATION / 3;
   std::cout << "Will dump intermediate report every "<<report_interval << " iterations." << std::endl;
   std::ostringstream iteration_oss;
   iteration_oss << outputdir << "/runtime-report.txt";
-  util::ReportWriter::Ptr iterationReporter(new util::ReportWriter(iteration_oss.str()));
+  iterationReporter = util::ReportWriter::Ptr(new util::ReportWriter(iteration_oss.str()));
   iterationReporter->addHeaderLine("Reporting runtime information below");
   iterationReporter->addReportLine("it\tacc\tsize\tdistance");
 
+  absReporter=util::ReportWriter::Ptr(new util::ReportWriter(std::string(outputdir)+"/absolute-results.txt"));
+  std::string headerLine("experiment from input file ");
+  absReporter->addHeaderLine(headerLine + inputfile);
+  std::string resourceInfo(resources->str());
+  absReporter->addHeaderLine(resourceInfo);
+  std::ostringstream oss1;
+  oss1 << "Workload file: " << inputfile;
+  absReporter->addHeaderLine(oss1.str());
+  std::ostringstream oss2;
+  oss2 << "Workload size: " << workload->size();
+  absReporter->addHeaderLine(oss2.str());
+
+  relReporter=util::ReportWriter::Ptr (new util::ReportWriter(std::string(outputdir)+"/relative-results.txt"));
+  relReporter->addHeaderLine(headerLine + inputfile);
+  relReporter->addHeaderLine(resourceInfo);
+  relReporter->addHeaderLine(oss1.str());
+  relReporter->addHeaderLine(oss2.str());
+
+
   // Main loop
   double prev_distance=0.0;
-  for( unsigned long iteration = 0; iteration < MAX_ITERATION; iteration += 1) {
+  for( unsigned long iteration = 0; iteration < config::MAX_ITERATION; iteration += 1) {
 	// 2. mutate c to produce m and evaluate m
 	scheduler::Schedule::Ptr mutation(new scheduler::Schedule(*current));
 	mutation->mutate();
@@ -243,31 +291,9 @@ int main (int argc, char** argv) {
 
   }
 
-  iterationReporter->writeReport();
-  // dump the archive to disk.
-  //std::cout << "Archive: " << archive->str() << std::endl;
-  util::ReportWriter::Ptr absReporter(new util::ReportWriter(std::string(outputdir)+"/absolute-results.txt"));
-  std::string headerLine("experiment from input file ");
-  absReporter->addHeaderLine(headerLine + inputfile);
-  std::string resourceInfo(resources->str());
-  absReporter->addHeaderLine(resourceInfo);
-  std::ostringstream oss1;
-  oss1 << "Workload file: " << inputfile;
-  absReporter->addHeaderLine(oss1.str());
-  std::ostringstream oss2;
-  oss2 << "Workload size: " << workload->size();
-  absReporter->addHeaderLine(oss2.str());
-  absReporter->addReportLine(archive->getAbsLogLines());
-  absReporter->writeReport();
+  // Finally, save the collected results.
 
-  util::ReportWriter::Ptr relReporter(new util::ReportWriter(std::string(outputdir)+"/relative-results.txt"));
-  relReporter->addHeaderLine(headerLine + inputfile);
-  relReporter->addHeaderLine(resourceInfo);
-  relReporter->addHeaderLine(oss1.str());
-  relReporter->addHeaderLine(oss2.str());
-  relReporter->addReportLine(archive->getRelLogLines(workload->size()));
-  relReporter->writeReport();
-
+  saveResults();
 
   return 0;
 }

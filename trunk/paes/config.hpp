@@ -5,6 +5,7 @@ namespace config {
   const static unsigned int LOCATION_DIMENSION_SIZE=32;
   const static unsigned int NUM_LOCATION_BITS=2*LOCATION_DIMENSION_SIZE;
   const static size_t ARCHIVE_SIZE=1000;
+  const static unsigned long MAX_ITERATION=10000000;
 }
 
 

@@ -17,6 +17,7 @@ void ScheduleArchive::addSchedule(const scheduler::Schedule::Ptr schedule) {
 
 bool ScheduleArchive::archiveSchedule(const scheduler::Schedule::Ptr schedule) {
   bool retval=false;
+  bool foundDominated=false;
   // Check if the new schedule is a duplicate - ignore it.
   std::vector<scheduler::Schedule::Ptr>::iterator it;
   for(  it = _archive->begin(); it < _archive->end(); it++) {
@@ -31,7 +32,6 @@ bool ScheduleArchive::archiveSchedule(const scheduler::Schedule::Ptr schedule) {
 	//std::cout << "*** Assessing schedule." << std::endl;
 	// Check if the new solution dominates any of the archived solutions.
 	std::vector<scheduler::Schedule::Ptr>* newArchive=new std::vector<scheduler::Schedule::Ptr>();
-	bool foundDominated=false;
 	std::vector<scheduler::Schedule::Ptr>::iterator it;
 	for(  it = _archive->begin(); it < _archive->end(); it++) {
 	  if (schedule->dominates((*it))) {
@@ -92,7 +92,8 @@ bool ScheduleArchive::archiveSchedule(const scheduler::Schedule::Ptr schedule) {
 	  }
 	}
   }
-  return retval;
+  //return retval;
+  return foundDominated;
 }
 
 unsigned long ScheduleArchive::getMaxPopulationCount() {
@@ -134,14 +135,14 @@ const double ScheduleArchive::getDistance() {
   return total_area;
 }
 
-const std::string ScheduleArchive::getRelLogLines(const size_t& size) {
+const std::string ScheduleArchive::getRelLogLines() {
   std::sort(_archive->begin(), _archive->end(), sortSchedulePredicate);
   std::ostringstream oss;
   oss << "QT\tPrice" << std::endl;
   std::vector<scheduler::Schedule::Ptr>::iterator it;
   for(  it = _archive->begin(); it < _archive->end(); it++) {
-	oss << ((*it)->getTotalQueueTime()/size) << "\t";
-	oss << ((*it)->getTotalPrice()/size) << std::endl;
+	oss << ((*it)->getTotalQueueTime()/_workload_size) << "\t";
+	oss << ((*it)->getTotalPrice()/_workload_size) << std::endl;
   }
   return oss.str();
 }
@@ -245,7 +246,6 @@ scheduler::Schedule::LocationDimensionType ScheduleArchive::calculateLocation(
 scheduler::Schedule::LocationType ScheduleArchive::encodeDimensions(
 	const scheduler::Schedule::LocationDimensionType& priceDimension,
 	const scheduler::Schedule::LocationDimensionType& queueTimeDimension) {
-  //TODO: What is the maximum size?
   std::string foo = priceDimension.to_string();
   std::string bar = queueTimeDimension.to_string();
   std::string retval( foo + bar);
@@ -294,7 +294,8 @@ const std::string ScheduleArchive::str() {
 	oss << " - not tainted." << std::endl;
   std::vector<scheduler::Schedule::Ptr>::iterator it;
   for(  it = _archive->begin(); it < _archive->end(); it++) {
-	oss << " * L: " << (*it)->getLocation() << ", QT: " << (*it)->getTotalQueueTime();
+	oss << " * L: " << (*it)->getLocation();
+	oss << ", QT: " << (*it)->getTotalQueueTime();
 	oss << ", P: " << (*it)->getTotalPrice() << std::endl;
   }
   return oss.str();
