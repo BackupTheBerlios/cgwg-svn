@@ -8,7 +8,7 @@ using namespace config;
 
 const std::string config::getConfigString() {
   std::ostringstream oss;
-  oss << "Configuration name: " << config::CONFIG_NAME;
+  oss << "Configuration id: " << config::CONFIG_NAME;
   oss << ", Location size: " << config::LOCATION_DIMENSION_SIZE;
   oss << ", Archive size: " << config::ARCHIVE_SIZE;
   oss << ", Max iterations: " << config::MAX_ITERATION;
@@ -16,10 +16,13 @@ const std::string config::getConfigString() {
 }
   
 scheduler::ResourcePool::Ptr config::createResourcePool() {
-  if (CONFIG_NAME == "3SimpleResources")
+  if (CONFIG_NAME == THREE_SIMPLE_RESOURCES)
 	return create3SimpleResources();
-  else
-	throw std::runtime_error(CONFIG_NAME + "no such configuration available");
+  else {
+	std::ostringstream oss;
+	oss << "Config id " << CONFIG_NAME << ": no such configuration available.";
+	throw std::runtime_error(oss.str());
+  }
 }
 
 scheduler::ResourcePool::Ptr config::create3SimpleResources() {

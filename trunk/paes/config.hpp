@@ -6,11 +6,14 @@
 
 
 namespace config {
+  enum ConfigName {
+	THREE_SIMPLE_RESOURCES
+  } ;
   /**
    * This string defines the configuration to be built. see config.cpp
    * for valid values.
    */
-  const static std::string CONFIG_NAME="3SimpleResources";
+  const static int CONFIG_NAME=THREE_SIMPLE_RESOURCES;
   const static unsigned int LOCATION_DIMENSION_SIZE=32;
   const static unsigned int NUM_LOCATION_BITS=2*LOCATION_DIMENSION_SIZE;
   const static size_t ARCHIVE_SIZE=1000;

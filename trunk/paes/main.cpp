@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h> /* various type definitions, like pid_t           */
 #include <signal.h>    /* signal name macros, and the signal() prototype */
+#include <sys/time.h>  /* gettimeofday and friends.						 */
 
 #include <resourcepool.hpp>
 #include <common.hpp>
@@ -71,6 +72,12 @@ void catch_int(int sig_num) {
 void register_inthandlers() {
   signal(SIGINT, catch_int);
   signal(SIGSEGV, catch_int);
+}
+
+long getCurrentMilliseconds() {
+  struct timeval tv;
+  gettimeofday (&tv, NULL);
+  return (((long)&tv.tv_sec * 1000) + (tv.tv_usec / 1000));
 }
 
 int main (int argc, char** argv) {
@@ -222,9 +229,12 @@ int main (int argc, char** argv) {
   relReporter->addHeaderLine(oss2.str());
   relReporter->addHeaderLine(oss3.str());
 
-
+  // mark start time.
+  long start_time = getCurrentMilliseconds();
+  
   // Main loop
   double prev_distance=0.0;
+  double sum_delta_distance=0.0;
   for( unsigned long iteration = 0; iteration < config::MAX_ITERATION; iteration += 1) {
 	// 2. mutate c to produce m and evaluate m
 	scheduler::Schedule::Ptr mutation(new scheduler::Schedule(*current));
@@ -284,11 +294,13 @@ int main (int argc, char** argv) {
 	if ((iteration % 1000) == 0) {
 	  // print some stats.
 	  double current_distance=archive->getDistance();
+	  double delta_distance = (fabs(current_distance - prev_distance)/current_distance);
 	  std::cout.precision(32);
 	  std::cout << "Iteration "<< iteration << ": dominant " << archivedSolutions;
 	  std::cout << "/1000, archive size " << archive->size() << ", distance: " << current_distance;
-	  std::cout << ", delta distance (%): " << (fabs(current_distance - prev_distance)/current_distance) << std::endl;
+	  std::cout << ", delta distance (%): " <<  delta_distance << std::endl;
 	  prev_distance=current_distance;
+	  sum_delta_distance+=delta_distance;
 
 	  std::ostringstream logLine;
 	  logLine << iteration << "\t" << archivedSolutions << "\t" << archive->size() << "\t" << archive->getDistance();
@@ -314,10 +326,26 @@ int main (int argc, char** argv) {
 	  absReporter->writeReport();
 	}
 
+	/**
+	 * Termination criterion: abort if the results do not change any more. This is the 
+	 * case if the delta distance is 0.0 for the last 10000 iterations,
+	 * we assume that there is no better solution.
+	 */
+	if ((iteration % 10000) == 0) {
+	  // Each 10 evaluation cycles
+	  if (sum_delta_distance == 0.0) {
+		std::cout << "No delta distance - we're stable. Exiting." << std::endl;
+		break;
+	  } else {
+		sum_delta_distance = 0.0;
+	  }
+	}
   }
 
-  // Finally, save the collected results.
+  long end_time = getCurrentMilliseconds();
+  std::cout << "Runtime was " << ((end_time - start_time) / 1000) << " seconds." << std::endl;
 
+  // Finally, save the collected results.
   saveResults();
 
   return 0;
