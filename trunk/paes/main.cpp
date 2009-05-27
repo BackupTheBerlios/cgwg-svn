@@ -8,12 +8,13 @@
 #include <sys/types.h> /* various type definitions, like pid_t           */
 #include <signal.h>    /* signal name macros, and the signal() prototype */
 
+#include <resourcepool.hpp>
 #include <common.hpp>
+#include <config.hpp>
 #include <workload.hpp>
 #include <random.hpp>
 #include <job.hpp>
 #include <simpleresource.hpp>
-#include <resourcepool.hpp>
 #include <schedule.hpp>
 #include <workload-factory.hpp>
 #include <reportwriter.hpp>
@@ -145,10 +146,8 @@ int main (int argc, char** argv) {
 	util::RNG& rng=util::RNG::instance();
 	std::cout << rng.get_seed() << std::endl;
   } else {
-//	unsigned int seed_value=atoi(rng_seed_str);
 	unsigned int seed_value=0;
 	std::istringstream convertStream(rng_seed_str);
-  
 	if (convertStream>>seed_value) {
 	  util::RNG& rng=util::RNG::instance();
 	  rng.set_seed(seed_value);
@@ -158,6 +157,9 @@ int main (int argc, char** argv) {
 	  exit(-10);
 	}
   }
+
+  std::string configInfo(config::getConfigString());
+  std::cout << "Compile-time configuration is: " << std::endl << configInfo << std::endl;
 
   // Load Workload.
   scheduler::FileWorkloadFactory fwFactory(inputfile);
@@ -175,15 +177,7 @@ int main (int argc, char** argv) {
   }
 
   // Build Resources.
-  scheduler::ResourcePool::Ptr resources(new scheduler::ResourcePool());
-  std::cout << "Creating 3 simple resources." << std::endl;
-  for(unsigned int i=0; i<3; i++) {
-	std::ostringstream oss;
-	oss << "Resource-" << i;
-	scheduler::PricingPlan::Ptr simplePricing(new scheduler::LinearPricing(0.1*(i+1)));
-	scheduler::SimpleResource::Ptr resource(new scheduler::SimpleResource(i, oss.str(), simplePricing));
-	resources->add(resource);
-  }
+  scheduler::ResourcePool::Ptr resources=config::createResourcePool();
 
   // Archive for the schedules.
   archive = scheduler::ScheduleArchive::Ptr (new scheduler::ScheduleArchive(config::ARCHIVE_SIZE, workload->size()));
@@ -217,12 +211,16 @@ int main (int argc, char** argv) {
   std::ostringstream oss2;
   oss2 << "Workload size: " << workload->size();
   absReporter->addHeaderLine(oss2.str());
+  std::ostringstream oss3;
+  oss3 << "Compile-time config: " << configInfo;
+  absReporter->addHeaderLine(oss3.str());
 
   relReporter=util::ReportWriter::Ptr (new util::ReportWriter(std::string(outputdir)+"/relative-results.txt"));
   relReporter->addHeaderLine(headerLine + inputfile);
   relReporter->addHeaderLine(resourceInfo);
   relReporter->addHeaderLine(oss1.str());
   relReporter->addHeaderLine(oss2.str());
+  relReporter->addHeaderLine(oss3.str());
 
 
   // Main loop

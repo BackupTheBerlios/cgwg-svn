@@ -73,7 +73,8 @@ bool ScheduleArchive::archiveSchedule(const scheduler::Schedule::Ptr schedule) {
 		}
 		// Select a schedule to replace
 		util::RNG& rng=util::RNG::instance();
-		unsigned long replaceIndex=rng.uniform_derivate_ranged_int(0, removeCandidates.size());
+		unsigned long replaceIndex=rng.uniform_derivate_ranged_int(0, removeCandidates.size()-1);
+		assert(replaceIndex < removeCandidates.size());
 		//std::cout << "Replacing candidate no. " << removeCandidates[replaceIndex] << std::endl;
 		_archive->erase(_archive->begin() + removeCandidates[replaceIndex]);
 		//for(it = _archive->begin(); it != _archive->end();) {

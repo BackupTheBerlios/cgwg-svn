@@ -5,9 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
+#include <assert.h>
 
 // Include global compile-time configuration
-#include "config.hpp"
+//#include "config.hpp"
 
 #endif /* PAES_COMMON_HPP */
 

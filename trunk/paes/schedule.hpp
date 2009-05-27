@@ -1,6 +1,7 @@
 #ifndef PAES_SCHEDULE_HPP
 #define PAES_SCHEDULE_HPP 1
 #include <common.hpp>
+#include <config.hpp>
 #include <vector>
 #include <bitset>
 #include <simpleresource.hpp>
