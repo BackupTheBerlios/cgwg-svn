@@ -80,6 +80,9 @@ class Optparser
       opts.on("-r", "--numTotalResources INT","the number of resources in the grid") do |numtotalresources|
         options.numTotalResources=numtotalresources
       end
+      opts.on("-c", "--numCPUs INT","the number of CPUs for each resource in the grid") do |numcpusperresource|
+        options.numCpusPerResource=numcpusperresource
+      end
       opts.on("-s", "--serialProb FLOAT", "the probability of a job to be serial, if not given 0 is assumed") do |serialprob|
         options.serialprob=serialprob
       end
@@ -118,6 +121,7 @@ numTotalJobs = options.numJobs.to_i
 $verbose = options.verbose
 joblength=options.joblength.to_i
 numTotalSystems = options.numTotalResources.to_i
+numCpusPerResource = options.numCpusPerResource.to_i
 serialProb = 0
 maxJobSize = 32
 subDir = options.subDir
@@ -132,7 +136,7 @@ end
 
 print "Calana Workload Generator\n"
 print "We generate a single-CPU grid workload: Consists of \n"
-print "#{numTotalSystems} single-node machines.\n"
+print "#{numTotalSystems} #{numCpusPerResource}-node machines.\n"
 print "We create #{numTotalJobs} jobs.\n"
 print "Starting up in directory #{@@config.basePath}\n"
 
@@ -141,8 +145,8 @@ cleanVarDirectory(subDir)
 # calculate how many jobs each resource must have
 # to add up to numTotalJobs
 numJobsPerCluster = ((numTotalJobs) / numTotalSystems).to_i
-for i in 1..numTotalSystems # single-node systems
-  cluster = ClusterConfig.new("Cluster1-"+i.to_s, 1, 1, numJobsPerCluster)
+for i in 1..numTotalSystems # #{numCpusPerResource}-node systems
+  cluster = ClusterConfig.new("Cluster1-"+i.to_s, numCpusPerResource, 1, numJobsPerCluster)
   @@config.addCluster(cluster)
 end
 
@@ -157,10 +161,10 @@ aggregatedWorkload = nil
   #print clusterConfig
   print "### Working on cluster #{clusterConfig.name}\n"
   if aggregatedWorkload == nil
-    puts "Clusterconfig: #{clusterConfig} with probability of #{serialProb} for serial jobs and a max size of #{maxJobSize} cpus"
-    aggregatedWorkload = genPoissonCluster(clusterConfig, serialProb, maxJobSize)
+    puts "Clusterconfig: #{clusterConfig} with probability of #{serialProb} for serial jobs, a max size of #{maxJobSize} cpus and an average job length of #{joblength}"
+    aggregatedWorkload = genPoissonCluster(clusterConfig, serialProb, maxJobSize, joblength)
   else
-    tempWorkload = genPoissonCluster(clusterConfig, serialProb, maxJobSize)
+    tempWorkload = genPoissonCluster(clusterConfig, serialProb, maxJobSize, joblength)
     tempWorkload.appendWorkloadTo(aggregatedWorkload)
   end
 }

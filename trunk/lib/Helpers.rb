@@ -48,10 +48,10 @@ def genLublinCluster(clusterConfig)
     return workload
 end
 
-def genPoissonCluster(clusterConfig, serialprob=0, maxJobSize=32)
+def genPoissonCluster(clusterConfig, serialprob=0, maxJobSize=32, avgRuntime=500)
   print "Generating workload using the poisson process model."
   print "ClusterConfig is: \n#{clusterConfig}"
-  poissonModel=PoissonWorkloadModel.new(clusterConfig, serialprob, maxJobSize);
+  poissonModel=PoissonWorkloadModel.new(clusterConfig, serialprob, maxJobSize, avgRuntime);
 	workload=poissonModel.execute();
 	return workload;
 end

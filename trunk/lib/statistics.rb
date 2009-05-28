@@ -321,7 +321,7 @@ if __FILE__ == $0
   dumpRTable(uniforms, "uniform.txt");
   gaussians=generateGaussianRandoms(amount, mean=0.0, sd=1, range=Range.new(-10.0, 10.0));
   dumpRTable(gaussians, "gaussians.txt");
-  rawgaussians=generateGaussianRandoms(amount, mean=0.0, sd=1); 
+  rawgaussians=generateGaussianRandoms(amount, mean=100.0, sd=1); 
   dumpRTable(rawgaussians, "rawgaussians.txt");
   doublegaussians=generateDoubleGaussianRandoms(amount);
   dumpRTable(doublegaussians, "doublegaussians.txt");

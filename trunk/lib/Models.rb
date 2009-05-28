@@ -171,7 +171,7 @@ def generateJobSizeDistribution(workloadsize, serialprob=0, maxJobSize=32)
   retval.shuffle!
 end
 
-def generateRunTimes(amount, avg=500)
+def generateRunTimes(amount, avg)
   factor = Math.log(10) - Math.log(0.00001) # ~13,82
   max = avg * 10 / Math.log(2)
   min = Math.exp(Math.log(max) - factor)
@@ -180,7 +180,7 @@ def generateRunTimes(amount, avg=500)
 end
 
 class PoissonWorkloadModel
-  def initialize(clusterConfig, serialprob=0, maxJobSize=32)
+  def initialize(clusterConfig, serialprob, maxJobSize, avgRuntime)
     @clusterConfig=clusterConfig
     @currentSubmitTime=0;
     @currentFinishTime=0;
@@ -188,7 +188,6 @@ class PoissonWorkloadModel
     @interarrivalRandoms = generateExponentialRandoms(@workloadsize, varlambda=1, range=Range.new(1,100));
   #  dumpfile="interarrivals.txt";
   #  dumpRTable(@interarrivalRandoms, dumpfile);
-    avgRuntime = 500
     @runtimeRandoms=generateRunTimes(@workloadsize, avgRuntime)
     @walltimeRandoms=generateGaussianRandoms(@workloadsize, avgRuntime * 1.1, 1.0)
     @jobsizeRandoms=generateJobSizeDistribution(@workloadsize, serialprob, maxJobSize)
@@ -212,12 +211,12 @@ class PoissonWorkloadModel
     job.jobID = jobID;
     job.submitTime = @currentSubmitTime
     job.waitTime = -1
-    job.runTime = @runtimeRandoms.pop()
+    job.runTime = (@runtimeRandoms.pop()+0.5).round
     job.numberAllocatedProcessors = @jobsizeRandoms.pop()
     job.averageCPUTimeUsed = -1
     job.usedMemory = -1
     job.reqNumProcessors = -1
-    job.wallTime = @walltimeRandoms.pop()
+    job.wallTime = @walltimeRandoms.pop().to_i
     job.reqMemory = -1
     job.status = -1
     job.userID = -1

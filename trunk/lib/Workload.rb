@@ -376,9 +376,9 @@ class Workload
     scaledJobs.eachJob{|j|
       #j.submitTime = j.submitTime * scalingFactor;
       #j.submitTime = j.submitTime / scalingFactor;
-      j.runTime = j.runTime * scalingFactor;
+      j.runTime = (j.runTime * scalingFactor).round;
       j.runTime = 1 if j.runTime < 1;
-      j.wallTime = j.wallTime * scalingFactor;
+      j.wallTime = (j.wallTime * scalingFactor).round;
       j.wallTime = 1 if j.wallTime < 1;
     }
     print "Scaled workload (load = #{currentLoad}) to load = #{scaledJobs.calculateLoadLevel}\n"
@@ -578,14 +578,17 @@ class Workload
     @events.sort!
     maxTime = 0
     accumulator = 0
+    accumulatorTmp = 0
     lastEventTime=0
     sumLoadSamples = 0.0
     @events.each{|event|
-      accumulator, eventTime=event.accumulate(accumulator)
+      accumulatorTmp, eventTime=event.accumulate(accumulator)
       # Update max values
       maxTime = event.time if eventTime > maxTime
       sumLoadSamples += (accumulator.to_f * (eventTime - lastEventTime))
       lastEventTime = eventTime
+      # Have to use old accumulator value before (sumLoadSamples)
+      accumulator = accumulatorTmp
     }
     @load = sumLoadSamples / (capacity * maxTime)
     return @load
