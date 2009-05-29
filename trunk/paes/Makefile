@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-c -Wall -Wextra -I. -std=gnu++98 -pedantic -fPIC -g
+CFLAGS=-c -Wall -Wextra -I. -std=gnu++98 -pedantic -fPIC -O3
 #LDFLAGS=-static
 LDFLAGS=
 SOURCES=main.cpp workload.cpp workload-factory.cpp job.cpp 

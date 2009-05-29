@@ -77,7 +77,7 @@ void register_inthandlers() {
 long getCurrentMilliseconds() {
   struct timeval tv;
   gettimeofday (&tv, NULL);
-  return (((long)&tv.tv_sec * 1000) + (tv.tv_usec / 1000));
+  return (((long)tv.tv_sec * 1000) + (tv.tv_usec / 1000));
 }
 
 int main (int argc, char** argv) {
@@ -231,6 +231,7 @@ int main (int argc, char** argv) {
 
   // mark start time.
   long start_time = getCurrentMilliseconds();
+  std::cout << "Start time is " << start_time << std::endl;
   
   // Main loop
   double prev_distance=0.0;
