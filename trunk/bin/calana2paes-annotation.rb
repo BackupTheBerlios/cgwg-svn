@@ -29,7 +29,7 @@ end
 require 'rubygems'
 #gem 'builder' #we need xml builder
 #require 'builder/xmlmarkup'
-require 'R'
+require 'Annotations'
 require 'optparse'
 require 'ostruct'
 
@@ -54,9 +54,13 @@ class Optparser
       opts.separator ""
       opts.separator "Specific options:"
       # Mandatory argument.
-      opts.on("-d", "--directory directory","the directory for input and result files") do |outdir|
-        options.outdir=outdir
+      opts.on("-i", "--directory directory","the directory for input files") do |indir|
+        options.indir=indir
       end
+      opts.on("-l", "--load-level FLOAT","the load level to use") do |loadlevel|
+        options.loadlevel=loadlevel
+      end
+      
       opts.on("-a", "--annotations file","the annotations to be added to the graph") do |annotations|
         options.annotations=annotations
       end
@@ -78,13 +82,13 @@ end
 ## Script startup
 #
 options = Optparser.parse(ARGV)
-outdir = options.outdir    
+indir = options.indir    
 loadlevel = options.loadlevel.to_f
 annotations = options.annotations
 $verbose = options.verbose
 
-puts "# PAES Scheduler - EPS evaluation generator"
-if outdir == nil
+puts "# Calana Scheduler - PAES annotation generator"
+if indir == nil
   puts "please read usage note - directory must be given."
   exit
 end
@@ -97,9 +101,62 @@ if annotations != nil
   puts "# Using annotations file #{annotationsFullPath}"
 end 
 
-outdirFullPath = File.expand_path(outdir)
-puts "# Using data file directory #{outdirFullPath}"
+indirFullPath = File.expand_path(indir)
+puts "# Using data file directory #{indirFullPath}"
 
-puts "# Generating graphs from logfile."
-plotEngine=PAES_Analysis.new(outdirFullPath, annotationsFullPath)
-plotEngine.plotSingleRun();
+puts "# Generating annotations from logfile for load level #{loadlevel}."
+
+# read QT and price values for different preferences
+qt_avg=qt_low=qt_high=0.0
+qtfile=File.join(indirFullPath, "load-QT.txt");
+File.open(qtfile, "r") {|file|
+  while (line=file.gets)
+    if line =~ /^#/
+      puts "skipping comment #{line}" if $verbose
+    else
+      puts "examining line #{line}" if $verbose
+      items=line.split();
+      currentlevel=items[0];
+      if loadlevel.to_f == currentlevel.to_f
+        puts "found loadlevel information!" if $verbose
+        qt_avg=items[1];
+        qt_low=items[2];
+        qt_high=items[3];
+      end
+    end
+  end
+}
+puts "Found QT: #{qt_avg}, QT_LOW_PERFPREF: #{qt_low}, QT_HIGH_PERFPREF: #{qt_high}"
+
+price_avg=price_low=price_high=0.0
+pricefile=File.join(indirFullPath, "load-avgprice.txt");
+File.open(pricefile, "r") {|file|
+  while (line=file.gets)
+    if line =~ /^#/
+      puts "skipping comment #{line}" if $verbose
+    else
+      puts "examining line #{line}" if $verbose
+      items=line.split();
+      currentlevel=items[0];
+      if loadlevel.to_f == currentlevel.to_f
+        puts "found loadlevel information!" if $verbose
+        price_avg=items[1];
+        price_low=items[2];
+        price_high=items[3];
+      end
+    end
+  end
+}
+puts "Found PRICE: #{price_avg}, P_LOW_PRICEPREF: #{price_low}, P_HIGH_PRICEPREF: #{price_high}"
+
+# use QT as first, price as second coordinate, preference as text.
+avgAnnotation=Annotation.new(qt_avg, price_avg, "Average")
+lowAnnotation=Annotation.new(qt_low, price_high, "Low Performance Preference")
+highAnnotation=Annotation.new(qt_high, price_low, "High Performance Preference")
+
+File.open(annotationsFullPath, "w") {|file|
+  file << "# QT\tPrice\tText\n"
+  file << avgAnnotation.to_file_line + "\n"
+  file << lowAnnotation.to_file_line + "\n"
+  file << highAnnotation.to_file_line + "\n"
+}

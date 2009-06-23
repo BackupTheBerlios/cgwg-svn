@@ -16,6 +16,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 require "tempfile"
+require 'Annotations'
 #require "rubygems"
 #require "ruby-debug"
 
@@ -137,8 +138,12 @@ end
 
 
 class PAES_Analysis
-  def initialize(path)
+  def initialize(path, annotationsfile)
     @workingdir=path
+    @annotationsfile=annotationsfile
+    if @annotationsfile != nil
+      @annotations=AnnotationCollection.new(@annotationsfile)
+    end
     @runner = RRunner.new(path)
   end
   def plotSingleRun
@@ -147,11 +152,61 @@ class PAES_Analysis
     }
     sleep(1)
   end
+  def arrayToC(input)
+    retval="c("
+    input.each{|element|
+      if element.instance_of?(String)
+        retval += "\"#{element}\","
+      else
+        retval += "#{element},"
+      end
+    }
+    retval.sub!(/,$/, "");   # delete the last comma
+    return retval+")";
+  end
+  ###
+  ## takes a drawcommand as an argument and adds annotations
+  ## as needed.
+  ## TODO: Points are not plotted if they are out of the range of
+  ## the plot - this might be necessary in the future.
+  #
+  def appendAnnotations(drawcmd)
+    if @annotations != nil
+      puts "Adding annotations\n#{@annotations.to_s}"
+      colors=Array.new()
+      labels=Array.new()
+      ltyInfo=Array.new()
+      pchInfo=Array.new()
+      counter=0;
+      pointlines=""
+      @annotations.each{|a|
+        counter+=1;
+        colors << counter;
+        labels << a.text;
+        pointlines+="points(#{a.qt}, #{a.price}, type=\"p\", pty=2, col=#{counter})\n"
+        ltyInfo << -1;
+        pchInfo << 1;
+      }
+      cols=arrayToC(colors)
+      labelList=arrayToC(labels)
+      ltyList=arrayToC(ltyInfo)
+      pchList=arrayToC(pchInfo)
+      drawcmd+=<<-EOC
+        cols=#{cols}
+        labels=#{labelList}
+        #{pointlines}
+        legend("topright", labels, col = cols,
+           text.col = "black", lty = #{ltyList}, pch = #{pchList},
+           bg = 'gray90')
+      EOC
+    end
+    return drawcmd
+  end
   def plotSingleRun_ParetoSchedules_Absolute
     basename="absolute-results"
+        #main="Pareto Front (absolute values)",
     drawcmd=<<-END_OF_CMD
       plot(data$QT, data$Price, type="b",
-        main="Pareto Front (absolute values)",
         xlab="queue time (s)",
         ylab="price"
       )
@@ -164,13 +219,26 @@ class PAES_Analysis
   end
   def plotSingleRun_ParetoSchedules_Relative
     basename="relative-results"
+    max_qt_annotation = @annotations.getMaxQT()
+    max_price_annotation = @annotations.getMaxPrice()
+    min_qt_annotation = @annotations.getMinQT()
+    min_price_annotation = @annotations.getMinPrice()
+    puts "### Calculated: #{max_qt_annotation}, #{max_price_annotation}"
+        #main="Pareto Front (relative values)",
     drawcmd=<<-END_OF_CMD
-      plot(data$QT, data$Price, type="b",
-        main="Pareto Front (relative values)",
+      max_qt<-max(data$QT, #{max_qt_annotation});
+      max_price<-max(data$Price, #{max_price_annotation});
+      min_qt<-min(data$QT, #{min_qt_annotation});
+      min_price<-min(data$Price, #{min_price_annotation});
+      qt_range<-c(min_qt,max_qt);
+      price_range<-c(min_price,max_price);
+      plot(qt_range, price_range, type="n",
         xlab="queue time (s)",
-        ylab="price"
+        ylab="price / second"
       )
+      points(data$QT, data$Price, type="b")
     END_OF_CMD
+    drawcmd=appendAnnotations(drawcmd)
     infile=File.join(@workingdir, basename+".txt")
     outfile=basename+".eps"
     puts "infile: #{infile}"
@@ -183,11 +251,10 @@ class PAES_Analysis
       l<-length(data$acc)
       range<-1:l
       plot(range, data$acc, type="n",
-        main="Runtime development",
-        xlab="Iteration",
-        ylab="accepted"
+        xlab="Iteration (x 1000)",
+        ylab="Dominant Solutions"
       )
-      points(range, data$acc, type="b", pch=1)
+      points(range, data$acc, type="l", lty=1)
     END_OF_CMD
     infile=File.join(@workingdir, basename+".txt")
     outfile=basename+".eps"
@@ -201,9 +268,8 @@ class PAES_Analysis
       l<-length(data$distance)
       range<-1:l
       plot(range, data$distance, type="n",
-        main="Runtime development",
-        xlab="Iteration",
-        ylab="distance"
+        xlab="Iteration (x 1000)",
+        ylab="Distance"
       )
       points(range, data$distance, type="l", lty=2)
     END_OF_CMD
