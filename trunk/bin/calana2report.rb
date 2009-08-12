@@ -849,11 +849,13 @@ end
 def processCalanaTrace(traceFileName, loadLevel)
   queueLength = Hash.new();
   utilization = Hash.new();
+  qState = Hash.new();
 
   traceFile=File.new(traceFileName, "r")
   puts "Processing trace file #{traceFileName}"
   @utilReportFile = File.new($outDir+"/utilization-"+loadLevel+".txt", "w")
   @queueReportFile = File.new($outDir+"/queuelength-"+loadLevel+".txt", "w")
+  @qStateReportFile = File.new($outDir+"/qState-"+loadLevel+".txt", "w")
   traceFile.each_line {|line|
     line.sub!(/trace./, "") # Drop the trace. prefix.
     line.sub!(/-\ /, "") # Drop the dash.
@@ -882,6 +884,13 @@ def processCalanaTrace(traceFileName, loadLevel)
         utilization[entity]=es
       end
     es = utilization[entity]
+    es.addEvent(time, value)
+    elsif property =~ /qState/
+      if not qState.has_key?(entity)
+        es=EventStore.new(entity)
+        qState[entity]=es
+      end
+    es = qState[entity]
     es.addEvent(time, value)
     end
   }
