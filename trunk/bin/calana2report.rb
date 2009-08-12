@@ -33,6 +33,7 @@ require 'Latex'
 require 'Scheduler'
 require 'optparse'
 require 'ostruct'
+require 'ruby-debug'
 
 # Constants for context of the job description...
 SEQUENCE = 1;
@@ -885,6 +886,7 @@ def processCalanaTrace(traceFileName, loadLevel)
       end
     es = utilization[entity]
     es.addEvent(time, value)
+      debugger
     elsif property =~ /qState/
       if not qState.has_key?(entity)
         es=EventStore.new(entity)
@@ -927,6 +929,19 @@ def processCalanaTrace(traceFileName, loadLevel)
     entityHeader << "#{e};"
   }
   @utilReportFile.puts(entityHeader)
+  entities = Array.new
+  qState.each_value{|eventStore|
+    eventStore.prepare(srate)
+    puts "Initializing #{eventStore.getName()}" if $verbose
+    entities << eventStore.getName()
+  }
+  entities.sort!
+  entityHeader = "time "
+  entities.each{|e|
+    e.gsub!(/-/, '')
+    entityHeader << "#{e}"
+  }
+  @qStateReportFile.puts(entityHeader)
 
   utilReporter = UtilizationReport.new($outDir, $load, entities)
 
@@ -957,6 +972,7 @@ def processCalanaTrace(traceFileName, loadLevel)
       puts "Entity #{key} => value #{value}" if $verbose
       queueLogLine << "#{value}\t"
     }
+
     puts "Utilization at time #{eventTime}" if $verbose
     hasMoreUtilValues = true;
     dequeuedValues = 0
@@ -984,15 +1000,41 @@ def processCalanaTrace(traceFileName, loadLevel)
     }
     utilLogLine << "#{tmpLine}"
     puts "queuelength-log: #{queueLogLine}\nutilization-log: #{utilLogLine}\n"
-    if (not hasMoreUtilValues) and (not hasMoreQueueValues)
+
+    puts "qState at time #{eventTime}" if $verbose
+    hasMoreQStateValues = true;
+    eventTime = 0
+    qStateValues = Hash.new
+    dequeuedValues = 0
+    qState.each_value{|eventStore|
+      entity = eventStore.getName
+      if (eventStore.hasNext())
+        eventTime, value = eventStore.getNext()
+        dequeuedValues += 1
+      end
+      qStateValues[entity]=value
+    }
+    if dequeuedValues == 0
+      hasMoreQStateValues = false;
+    end
+    qStateLogLine = "#{eventTime}\t"
+    sorted = qStateValues.sort
+    sorted.each{|key, value|
+      puts "Entity #{key} => value #{value}" if $verbose
+      qStateLogLine << "#{value}\t"
+    }
+
+    if (not hasMoreUtilValues) and (not hasMoreQueueValues) and (not hasMoreQStateValues)
       hasMoreValues = false
     end
     @utilReportFile.puts(utilLogLine)
     @queueReportFile.puts(queueLogLine)
+    @qStateReportFile.puts(qStateLogLine)
   end
   utilReporter.finalize
   @utilReportFile.close
   @queueReportFile.close
+  @qStateReportFile.close
 end
 
 ###
