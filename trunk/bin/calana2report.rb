@@ -886,7 +886,6 @@ def processCalanaTrace(traceFileName, loadLevel)
       end
     es = utilization[entity]
     es.addEvent(time, value)
-      debugger
     elsif property =~ /qState/
       if not qState.has_key?(entity)
         es=EventStore.new(entity)
@@ -1011,18 +1010,20 @@ def processCalanaTrace(traceFileName, loadLevel)
       if (eventStore.hasNext())
         eventTime, value = eventStore.getNext()
         dequeuedValues += 1
+        qStateValues[entity]=value
       end
-      qStateValues[entity]=value
     }
+    
     if dequeuedValues == 0
       hasMoreQStateValues = false;
-    end
+    elsif
     qStateLogLine = "#{eventTime}\t"
     sorted = qStateValues.sort
     sorted.each{|key, value|
       puts "Entity #{key} => value #{value}" if $verbose
       qStateLogLine << "#{value}\t"
     }
+    end
 
     if (not hasMoreUtilValues) and (not hasMoreQueueValues) and (not hasMoreQStateValues)
       hasMoreValues = false
