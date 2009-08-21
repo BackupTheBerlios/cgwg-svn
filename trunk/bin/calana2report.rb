@@ -33,7 +33,7 @@ require 'Latex'
 require 'Scheduler'
 require 'optparse'
 require 'ostruct'
-require 'ruby-debug'
+#require 'ruby-debug'
 
 # Constants for context of the job description...
 SEQUENCE = 1;
@@ -564,7 +564,8 @@ class RevenuePerAgent
     fileName = "revenue-per-agent-#{load}.txt"
     fullFileName = File.expand_path(File.join(directory, fileName))
     @reportFile = File.new(fullFileName, "w")
-    @revenues = new Hash();
+    @reportFile.puts "agent totalRevenue"
+    @revenues = Hash.new(0);
   end
 
   def addJob(job)
@@ -600,7 +601,7 @@ class ReportCollection
     @reports << report1 << report2 << report3 
     @reports << report4 << report5 << report6
     @reports << report7 << report8 << report9
-    @reports << report10 << report11 #<< report12
+    @reports << report10 << report11 << report12
   end
 
   def addJob(job)
