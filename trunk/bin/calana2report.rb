@@ -556,6 +556,30 @@ class RReport
 end
 
 
+###
+## A report that sums up all revenues for each participating agent
+#
+class RevenuePerAgent
+  def initialize(directory, load)
+    fileName = "revenue-per-agent-#{load}.txt"
+    fullFileName = File.expand_path(File.join(directory, fileName))
+    @reportFile = File.new(fullFileName, "w")
+    @revenues = new Hash();
+  end
+
+  def addJob(job)
+    @revenues[job.agent] += job.price
+  end
+
+  def finalize()
+    @revenues.each {|agent, revenue|
+      @reportFile.puts("#{agent} #{revenue}\n")
+    }
+    @reportFile.close
+  end
+end
+
+
 class ReportCollection
   def initialize(load)
     @reports = Array.new
@@ -571,6 +595,7 @@ class ReportCollection
     #report10 = DataplotReport.new($outDir, load);
     report10 = RReport.new($outDir, load);
     report11 = LoadTotalRevenue.new($outDir, load);
+    report12 = RevenuePerAgent.new($outDir, load);
 #    report12 = LatexExperimentReport.new($outDir);
     @reports << report1 << report2 << report3 
     @reports << report4 << report5 << report6
