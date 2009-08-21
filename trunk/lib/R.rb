@@ -21,7 +21,30 @@ require 'Annotations'
 #require "ruby-debug"
 
 # Run R without saving of environment, as quiet as possible.
-R_CMD = "Rscript --vanilla"  
+R_CMD = "Rscript --vanilla"
+
+class RExperimentSingleAnalysis
+  def initialize(path, datafile, loadlevel)
+    @workingdir=path
+    @dataFile = datafile
+    @fullDataFile = File.expand_path(File.join(path, datafile))
+    @loadlevel = loadlevel
+    puts "Using data from file #{@fullDataFile}" if $verbose
+    @runner = RRunner.new(path)
+  end
+
+  def plotRTwoDimensional(outFile, title, xLabel, yLabel)
+    drawcmd=<<-END_OF_CMD
+      plot(data,
+        main="#{title}",
+        xlab="#{xLabel}",
+        ylab="#{yLabel}"
+      )
+    END_OF_CMD
+    outfile="#{outFile}-#{@loadlevel.to_s}"
+    @runner.execute(@fullDataFile, outfile, drawcmd)
+  end
+end
 
 class RExperimentAnalysis
   def initialize(path, datafile, loadlevel)

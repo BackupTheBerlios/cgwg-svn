@@ -561,9 +561,11 @@ end
 #
 class RevenuePerAgent
   def initialize(directory, load)
-    fileName = "revenue-per-agent-#{load}.txt"
-    fullFileName = File.expand_path(File.join(directory, fileName))
-    @reportFile = File.new(fullFileName, "w")
+    @fileName = "revenue-per-agent-#{load}.txt"
+    @directory = directory
+    @load = load
+    @fullFileName = File.expand_path(File.join(directory, @fileName))
+    @reportFile = File.new(@fullFileName, "w")
     @reportFile.puts "agent totalRevenue"
     @revenues = Hash.new(0);
   end
@@ -577,6 +579,8 @@ class RevenuePerAgent
       @reportFile.puts("#{agent} #{revenue}\n")
     }
     @reportFile.close
+    @r = RExperimentSingleAnalysis.new(@directory, @fileName, @load)
+    @r.plotRTwoDimensional("revenue-per-agent", "Total Revenue for each agent", "Agents", "Total revenue")
   end
 end
 
