@@ -24,16 +24,12 @@ require 'Annotations'
 R_CMD = "Rscript --vanilla"
 
 class RExperimentSingleAnalysis
-  def initialize(path, datafile, loadlevel)
-    @workingdir=path
-    @dataFile = datafile
-    @fullDataFile = File.expand_path(File.join(path, datafile))
-    @loadlevel = loadlevel
-    puts "Using data from file #{@fullDataFile}" if $verbose
+  def RExperimentSingleAnalysis.plotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel)
     @runner = RRunner.new(path)
-  end
-
-  def plotRTwoDimensional(outFile, title, xLabel, yLabel)
+    outFile = fileName+"-"+loadlevel.to_s
+    inFile = outFile+".txt"
+    fullInFile = File.expand_path(File.join(path, inFile))
+    puts "Using data from file #{fullInFile}" if $verbose
     drawcmd=<<-END_OF_CMD
       plot(data,
         main="#{title}",
@@ -41,8 +37,80 @@ class RExperimentSingleAnalysis
         ylab="#{yLabel}"
       )
     END_OF_CMD
-    outfile="#{outFile}-#{@loadlevel.to_s}"
-    @runner.execute(@fullDataFile, outfile, drawcmd)
+    @runner.execute(fullInFile, outFile, drawcmd)
+  end
+
+  def RExperimentSingleAnalysis.linePlotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel)
+    @runner = RRunner.new(path)
+    outFile = fileName+"-"+loadlevel.to_s
+    inFile = outFile+".txt"
+    fullInFile = File.expand_path(File.join(path, inFile))
+    puts "Using data from file #{fullInFile}" if $verbose
+    drawcmd=<<-END_OF_CMD
+      plot(data,
+        main="#{title}",
+        xlab="#{xLabel}",
+        ylab="#{yLabel}",
+        type="l"
+      )
+    END_OF_CMD
+    @runner.execute(fullInFile, outFile, drawcmd)
+  end
+
+  def RExperimentSingleAnalysis.barplotTwoDimensional(path, loadlevel, fileName, title, valuesRow, labelsRow)
+    @runner = RRunner.new(path)
+    outFile = fileName+"-"+loadlevel.to_s
+    inFile = outFile+".txt"
+    fullInFile = File.expand_path(File.join(path, inFile))
+    puts "Using data from file #{fullInFile}" if $verbose
+    drawcmd=<<-END_OF_CMD
+      barplot(data$#{valuesRow},
+        main="#{title}",
+        names.arg=data$#{labelsRow}
+      )
+    END_OF_CMD
+    @runner.execute(fullInFile, outFile, drawcmd)
+  end
+
+  def RExperimentSingleAnalysis.multiLinePlotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel)
+    @runner = RRunner.new(path)
+    outFile = fileName+"-"+loadlevel.to_s
+    inFile = outFile+".txt"
+    fullInFile = File.expand_path(File.join(path, inFile))
+    puts "Using data from file #{fullInFile}" if $verbose
+
+    # Entities aus der Datei lesen, erstes entity merken und löschen und die restlichen gegen dieses auftragen
+    file = File.open(File.expand_path(File.join(path, inFile)), "r");
+    tableHeader = file.readline
+    entities = tableHeader.split(" ")
+    baseEntity = entities[0]
+    entities.delete(entities[0])
+    color = 1;
+
+    drawcmd=<<-END_OF_CMD
+      ran <- range(data[2:length(colnames(data))]);
+      plot(data$#{baseEntity}, data$#{entities[0]},
+        xlab="#{xLabel}",
+        ylab="#{yLabel}",
+        ylim=ran,
+        main="#{title}",
+        type='l'
+      )
+    END_OF_CMD
+    entities.delete(entities[0])
+    color = color+1
+
+    entities.each{|entity|
+      drawcmd+=<<-END_OF_CMD
+        lines(
+          data$#{baseEntity},
+          data$#{entity},
+          col=#{color}
+        );
+      END_OF_CMD
+      color = color+1
+      }
+    @runner.execute(fullInFile, outFile, drawcmd)
   end
 end
 

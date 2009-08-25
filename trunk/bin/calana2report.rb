@@ -561,7 +561,7 @@ end
 #
 class RevenuePerAgent
   def initialize(directory, load)
-    @fileName = "revenue-per-agent-#{load}.txt"
+    @fileName = "total-revenue-per-agent-#{load}.txt"
     @directory = directory
     @load = load
     @fullFileName = File.expand_path(File.join(directory, @fileName))
@@ -579,8 +579,8 @@ class RevenuePerAgent
       @reportFile.puts("#{agent} #{revenue}\n")
     }
     @reportFile.close
-    @r = RExperimentSingleAnalysis.new(@directory, @fileName, @load)
-    @r.plotRTwoDimensional("revenue-per-agent", "Total Revenue for each agent", "Agents", "Total revenue")
+    RExperimentSingleAnalysis.barplotTwoDimensional(@directory, @load, "total-revenue-per-agent",
+             "Total revenue for each agent", "totalRevenue", "agent")
   end
 end
 
@@ -878,15 +878,17 @@ end
 
 
 def processCalanaTrace(traceFileName, loadLevel)
-  queueLength = Hash.new();
-  utilization = Hash.new();
-  qState = Hash.new();
+  queueLength = Hash.new()
+  utilization = Hash.new()
+  qState = Hash.new()
+  price = Hash.new()
 
   traceFile=File.new(traceFileName, "r")
   puts "Processing trace file #{traceFileName}"
   @utilReportFile = File.new($outDir+"/utilization-"+loadLevel+".txt", "w")
   @queueReportFile = File.new($outDir+"/queuelength-"+loadLevel+".txt", "w")
   @qStateReportFile = File.new($outDir+"/qState-"+loadLevel+".txt", "w")
+  @priceReportFile = File.new($outDir+"/priceAlongTime-"+loadLevel+".txt", "w")
   traceFile.each_line {|line|
     line.sub!(/trace./, "") # Drop the trace. prefix.
     line.sub!(/-\ /, "") # Drop the dash.
@@ -907,22 +909,29 @@ def processCalanaTrace(traceFileName, loadLevel)
         es=EventStore.new(entity)
         queueLength[entity]=es
       end
-    es = queueLength[entity]
-    es.addEvent(time, value)
+      es = queueLength[entity]
+      es.addEvent(time, value)
     elsif property =~ /utilization/
       if not utilization.has_key?(entity)
         es=EventStore.new(entity)
         utilization[entity]=es
       end
-    es = utilization[entity]
-    es.addEvent(time, value)
+      es = utilization[entity]
+      es.addEvent(time, value)
     elsif property =~ /qState/
       if not qState.has_key?(entity)
         es=EventStore.new(entity)
         qState[entity]=es
       end
-    es = qState[entity]
-    es.addEvent(time, value)
+      es = qState[entity]
+      es.addEvent(time, value)
+    elsif property =~ /price/
+      if not price.has_key?(entity)
+        es=EventStore.new(entity)
+        price[entity]=es
+      end
+      es = price[entity]
+      es.addEvent(time, value)
     end
   }
 
@@ -968,9 +977,22 @@ def processCalanaTrace(traceFileName, loadLevel)
   entityHeader = "time "
   entities.each{|e|
     e.gsub!(/-/, '')
-    entityHeader << "#{e}"
+    entityHeader << "#{e} "
   }
   @qStateReportFile.puts(entityHeader)
+  entities = Array.new
+  price.each_value{|eventStore|
+    eventStore.prepare(srate)
+    puts "Initializing #{eventStore.getName()}" if $verbose
+    entities << eventStore.getName()
+  }
+  entities.sort!
+  entityHeader = "time "
+  entities.each{|e|
+    e.gsub!(/-/, '')
+    entityHeader << "#{e} "
+  }
+  @priceReportFile.puts(entityHeader)
 
   utilReporter = UtilizationReport.new($outDir, $load, entities)
 
@@ -1043,29 +1065,58 @@ def processCalanaTrace(traceFileName, loadLevel)
         qStateValues[entity]=value
       end
     }
-    
     if dequeuedValues == 0
       hasMoreQStateValues = false;
     elsif
-    qStateLogLine = "#{eventTime}\t"
-    sorted = qStateValues.sort
-    sorted.each{|key, value|
-      puts "Entity #{key} => value #{value}" if $verbose
-      qStateLogLine << "#{value}\t"
-    }
+      qStateLogLine = "#{eventTime}\t"
+      sorted = qStateValues.sort
+      sorted.each{|key, value|
+        puts "Entity #{key} => value #{value}" if $verbose
+        qStateLogLine << "#{value}\t"
+      }
     end
 
-    if (not hasMoreUtilValues) and (not hasMoreQueueValues) and (not hasMoreQStateValues)
+    puts "price at time #{eventTime}" if $verbose
+    hasMorePriceValues = true;
+    eventTime = 0
+    priceValues = Hash.new
+    dequeuedValues = 0
+    price.each_value{|eventStore|
+      entity = eventStore.getName
+      if (eventStore.hasNext())
+        eventTime, value = eventStore.getNext()
+        dequeuedValues += 1
+        priceValues[entity]=value
+      end
+    }
+    if dequeuedValues == 0
+      hasMorePriceValues = false;
+    elsif
+      priceLogLine = "#{eventTime}\t"
+      sorted = priceValues.sort
+      sorted.each{|key, value|
+        puts "Entity #{key} => value #{value}" if $verbose
+        priceLogLine << "#{value}\t"
+      }
+    end
+
+    if (not hasMoreUtilValues) and (not hasMoreQueueValues) and (not hasMoreQStateValues) and (not hasMorePriceValues)
       hasMoreValues = false
     end
     @utilReportFile.puts(utilLogLine)
     @queueReportFile.puts(queueLogLine)
     @qStateReportFile.puts(qStateLogLine)
+    @priceReportFile.puts(priceLogLine)
   end
   utilReporter.finalize
   @utilReportFile.close
   @queueReportFile.close
   @qStateReportFile.close
+  RExperimentSingleAnalysis.plotTwoDimensional($outDir, loadLevel,
+          "qState", "Q-States", "time", "price")
+  @priceReportFile.close
+  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
+          "priceAlongTime", "Price per second for agents along time", "time", "price/sec")
 end
 
 ###
@@ -1100,6 +1151,3 @@ else
     createSAReport($saFileName, $load)
   end
 end
-
-
-
