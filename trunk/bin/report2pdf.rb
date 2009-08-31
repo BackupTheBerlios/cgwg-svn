@@ -291,11 +291,11 @@ def runLoadDepScripts()
         "Price vs. PricePreference", "pricePref", "pricePerSecond", 2, 1)
     gnuPlot2Data("price-rt-preference-#{$load}.txt", "perf-pref-#{$load}.eps", 
         "Queuetime vs. PerfPreference", "perfPref", "queuetime", 4, 3)
-    names = discoverEntities("utilization-#{$load}.txt")
-    gnuPlotMultiData("utilization-#{$load}.txt", "utilization-#{$load}.eps", 
-        "Utilization per agent", "time", "utilization", names)
+#    names = discoverEntities("utilization-#{$load}.txt")
+#    gnuPlotMultiData("utilization-#{$load}.txt", "utilization-#{$load}.eps",
+#        "Utilization per agent", "time", "utilization", names)
     names = discoverEntities("queuelength-#{$load}.txt")
-    gnuPlotMultiData("queuelength-#{$load}.txt", "queuelength-#{$load}.eps", 
+    gnuPlotMultiData("queuelength-#{$load}.txt", "queuelength-#{$load}.eps",
         "Queue length per agent", "time", "queue length", names)
 end
 

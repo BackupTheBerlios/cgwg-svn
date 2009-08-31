@@ -101,7 +101,7 @@ end
 ## Job abstraction class
 #
 class Job
-  attr_accessor :type, :responseTime, :jid, :price, :minprice, :maxprice, :pricePref,
+  attr_accessor :type, :responseTime, :jid, :uid, :price, :minprice, :maxprice, :pricePref,
     :perfPref, :runTime, :queueTime, :startTime, :endTime, :minfinishtime, :maxfinishtime,
     :agent, :submitTime, :eventState
   def initialize(jid)
@@ -127,8 +127,9 @@ class Job
     retval+="#{@perfPref} #{@runTime} #{@queueTime} #{@responseTime} #{@minprice} #{@maxprice}" 
   end
   def to_R_format
-    retval="#{@jid.to_f} #{pricePref} #{@price} #{(@price/@runTime)} #{@minprice} #{@maxprice} "
-    retval+="#{@perfPref} #{@submitTime} #{@runTime} #{@queueTime} #{@responseTime} "
+    retval="#{@jid.to_f} #{@uid} #{pricePref} #{@price} #{(@price/@runTime)} "
+    retval+="#{@minprice} #{@maxprice} #{@perfPref} #{@submitTime} #{@runTime} "
+    retval+="#{@queueTime} #{@responseTime}"
   end
 end
 
@@ -538,7 +539,7 @@ class RReport
     fullReportFileName = File.expand_path(File.join(directory,reportFileName))
     @r=RExperimentAnalysis.new(directory, reportFileName, load);
     @reportFile = File.new(fullReportFileName, "w")
-    @reportFile.puts("jid pricepref price pricert minprice maxprice perfpref stime rtime qtime resptime")
+    @reportFile.puts("jid uid pricepref price pricert minprice maxprice perfpref stime rtime qtime resptime")
   end
 
   def addJob(job)
@@ -719,6 +720,7 @@ def createCalanaReport(reportFileName, loadLevel)
     #
     jid = fields[2].strip!
     jid.sub!("job-", "")
+    uid = fields[3].strip!
     submitTime = fields[12].strip!
     runTime = fields[15].strip!
     responseTime = fields[19].strip!
@@ -747,6 +749,7 @@ def createCalanaReport(reportFileName, loadLevel)
     ## Create a job instance
     #
     j = Job.new(jid)
+    j.uid = uid.to_i
     j.submitTime = submitTime.to_i
     j.price = price.to_f
     j.minprice = minprice.to_f
@@ -870,7 +873,7 @@ class UtilizationReport
     }
     totalUtilization = (@totalUtilization.to_f / @totalSampleCount)
     logLine = "#{@load}\t#{totalUtilization}\t#{tmpLine}"
-    puts "Writing logline: #{logLine}"
+    puts "Writing logline: #{logLine}" if $verbose
     @reportFile.puts(logLine)
     @reportFile.close()
   end
@@ -950,9 +953,10 @@ def processCalanaTrace(traceFileName, loadLevel)
     entities << eventStore.getName()
   }
   entities.sort!
-  entityHeader = "#entities: "
+  entityHeader = "entities "
   entities.each{|e|
-    entityHeader << "#{e};"
+    e.gsub!(/-/, '')
+    entityHeader << "#{e} "
   }
   @queueReportFile.puts(entityHeader)
   entities = Array.new
@@ -962,9 +966,10 @@ def processCalanaTrace(traceFileName, loadLevel)
     entities << eventStore.getName()
   }
   entities.sort!
-  entityHeader = "#entities: "
+  entityHeader = "entities "
   entities.each{|e|
-    entityHeader << "#{e};"
+    e.gsub!(/-/, '')
+    entityHeader << "#{e} "
   }
   @utilReportFile.puts(entityHeader)
   entities = Array.new
@@ -1016,13 +1021,17 @@ def processCalanaTrace(traceFileName, loadLevel)
     }
     if dequeuedValues == 0
       hasMoreQueueValues = false;
+    elsif
+      if eventTime != nil
+        queueLogLine = "#{eventTime}\t"
+        sorted = queueValues.sort
+        sorted.each{|key, value|
+          value = "0.00" if value == nil
+          puts "Entity #{key} => value #{value}" if $verbose
+          queueLogLine << "#{value}\t"
+        }
+      end
     end
-    queueLogLine = "#{eventTime}\t"
-    sorted = queueValues.sort
-    sorted.each{|key, value|
-      puts "Entity #{key} => value #{value}" if $verbose
-      queueLogLine << "#{value}\t"
-    }
 
     puts "Utilization at time #{eventTime}" if $verbose
     hasMoreUtilValues = true;
@@ -1039,18 +1048,22 @@ def processCalanaTrace(traceFileName, loadLevel)
     }
     if dequeuedValues == 0
       hasMoreUtilValues = false;
+    elsif
+      if eventTime != nil
+        utilLogLine = "#{eventTime}\t"
+        tmpLine = ""
+        aggregatedUtilization = 0.0
+        sorted = utilValues.sort
+        sorted.each{|key, value|
+          value = "0.00" if value == nil
+          puts "Entity #{key} => value #{value}" if $verbose
+          tmpLine << "#{value}\t"
+          aggregatedUtilization += value.to_f
+        }
+        utilLogLine << "#{tmpLine}"
+        puts "queuelength-log: #{queueLogLine}\nutilization-log: #{utilLogLine}\n" if $verbose
+      end
     end
-    utilLogLine = "#{eventTime}\t"
-    tmpLine = ""
-    aggregatedUtilization = 0.0
-    sorted = utilValues.sort
-    sorted.each{|key, value|
-      puts "Entity #{key} => value #{value}" if $verbose
-      tmpLine << "#{value}\t"
-      aggregatedUtilization += value.to_f
-    }
-    utilLogLine << "#{tmpLine}"
-    puts "queuelength-log: #{queueLogLine}\nutilization-log: #{utilLogLine}\n"
 
     puts "qState at time #{eventTime}" if $verbose
     hasMoreQStateValues = true;
@@ -1073,6 +1086,7 @@ def processCalanaTrace(traceFileName, loadLevel)
       sorted.each{|key, value|
         puts "Entity #{key} => value #{value}" if $verbose
         qStateLogLine << "#{value}\t"
+        puts "qState-log: #{qStateLogLine}\n" if $verbose
       }
     end
 
@@ -1110,9 +1124,13 @@ def processCalanaTrace(traceFileName, loadLevel)
   end
   utilReporter.finalize
   @utilReportFile.close
+#  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,      # TODO (also remove in report2pdf)
+#          "queuelength", "Queue length per agent", "time", "queue length")
   @queueReportFile.close
+  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
+          "utilization", "Utilization per agent", "time", "utilization")
   @qStateReportFile.close
-  RExperimentSingleAnalysis.plotTwoDimensional($outDir, loadLevel,
+  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
           "qState", "Q-States", "time", "price")
   @priceReportFile.close
   RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,

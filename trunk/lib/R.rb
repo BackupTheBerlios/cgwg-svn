@@ -85,8 +85,18 @@ class RExperimentSingleAnalysis
     entities = tableHeader.split(" ")
     baseEntity = entities[0]
     entities.delete(entities[0])
-    color = 1;
 
+    # Build legend
+    legend = Array.new
+    i = 0
+    entities.each{|entity|
+      legend[i] = "\""+entity+"\""
+      i += 1
+    }
+    legend.join(",")
+
+    # Draw plot (first line)
+    color = 1;
     drawcmd=<<-END_OF_CMD
       ran <- range(data[2:length(colnames(data))]);
       plot(data$#{baseEntity}, data$#{entities[0]},
@@ -95,11 +105,12 @@ class RExperimentSingleAnalysis
         ylim=ran,
         main="#{title}",
         type='l'
-      )
+      );
     END_OF_CMD
     entities.delete(entities[0])
-    color = color+1
 
+    # Draw other lines
+    color = color+1
     entities.each{|entity|
       drawcmd+=<<-END_OF_CMD
         lines(
@@ -108,8 +119,34 @@ class RExperimentSingleAnalysis
           col=#{color}
         );
       END_OF_CMD
-      color = color+1
+      color += 1
       }
+
+    # Draw legend
+    drawcmd+=<<-END_OF_CMD
+      numLastEntity <- length(colnames(data))
+      legend("topright", colnames(data[2:numLastEntity]), lwd=1, col=c(1:numLastEntity))
+    END_OF_CMD
+
+    @runner.execute(fullInFile, outFile, drawcmd)
+  end
+
+  def RExperimentSingleAnalysis.multiLinePlotTwoDimensional2(path, loadlevel, inFile, outFile, xRow, yRow, colorRow, title, xLabel, yLabel)
+    @runner = RRunner.new(path)
+    outFile = outFile+"-"+loadlevel.to_s
+    inFile = inFile+"-"+loadlevel.to_s+".txt"
+    fullInFile = File.expand_path(File.join(path, inFile))
+    puts "Using data from file #{fullInFile}" if $verbose
+
+    file = File.open(File.expand_path(File.join(path, inFile)), "r");
+
+    drawcmd=<<-END_OF_CMD
+      xRan <- range(data$#{xRow})
+      yRan <- range(data$#{yRow})
+      plot(0, 0, xlab="#{xLabel}", ylab="#{yLabel}", xlim=xRan, ylim=yRan)
+      for(rowNo in rownames(data)) points(data[rowNo,]$#{xRow}, data[rowNo,]$#{yRow}, col=data[rowNo,]$#{colorRow})
+    END_OF_CMD
+
     @runner.execute(fullInFile, outFile, drawcmd)
   end
 end
@@ -216,6 +253,29 @@ class RExperimentAnalysis
       )
     END_OF_CMD
     outfile="histperfpref-"+@loadlevel.to_s
+    @runner.execute(@datafile, outfile, drawcmd)
+  end
+
+  def plotSingleRun_user_prices
+    RExperimentSingleAnalysis.multiLinePlotTwoDimensional2(@workingdir, @loadlevel,
+            "rtable", "user-costs", "stime", "price", "uid",
+            "User costs for each job", "JobID", "Price")
+  end
+
+  def plotSingleRun_user_qtimes
+    RExperimentSingleAnalysis.multiLinePlotTwoDimensional2(@workingdir, @loadlevel,
+            "rtable", "user-queuetimes", "stime", "qtime", "uid",
+            "User queuetimes for each job", "JobID", "Queuetime")
+  end
+
+  def plotSingleRun_userBoxplot
+    drawcmd=<<-END_OF_CMD
+      ordereduids <- unique(data[order(data$pricepref, decreasing=T),]$uid)
+      uids <- factor(data$uid, levels=ordereduids)
+      boxplot(data$price/data$rtime ~ uids, col=c(1:8),
+        main="Price per sec for each user", xlab="users", ylab="price/sec")
+    END_OF_CMD
+    outfile="user-boxes-"+@loadlevel.to_s
     @runner.execute(@datafile, outfile, drawcmd)
   end
 
