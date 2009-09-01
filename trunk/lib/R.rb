@@ -57,16 +57,18 @@ class RExperimentSingleAnalysis
     @runner.execute(fullInFile, outFile, drawcmd)
   end
 
-  def RExperimentSingleAnalysis.barplotTwoDimensional(path, loadlevel, fileName, title, valuesRow, labelsRow)
+  def RExperimentSingleAnalysis.barplotTwoDimensional(path, loadlevel, fileName, title, valuesCol, labelsCol, yLabel)
     @runner = RRunner.new(path)
-    outFile = fileName+"-"+loadlevel.to_s
+    outFile = fileName
+    outFile += "-"+loadlevel.to_s if loadlevel != NIL
     inFile = outFile+".txt"
     fullInFile = File.expand_path(File.join(path, inFile))
     puts "Using data from file #{fullInFile}" if $verbose
     drawcmd=<<-END_OF_CMD
-      barplot(data$#{valuesRow},
+      barplot(data$#{valuesCol},
         main="#{title}",
-        names.arg=data$#{labelsRow}
+        ylab="#{yLabel}",
+        names.arg=data$#{labelsCol}
       )
     END_OF_CMD
     @runner.execute(fullInFile, outFile, drawcmd)
@@ -169,6 +171,18 @@ class RExperimentAnalysis
       )
     END_OF_CMD
     outfile="queuetimes-"+@loadlevel.to_s
+    @runner.execute(@datafile, outfile, drawcmd)
+  end
+
+  def plotSingleRun_QueueRunTime
+    drawcmd=<<-END_OF_CMD
+      plot(data$stime, data$qtime/data$rtime,
+        main="Queuetime per runtime",
+        xlab="submittime",
+        ylab="queuetime/runtime"
+      )
+    END_OF_CMD
+    outfile="queuetime-per-runtime-"+@loadlevel.to_s
     @runner.execute(@datafile, outfile, drawcmd)
   end
 

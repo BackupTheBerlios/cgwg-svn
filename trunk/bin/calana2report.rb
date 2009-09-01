@@ -129,7 +129,7 @@ class Job
   def to_R_format
     retval="#{@jid.to_f} #{@uid} #{pricePref} #{@price} #{(@price/@runTime)} "
     retval+="#{@minprice} #{@maxprice} #{@perfPref} #{@submitTime} #{@runTime} "
-    retval+="#{@queueTime} #{@responseTime}"
+    retval+="#{@queueTime} #{@responseTime} #{@agent}"
   end
 end
 
@@ -230,8 +230,11 @@ end
 ## A report that prints the total revenue for each workload
 #
 class LoadTotalRevenue
+  @@reportFileName = "total-revenue-workloads"
+
   def initialize(directory, load)
-    @reportFileName = directory+"/load-total-revenue.txt"
+    @@directory = directory
+    @fullReportFileName = "#{directory}/#{@@reportFileName}"
     @load = load
     @totalRevenue = 0.0
   end
@@ -242,11 +245,16 @@ class LoadTotalRevenue
 
   def finalize()
     mode = "w"
-    mode = "a" if File.exists?("#{@reportFileName}")
-    File.open(@reportFileName, mode) {|handle|
-      handle.puts("#load\ttotalRevenue") if mode == "w"
+    mode = "a" if File.exists?("#{@fullReportFileName}.txt")
+    File.open("#{@fullReportFileName}.txt", mode) {|handle|
+      handle.puts("load totalRevenue") if mode == "w"
       handle.puts("#{@load}\t#{@totalRevenue}")
       }
+  end
+
+  def LoadTotalRevenue.plotTotalRevenue()
+    RExperimentSingleAnalysis.barplotTwoDimensional(@@directory, NIL, @@reportFileName,
+            "Total revenues for each workload", "totalRevenue", "load", "revenue")
   end
 end
 
@@ -367,7 +375,7 @@ end
 class TotalRevenueReport
   def initialize(directory, load)
     @load = load
-    @reportFileName = directory+"/total-revenue-"+load+".txt"
+    @reportFileName = directory+"/total-revenue-per-agent"+load+".txt"
 
     @totalRunTime = Hash.new(0.0)
     @totalRevenue = Hash.new(0)
@@ -392,19 +400,19 @@ class TotalRevenueReport
 end
 
 ###
-## A report that prints the queue time along time
+## A report that prints the queuetime/runtime quotient along time
 #
 class QueueTimeReport
   def initialize(directory, load)
     @load = load
     reportFileName = directory+"/queue-time-"+load+".txt"
     @reportFile = File.new(reportFileName, "w")
-    @reportFile.puts("#time\tqueue-time-per-second")
+    @reportFile.puts("#time\tqueue-per-runtime")
   end
     
   def addJob(job)
-    queueTimePerSecond = job.queueTime.to_f / job.runTime.to_f
-    @reportFile.puts("#{job.startTime}\t#{queueTimePerSecond}")
+    queueTime = job.queueTime.to_f / job.runTime.to_f
+    @reportFile.puts("#{job.startTime}\t#{queueTime}")
   end
     
   def finalize()
@@ -539,7 +547,7 @@ class RReport
     fullReportFileName = File.expand_path(File.join(directory,reportFileName))
     @r=RExperimentAnalysis.new(directory, reportFileName, load);
     @reportFile = File.new(fullReportFileName, "w")
-    @reportFile.puts("jid uid pricepref price pricert minprice maxprice perfpref stime rtime qtime resptime")
+    @reportFile.puts("jid uid pricepref price pricert minprice maxprice perfpref stime rtime qtime resptime agent")
   end
 
   def addJob(job)
@@ -581,7 +589,7 @@ class RevenuePerAgent
     }
     @reportFile.close
     RExperimentSingleAnalysis.barplotTwoDimensional(@directory, @load, "total-revenue-per-agent",
-             "Total revenue for each agent", "totalRevenue", "agent")
+             "Total revenue for each agent", "totalRevenue", "agent", "revenue")
   end
 end
 
@@ -595,18 +603,18 @@ class ReportCollection
     report4 = PricePrefCorrelationReport.new($outDir, load);
     report5 = LoadQTReport.new($outDir, load);
     report6 = TimePriceReport.new($outDir, load);
-    report7 = QueueTimeReport.new($outDir, load);
+    #report7 = QueueTimeReport.new($outDir, load);
+    report7 = RevenuePerAgent.new($outDir, load);
     report8 = PricePrefReport.new($outDir, load);
     report9 = TotalRevenueReport.new($outDir, load);
     #report10 = DataplotReport.new($outDir, load);
     report10 = RReport.new($outDir, load);
     report11 = LoadTotalRevenue.new($outDir, load);
-    report12 = RevenuePerAgent.new($outDir, load);
 #    report12 = LatexExperimentReport.new($outDir);
     @reports << report1 << report2 << report3 
     @reports << report4 << report5 << report6
     @reports << report7 << report8 << report9
-    @reports << report10 << report11 << report12
+    @reports << report10 << report11 #<< report12
   end
 
   def addJob(job)
@@ -620,6 +628,7 @@ class ReportCollection
     @reports.each{|report|
       report.finalize();
     }
+    LoadTotalRevenue.plotTotalRevenue()
   end
 end
 

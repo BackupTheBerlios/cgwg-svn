@@ -281,8 +281,8 @@ end
 def runLoadDepScripts()
     gnuPlot2Points("time-price-#{$load}.txt", "time-price-#{$load}.eps", 
         "Time vs. Price per Second", "time", "price per sec", 1, 2)
-    gnuPlot2Points("queue-time-#{$load}.txt", "queue-time-#{$load}.eps", 
-        "Time vs. QueueTime per Second", "Time", "queueTime per sec", 1, 2)
+#    gnuPlot2Points("queue-time-#{$load}.txt", "queue-time-#{$load}.eps",
+#        "Time vs. QueueTime per Second", "Time", "queueTime per sec", 1, 2)
     gnuPlot2Points("total-revenue-#{$load}.txt", "total-revenue-#{$load}.eps",
         "Total Revenue vs. Avg. Price Per Second", "avg. price/sec", "Total Revenue", 2, 3)
     gnuPlot2Data("price-pref-#{$load}.txt", "price-pref-#{$load}.eps", 
