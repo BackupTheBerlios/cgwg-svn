@@ -57,11 +57,18 @@ class RExperimentSingleAnalysis
     @runner.execute(fullInFile, outFile, drawcmd)
   end
 
-  def RExperimentSingleAnalysis.barplotTwoDimensional(path, loadlevel, fileName, title, valuesCol, labelsCol, yLabel)
+  def RExperimentSingleAnalysis.barplotTwoDimensional(path, loadlevel, fileName, title, valuesCol, labelsCol, yLabel, outFileName="")
     @runner = RRunner.new(path)
+
+    # build input and output filenames
     outFile = fileName
     outFile += "-"+loadlevel.to_s if loadlevel != NIL
     inFile = outFile+".txt"
+
+    # if differnt output filename is given change it
+    outFile = outFileName
+    outFile += "-"+loadlevel.to_s if loadlevel != NIL
+
     fullInFile = File.expand_path(File.join(path, inFile))
     puts "Using data from file #{fullInFile}" if $verbose
     drawcmd=<<-END_OF_CMD

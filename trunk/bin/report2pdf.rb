@@ -283,8 +283,8 @@ def runLoadDepScripts()
         "Time vs. Price per Second", "time", "price per sec", 1, 2)
 #    gnuPlot2Points("queue-time-#{$load}.txt", "queue-time-#{$load}.eps",
 #        "Time vs. QueueTime per Second", "Time", "queueTime per sec", 1, 2)
-    gnuPlot2Points("total-revenue-#{$load}.txt", "total-revenue-#{$load}.eps",
-        "Total Revenue vs. Avg. Price Per Second", "avg. price/sec", "Total Revenue", 2, 3)
+#    gnuPlot2Points("total-revenue-#{$load}.txt", "total-revenue-#{$load}.eps",
+#        "Total Revenue vs. Avg. Price Per Second", "avg. price/sec", "Total Revenue", 2, 3)
     gnuPlot2Data("price-pref-#{$load}.txt", "price-pref-#{$load}.eps", 
         "PricePreference vs. Time", "time", "accuracy of user preference", 1, 2)
     gnuPlot2Data("price-rt-preference-#{$load}.txt", "price-rt-pref-#{$load}.eps", 
@@ -327,8 +327,8 @@ end
 def runGeneralScripts()
     gnuPlot2Lines("load-ART.txt", "load-ART.eps", 
         "Average Response Time vs. Load", "Load", "ART", 1,2)
-    gnuPlot2Points("load-total-revenue.txt", "load-total-revenue.eps",
-        "Total Revenue vs. Load", "Load", "Total Revenue", 1, 2)
+#    gnuPlot2Points("load-total-revenue.txt", "load-total-revenue.eps",
+#        "Total Revenue vs. Load", "Load", "Total Revenue", 1, 2)
 
     names = Array.new
     names << "ART" << "ART (perfPref <= 0.25)" 

@@ -123,11 +123,11 @@ class Job
     #puts("Updating prefs: perf=#{perfPref}, price=#{pricePref}")
   end
   def to_dataplot_format
-    retval="#{@jid.to_f} #{pricePref} #{@price} #{(@price/@runTime)} "
+    retval="#{@jid.to_f} #{@pricePref} #{@price} #{(@price/@runTime)} "
     retval+="#{@perfPref} #{@runTime} #{@queueTime} #{@responseTime} #{@minprice} #{@maxprice}" 
   end
   def to_R_format
-    retval="#{@jid.to_f} #{@uid} #{pricePref} #{@price} #{(@price/@runTime)} "
+    retval="#{@jid.to_i} #{@uid} #{@pricePref} #{@price} #{(@price/@runTime)} "
     retval+="#{@minprice} #{@maxprice} #{@perfPref} #{@submitTime} #{@runTime} "
     retval+="#{@queueTime} #{@responseTime} #{@agent}"
   end
@@ -229,7 +229,7 @@ end
 ###
 ## A report that prints the total revenue for each workload
 #
-class LoadTotalRevenue
+class LoadRevenue
   @@reportFileName = "total-revenue-workloads"
 
   def initialize(directory, load)
@@ -252,7 +252,7 @@ class LoadTotalRevenue
       }
   end
 
-  def LoadTotalRevenue.plotTotalRevenue()
+  def LoadRevenue.plotTotalRevenue()
     RExperimentSingleAnalysis.barplotTwoDimensional(@@directory, NIL, @@reportFileName,
             "Total revenues for each workload", "totalRevenue", "load", "revenue")
   end
@@ -369,33 +369,6 @@ class PricePrefReport
     
   def finalize()
     @reportFile.close
-  end
-end
-
-class TotalRevenueReport
-  def initialize(directory, load)
-    @load = load
-    @reportFileName = directory+"/total-revenue-per-agent"+load+".txt"
-
-    @totalRunTime = Hash.new(0.0)
-    @totalRevenue = Hash.new(0)
-  end
-
-  def addJob(job)
-    agentName = job.agent.split("-")[1]
-    @totalRunTime[agentName] += job.runTime.to_f
-    @totalRevenue[agentName] += job.price
-  end
-
-  def finalize()
-    agents = @totalRevenue.keys
-    agents.sort!
-    File.open(@reportFileName, "w") {|handle|
-      handle.puts("#agent\tavgPricePerSec\ttotalRevenue")
-      agents.each {|entity|
-        handle.puts("#{entity}\t#{@totalRevenue[entity]/@totalRunTime[entity]}\t#{@totalRevenue[entity]}")
-      }
-    }
   end
 end
 
@@ -568,28 +541,37 @@ end
 ###
 ## A report that sums up all revenues for each participating agent
 #
-class RevenuePerAgent
+class AgentRevenue
   def initialize(directory, load)
-    @fileName = "total-revenue-per-agent-#{load}.txt"
+    @fileName = "revenue-per-agent-#{load}.txt"
     @directory = directory
     @load = load
     @fullFileName = File.expand_path(File.join(directory, @fileName))
     @reportFile = File.new(@fullFileName, "w")
-    @reportFile.puts "agent totalRevenue"
-    @revenues = Hash.new(0);
+    @reportFile.puts "agent totalRevenue revenuePerRuntime"
+
+    @totalRunTime = Hash.new(0.0)
+    @totalRevenue = Hash.new(0)
   end
 
   def addJob(job)
-    @revenues[job.agent] += job.price
+    agentName = job.agent.split("-")[1]
+    @totalRunTime[agentName] += job.runTime.to_f
+    @totalRevenue[agentName] += job.price
   end
 
   def finalize()
-    @revenues.each {|agent, revenue|
-      @reportFile.puts("#{agent} #{revenue}\n")
+    @totalRevenue.each {|agent, revenue|
+      revPerRT = @totalRevenue[agent]/@totalRunTime[agent]
+      @reportFile.puts("#{agent} #{@totalRevenue[agent]} #{revPerRT}\n")
     }
     @reportFile.close
-    RExperimentSingleAnalysis.barplotTwoDimensional(@directory, @load, "total-revenue-per-agent",
-             "Total revenue for each agent", "totalRevenue", "agent", "revenue")
+    RExperimentSingleAnalysis.barplotTwoDimensional(@directory, @load, "revenue-per-agent",
+            "Total revenue for each agent", "totalRevenue", "agent", "agent",
+            outFileName="revenue-per-agent-total")
+    RExperimentSingleAnalysis.barplotTwoDimensional(@directory, @load, "revenue-per-agent",
+            "Total revenue for each agent", "revenuePerRuntime", "agent", "agent",
+            outFileName="revenue-per-agent-relative")
   end
 end
 
@@ -604,17 +586,18 @@ class ReportCollection
     report5 = LoadQTReport.new($outDir, load);
     report6 = TimePriceReport.new($outDir, load);
     #report7 = QueueTimeReport.new($outDir, load);
-    report7 = RevenuePerAgent.new($outDir, load);
+    report7 = AgentRevenue.new($outDir, load);
     report8 = PricePrefReport.new($outDir, load);
-    report9 = TotalRevenueReport.new($outDir, load);
+    report9 = LoadRevenue.new($outDir, load);
+    #report9 = TotalRevenueReport.new($outDir, load);
     #report10 = DataplotReport.new($outDir, load);
     report10 = RReport.new($outDir, load);
-    report11 = LoadTotalRevenue.new($outDir, load);
+
 #    report12 = LatexExperimentReport.new($outDir);
     @reports << report1 << report2 << report3 
     @reports << report4 << report5 << report6
     @reports << report7 << report8 << report9
-    @reports << report10 << report11 #<< report12
+    @reports << report10 #<< report11 #<< report12
   end
 
   def addJob(job)
@@ -628,7 +611,7 @@ class ReportCollection
     @reports.each{|report|
       report.finalize();
     }
-    LoadTotalRevenue.plotTotalRevenue()
+    LoadRevenue.plotTotalRevenue()
   end
 end
 
