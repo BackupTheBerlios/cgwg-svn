@@ -31,7 +31,7 @@ require 'optparse'
 require 'Latex'
 require 'ostruct'
 
-$errorFile = File.open(ENV["HOME"]+"/tmp/error.log")                          # TODO remove
+$errorFile = File.open(ENV["HOME"]+"/tmp/error.log", "a")                          # TODO remove
 
 ###
 ## Commandline parser
@@ -299,9 +299,9 @@ def runLoadDepScripts()
 #    names = discoverEntities("utilization-#{$load}.txt")
 #    gnuPlotMultiData("utilization-#{$load}.txt", "utilization-#{$load}.eps",
 #        "Utilization per agent", "time", "utilization", names)
-    names = discoverEntities("queuelength-#{$load}.txt")
-    gnuPlotMultiData("queuelength-#{$load}.txt", "queuelength-#{$load}.eps",
-        "Queue length per agent", "time", "queue length", names)
+#    names = discoverEntities("queuelength-#{$load}.txt")
+#    gnuPlotMultiData("queuelength-#{$load}.txt", "queuelength-#{$load}.eps",
+#        "Queue length per agent", "time", "queue length", names)
 end
 
 def runLoadDepScriptsEntity(entity)

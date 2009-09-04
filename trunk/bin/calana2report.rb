@@ -1022,6 +1022,7 @@ def processCalanaTrace(traceFileName, loadLevel)
           value = "0.00" if value == nil
           puts "Entity #{key} => value #{value}" if $verbose
           queueLogLine << "#{value}\t"
+          puts "queuelength-log: #{queueLogLine}\n" if $verbose
         }
       end
     end
@@ -1054,7 +1055,7 @@ def processCalanaTrace(traceFileName, loadLevel)
           aggregatedUtilization += value.to_f
         }
         utilLogLine << "#{tmpLine}"
-        puts "queuelength-log: #{queueLogLine}\nutilization-log: #{utilLogLine}\n" if $verbose
+        puts "utilization-log: #{utilLogLine}\n" if $verbose
       end
     end
 
@@ -1117,11 +1118,11 @@ def processCalanaTrace(traceFileName, loadLevel)
   end
   utilReporter.finalize
   @utilReportFile.close
-##  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,      # TODO (move here from report2pdf)
-##          "queuelength", "Queue length per agent", "time", "queue length")
-  @queueReportFile.close
   RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
           "utilization", "Utilization per agent", "time", "utilization")
+  @queueReportFile.close
+  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,     # TODO (move here from report2pdf)
+          "queuelength", "Queue length per agent", "time", "queue length")
   @qStateReportFile.close
   RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
           "qState", "Q-States", "time", "price")
