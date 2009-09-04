@@ -579,6 +579,11 @@ class RRunner
     cmdfile.print(cmdSet)
     cmdfile.close()
     puts "executing commands:\n#{cmdSet}" if $verbose
+            file = File.new(ENV["HOME"]+"/tmp/error.log", "a")                       #TODO remove
+            file.puts "infile: #{infilename}\n"
+            file.puts "outfile: #{outfilename}\n"
+            file.puts "commands: #{commands}\n"
+            file.puts "----------------------\n"
     commandline="#{R_CMD} #{cmdfile.path}"
     puts "using commandline: #{commandline}" if $verbose
     stdout = %x[#{commandline}]
