@@ -31,6 +31,8 @@ require 'optparse'
 require 'Latex'
 require 'ostruct'
 
+$errorFile = File.open(ENV["HOME"]+"/tmp/error.log")                          # TODO remove
+
 ###
 ## Commandline parser
 #
@@ -90,6 +92,9 @@ def runGnuPlot (gnuplotCmd, inFile, outFile)
   outPDFFile = $outDir+"/"+outPDF
   puts "Using gnuplot command: \n#{gnuplotCmd}\n" if $verbose
   puts "running gnuplot to create #{outFile}"
+        $errorFile.puts "infile: #{inFile}\n"                                   # TODO remove
+        $errorFile.puts "outfile: #{outFile}\n"
+        $errorFile.puts "command: #{gnuplotCmd}\n"
   cmd = `echo -n "#{gnuplotCmd}" | gnuplot`
   print "Gnuplot said: \n#{cmd}\n" if $verbose 
   print "converting to PDF, using the EPS boundingbox\n" if $verbose
@@ -402,3 +407,4 @@ else
 end
 
 
+$errorFile.close                                                                # TODO remove

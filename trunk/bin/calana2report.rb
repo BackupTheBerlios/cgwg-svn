@@ -570,7 +570,7 @@ class AgentRevenue
             "Total revenue for each agent", "totalRevenue", "agent", "agent",
             outFileName="revenue-per-agent-total")
     RExperimentSingleAnalysis.barplotTwoDimensional(@directory, @load, "revenue-per-agent",
-            "Total revenue for each agent", "revenuePerRuntime", "agent", "agent",
+            "Relative revenue for each agent", "revenuePerRuntime", "agent", "agent",
             outFileName="revenue-per-agent-relative")
   end
 end
@@ -877,6 +877,7 @@ def processCalanaTrace(traceFileName, loadLevel)
   utilization = Hash.new()
   qState = Hash.new()
   price = Hash.new()
+  #TODO create construct to save "time agent utilization price" to create a R compatible file
 
   traceFile=File.new(traceFileName, "r")
   puts "Processing trace file #{traceFileName}"
@@ -1116,8 +1117,8 @@ def processCalanaTrace(traceFileName, loadLevel)
   end
   utilReporter.finalize
   @utilReportFile.close
-#  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,      # TODO (also remove in report2pdf)
-#          "queuelength", "Queue length per agent", "time", "queue length")
+##  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,      # TODO (move here from report2pdf)
+##          "queuelength", "Queue length per agent", "time", "queue length")
   @queueReportFile.close
   RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
           "utilization", "Utilization per agent", "time", "utilization")

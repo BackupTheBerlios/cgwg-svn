@@ -65,6 +65,9 @@ class Optparser
       opts.separator ""
       opts.separator "Specific options:"
       # Mandatory argument.
+      opts.on("-m", "--maxLoad FLOAT", "the maximum load (optional)") do |maxLoad|
+        options.maxLoad=maxLoad
+      end
       opts.on("-u", "--numUsers INT", "the number of users to generate") do |numUsers|
         options.numUsers=numUsers
       end
@@ -76,6 +79,9 @@ class Optparser
       end
       opts.on("-r", "--numTotalResources INT","the number of resources in the grid") do |numtotalresources|
         options.numTotalResources=numtotalresources
+      end
+      opts.on("-d", "--directory STRING","the subdirectory in var to put the files in") do |subdir|
+        options.subDir=subdir
       end
       #            opts.on("-c", "--percentCoallocation FLOAT","the number of jobs to generate") do |percentCoallocation|
       #                options.percentCoallocation = percentCoallocation
@@ -106,9 +112,11 @@ numTotalJobs = options.numJobs.to_i
 $verbose = options.verbose
 joblength=options.joblength.to_i
 numTotalSystems = options.numTotalResources.to_i
+subDir = options.subDir
+maxLoad = options.maxLoad.to_f if options.maxLoad != nil
 #percentCoallocation = options.percentCoallocation.to_f
 
-if numTotalJobs == 0 or @@config.numUsers == 0 or joblength == 0 or numTotalSystems == 0
+if numTotalJobs == 0 or @@config.numUsers == 0 or joblength == 0 or numTotalSystems == 0 or subDir == nil
   print "please read usage note (-h)\n"
   exit
 end
@@ -150,7 +158,7 @@ aggregatedWorkload = nil
     aggregatedWorkload = genSteadyCluster(clusterConfig, joblength)
   else
     tempWorkload = genSteadyCluster(clusterConfig, joblength)
-    tempWorkload.mergeWorkloadTo(aggregatedWorkload)
+    tempWorkload.appendWorkloadTo(aggregatedWorkload)
   end
 }
 
@@ -177,13 +185,17 @@ aggregatedWorkload.linkUsers()
 
 
 # Create a new workload connection where we gather all generated workloads
-collection=WorkloadCollection.new
+if maxLoad == nil
+  collection=WorkloadCollection.new
+elsif
+  collection=WorkloadCollection.new(maxLoad)
+end
 
 # Generate all load level slots from the generated workload. Note that all
 # characteristics except for the interarrival time are not changed.
 print "Generating scaled workloads\n"
 collection.generateEachSlot {|load|
-  collection.addExact(load, aggregatedWorkload.scaleLoadLevel(load))
+  collection.addExact(load, aggregatedWorkload.scaleLoadLevel(load))             #TODO mehr Slots statt höheren level
 }
 
 ###
@@ -193,7 +205,8 @@ collection.generateEachSlot {|load|
 ###
 ## Put the workload collection on disk for analysis later on...
 #
-storeFileName=@@config.runPath+"/"+@@config.outFile+"-wcollection.bin"
+Dir.mkdir(ENV["CGWG_HOME"]+"/var/"+subDir)
+storeFileName=ENV["CGWG_HOME"]+"/var/#{subDir}/#{@@config.outFile}-wcollection.bin"
 store=File.new(storeFileName, "w")
 Marshal.dump(collection, store)
 store.close
@@ -202,7 +215,7 @@ store.close
 ## Finally: Put the generated workloads on the disk.
 #
 collection.eachWorkload {|w|
-  file=@@config.runPath+"/"+@@config.outFile+"-"+
+  file=ENV["CGWG_HOME"]+"/var/#{subDir}/#{@@config.outFile}-"+
     w.calculateLoadLevel().to_s + ".xml"
     outFile=File.new(file, "w")
   builder = Builder::XmlMarkup.new(:target=>outFile, :indent=>2)

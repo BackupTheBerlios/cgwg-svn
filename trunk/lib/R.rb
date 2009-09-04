@@ -66,8 +66,10 @@ class RExperimentSingleAnalysis
     inFile = outFile+".txt"
 
     # if differnt output filename is given change it
-    outFile = outFileName
-    outFile += "-"+loadlevel.to_s if loadlevel != NIL
+    if outFileName != ""
+      outFile = outFileName
+      outFile += "-"+loadlevel.to_s if loadlevel != NIL
+    end
 
     fullInFile = File.expand_path(File.join(path, inFile))
     puts "Using data from file #{fullInFile}" if $verbose
@@ -136,7 +138,6 @@ class RExperimentSingleAnalysis
       numLastEntity <- length(colnames(data))
       legend("topright", colnames(data[2:numLastEntity]), lwd=1, col=c(1:numLastEntity))
     END_OF_CMD
-
     @runner.execute(fullInFile, outFile, drawcmd)
   end
 
@@ -155,7 +156,6 @@ class RExperimentSingleAnalysis
       plot(0, 0, xlab="#{xLabel}", ylab="#{yLabel}", xlim=xRan, ylim=yRan)
       for(rowNo in rownames(data)) points(data[rowNo,]$#{xRow}, data[rowNo,]$#{yRow}, col=data[rowNo,]$#{colorRow})
     END_OF_CMD
-
     @runner.execute(fullInFile, outFile, drawcmd)
   end
 end
@@ -571,7 +571,7 @@ class RRunner
 
   # Executes the given command. Expects a string that contains the 
   # commands to execute.
-  def execute(infilename, outfilename, commands) 
+  def execute(infilename, outfilename, commands)
     cmdSet = createPreamble(infilename, outfilename)
     cmdSet << commands << createClosing
     # The Tempfile will get deleted automagically when ruby terminates.

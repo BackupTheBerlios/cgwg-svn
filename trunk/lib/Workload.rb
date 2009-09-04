@@ -623,11 +623,11 @@ end
 ## a given load level. Therefore, we must rerun the generator several times.
 #
 class WorkloadCollection
-  def initialize
+  def initialize(maxload=1)
     @workloads=Hash.new
     # Now, we build the indices we need to have in the workload. 
     # We have for each interval @@config.loadDeviation a slot.
-    0.step(1, @@config.loadDeviation) {|step|
+    0.step(maxload, @@config.loadDeviation) {|step|
       @workloads[step]=nil
     }
   end
