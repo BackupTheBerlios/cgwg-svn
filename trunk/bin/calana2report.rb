@@ -1121,7 +1121,7 @@ def processCalanaTrace(traceFileName, loadLevel)
   RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
           "utilization", "Utilization per agent", "time", "utilization")
   @queueReportFile.close
-  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,     # TODO (move here from report2pdf)
+  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,     # TODO check if works correctly
           "queuelength", "Queue length per agent", "time", "queue length")
   @qStateReportFile.close
   RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,

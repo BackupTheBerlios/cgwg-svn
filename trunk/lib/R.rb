@@ -83,7 +83,7 @@ class RExperimentSingleAnalysis
     @runner.execute(fullInFile, outFile, drawcmd)
   end
 
-  def RExperimentSingleAnalysis.multiLinePlotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel)
+  def RExperimentSingleAnalysis.multiLinePlotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel)          # TODO nicht ausführen, wenn Datei nicht existiert
     @runner = RRunner.new(path)
     outFile = fileName+"-"+loadlevel.to_s
     inFile = outFile+".txt"
@@ -91,9 +91,11 @@ class RExperimentSingleAnalysis
     puts "Using data from file #{fullInFile}" if $verbose
 
     # Entities aus der Datei lesen, erstes entity merken und löschen und die restlichen gegen dieses auftragen
+    # Abbrechen, wenn keine entities da sind
     file = File.open(File.expand_path(File.join(path, inFile)), "r");
     tableHeader = file.readline
     entities = tableHeader.split(" ")
+    return if entities.length == 1
     baseEntity = entities[0]
     entities.delete(entities[0])
 
@@ -572,6 +574,11 @@ class RRunner
   # Executes the given command. Expects a string that contains the 
   # commands to execute.
   def execute(infilename, outfilename, commands)
+    if !File.exists?(infilename)
+            file = File.new(ENV["HOME"]+"/tmp/error.log", "a")                       #TODO remove
+            file.puts "infile: #{infilename} doesn't exist\n"
+      return
+    end
     cmdSet = createPreamble(infilename, outfilename)
     cmdSet << commands << createClosing
     # The Tempfile will get deleted automagically when ruby terminates.
@@ -579,11 +586,6 @@ class RRunner
     cmdfile.print(cmdSet)
     cmdfile.close()
     puts "executing commands:\n#{cmdSet}" if $verbose
-            file = File.new(ENV["HOME"]+"/tmp/error.log", "a")                       #TODO remove
-            file.puts "infile: #{infilename}\n"
-            file.puts "outfile: #{outfilename}\n"
-            file.puts "commands: #{commands}\n"
-            file.puts "----------------------\n"
     commandline="#{R_CMD} #{cmdfile.path}"
     puts "using commandline: #{commandline}" if $verbose
     stdout = %x[#{commandline}]
