@@ -921,7 +921,7 @@ def processCalanaTrace(traceFileName, loadLevel)
       end
       es = qState[entity]
       es.addEvent(time, value)
-    elsif property =~ /price/
+    elsif property =~ /timePrice/
       if not price.has_key?(entity)
         es=EventStore.new(entity)
         price[entity]=es
@@ -1075,13 +1075,15 @@ def processCalanaTrace(traceFileName, loadLevel)
     if dequeuedValues == 0
       hasMoreQStateValues = false;
     elsif
-      qStateLogLine = "#{eventTime}\t"
-      sorted = qStateValues.sort
-      sorted.each{|key, value|
-        puts "Entity #{key} => value #{value}" if $verbose
-        qStateLogLine << "#{value}\t"
-        puts "qState-log: #{qStateLogLine}\n" if $verbose
-      }
+      if eventTime.to_f != 0.0
+        qStateLogLine = "#{eventTime}\t"
+        sorted = qStateValues.sort
+        sorted.each{|key, value|
+          puts "Entity #{key} => value #{value}" if $verbose
+          qStateLogLine << "#{value}\t"
+          puts "qState-log: #{qStateLogLine}\n" if $verbose
+        }
+      end
     end
 
     puts "price at time #{eventTime}" if $verbose
