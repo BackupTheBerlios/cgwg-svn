@@ -74,6 +74,7 @@ class RExperimentSingleAnalysis
     fullInFile = File.expand_path(File.join(path, inFile))
     puts "Using data from file #{fullInFile}" if $verbose
     drawcmd=<<-END_OF_CMD
+      data <- data[order(data$#{valuesCol}),]
       barplot(data$#{valuesCol},
         main="#{title}",
         ylab="#{yLabel}",
