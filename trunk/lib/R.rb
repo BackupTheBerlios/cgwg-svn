@@ -74,7 +74,7 @@ class RExperimentSingleAnalysis
     fullInFile = File.expand_path(File.join(path, inFile))
     puts "Using data from file #{fullInFile}" if $verbose
     drawcmd=<<-END_OF_CMD
-      data <- data[order(data$#{valuesCol}),]
+      data <- data[order(data$#{valuesCol}, decreasing=T),]
       barplot(data$#{valuesCol},
         main="#{title}",
         ylab="#{yLabel}",
@@ -84,7 +84,7 @@ class RExperimentSingleAnalysis
     @runner.execute(fullInFile, outFile, drawcmd)
   end
 
-  def RExperimentSingleAnalysis.multiLinePlotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel)          # TODO nicht ausführen, wenn Datei nicht existiert
+  def RExperimentSingleAnalysis.multiLinePlotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel)
     @runner = RRunner.new(path)
     outFile = fileName+"-"+loadlevel.to_s
     inFile = outFile+".txt"
@@ -576,8 +576,7 @@ class RRunner
   # commands to execute.
   def execute(infilename, outfilename, commands)
     if !File.exists?(infilename)
-            file = File.new(ENV["HOME"]+"/tmp/error.log", "a")                       #TODO remove
-            file.puts "infile: #{infilename} doesn't exist\n"
+      # exit if file doesn't exist
       return
     end
     cmdSet = createPreamble(infilename, outfilename)

@@ -279,23 +279,23 @@ end
 
 # Runs the load-dependent scripts.
 def runLoadDepScripts()
-    gnuPlot2Points("time-price-#{$load}.txt", "time-price-#{$load}.eps", 
+    gnuPlot2Points("time-price-#{$load}.txt", "time-price-#{$load}.eps",
         "Time vs. Price per Second", "time", "price per sec", 1, 2)
 #    gnuPlot2Points("queue-time-#{$load}.txt", "queue-time-#{$load}.eps",
 #        "Time vs. QueueTime per Second", "Time", "queueTime per sec", 1, 2)
 #    gnuPlot2Points("total-revenue-#{$load}.txt", "total-revenue-#{$load}.eps",
 #        "Total Revenue vs. Avg. Price Per Second", "avg. price/sec", "Total Revenue", 2, 3)
-    gnuPlot2Data("price-pref-#{$load}.txt", "price-pref-#{$load}.eps", 
+    gnuPlot2Data("price-pref-#{$load}.txt", "price-pref-#{$load}.eps",
         "PricePreference vs. Time", "time", "accuracy of user preference", 1, 2)
-    gnuPlot2Data("price-rt-preference-#{$load}.txt", "price-rt-pref-#{$load}.eps", 
+    gnuPlot2Data("price-rt-preference-#{$load}.txt", "price-rt-pref-#{$load}.eps",
         "Price vs. PricePreference", "pricePref", "pricePerSecond", 2, 1)
-    gnuPlot2Data("price-rt-preference-#{$load}.txt", "perf-pref-#{$load}.eps", 
+    gnuPlot2Data("price-rt-preference-#{$load}.txt", "perf-pref-#{$load}.eps",
         "Queuetime vs. PerfPreference", "perfPref", "queuetime", 4, 3)
 #    names = discoverEntities("utilization-#{$load}.txt")
 #    gnuPlotMultiData("utilization-#{$load}.txt", "utilization-#{$load}.eps",
 #        "Utilization per agent", "time", "utilization", names)
 #    names = discoverEntities("queuelength-#{$load}.txt")
-#    gnuPlotMultiData("queuelength-#{$load}.txt", "queuelength-#{$load}.eps",
+#    gnuPlotMultiData("queuelength-#{$load}.txt", "queuelength-#{$load}.old.eps",
 #        "Queue length per agent", "time", "queue length", names)
 end
 

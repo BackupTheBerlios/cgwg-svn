@@ -27,6 +27,7 @@ end
 require 'optparse'
 require 'ostruct'
 require 'statistics'
+require 'Utils'
 
 ###
 ## Commandline parser
@@ -124,11 +125,6 @@ class Optparser
 end
 
 # some useful methods
-
-def mda(width, height)
-  mda = Array.new(width)
-  mda.map! { Array.new(height) }
-end
 
 def round(number, decimals)
   (number * 10**decimals).round.to_f / 10**decimals

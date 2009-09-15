@@ -54,3 +54,9 @@ class LogReporter
     }
   end
 end
+
+
+def mda(width, height)
+  mda = Array.new(width)
+  mda.map! { Array.new(height) }
+end

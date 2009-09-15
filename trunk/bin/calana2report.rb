@@ -33,7 +33,8 @@ require 'Latex'
 require 'Scheduler'
 require 'optparse'
 require 'ostruct'
-#require 'ruby-debug'
+require 'Utils'
+require 'ruby-debug'
 
 # Constants for context of the job description...
 SEQUENCE = 1;
@@ -872,7 +873,7 @@ class UtilizationReport
 end
 
 
-def processCalanaTrace(traceFileName, loadLevel)
+def processCalanaTrace_OLD(traceFileName, loadLevel)
   queueLength = Hash.new()
   utilization = Hash.new()
   qState = Hash.new()
@@ -1123,7 +1124,7 @@ def processCalanaTrace(traceFileName, loadLevel)
   RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
           "utilization", "Utilization per agent", "time", "utilization")
   @queueReportFile.close
-  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,     # TODO check if works correctly
+  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
           "queuelength", "Queue length per agent", "time", "queue length")
   @qStateReportFile.close
   RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
@@ -1131,6 +1132,70 @@ def processCalanaTrace(traceFileName, loadLevel)
   @priceReportFile.close
   RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
           "priceAlongTime", "Price per second for agents along time", "time", "price/sec")
+end
+
+def processCalanaTrace(reportFileName, traceFileName, loadLevel)
+  # Entities the array holds: utilization, queuelength, qState, price, timePrice
+  # -> adapt this for changes in regarded entities
+  entities = Array["utilization", "queuelength", "qState", "timePrice"]
+
+  # Create structure for building the tables later on
+  reportFile = File.new(reportFileName, 'r')
+  agents = nil
+  reportFile.each_line{|line|
+    if(line =~ /^;\sagents:.*/)
+      agents = line[/^;\sagents:\s(.*)/, 1]
+      agents = agents.split(", ")
+      break
+    else
+      next
+    end
+  }
+  agents.sort!
+  tmplArray = Array.new(agents.length, 0.0)
+
+  # intended structure for struct:
+  # hash(key = entity, value =
+  #   hash(key = time, value =
+  #     array with agent values))
+  struct = Hash.new
+  entities.each{|entity|
+    struct[entity] = Hash.new
+  }
+
+  # Do the actual work
+  traceFile = File.new(traceFileName, "r")
+  traceFile.each_line{|line|
+    weg, agent, ent, time, value = line.split(/^trace\.(.*)\s-\s(.*)@(.*):\s(.*)$/)  # TODO "weg" wegmachen
+    next if !entities.include?(ent)
+    entity = struct[ent]
+    if(!entity.has_key?(time.to_i))
+      entity[time.to_i] = tmplArray.dup
+    end
+    entityTime = entity[time.to_i]
+    entityTime[agents.index(agent)] = value
+  }
+
+  # Build files                     #TODO use a sample only (see EventStore.prepare(rate))
+  entities.each{|entity|
+    entityFile = File.new($outDir+"/#{entity}-#{loadLevel}.txt", "w")
+    agents.each{|a| a.sub!("-", "")}
+    entityFile.puts("time "+(agents * " "))
+    struct[entity].sort.each{|time, agentValues|
+      entityFile.puts(time.to_s + " " + (agentValues * " "))
+    }
+    entityFile.close
+  }
+
+  # Run the plots
+  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
+          "utilization", "Utilization per agent", "time", "utilization")
+  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
+          "queuelength", "Queue length per agent", "time", "queue length")
+  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
+          "qState", "Q-States", "time", "price")
+  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
+          "timePrice", "Price per second for agents along time", "time", "price/sec")
 end
 
 ###
@@ -1158,7 +1223,7 @@ puts "Using library path #{$:.join(":")}" if $verbose
 if ($reportFileName != nil)
   createCalanaReport($reportFileName, $load)
   if ($traceFileName != nil)
-    processCalanaTrace($traceFileName, $load)
+    processCalanaTrace($reportFileName, $traceFileName, $load)
   end
 else
   if ($saFileName != nil)
