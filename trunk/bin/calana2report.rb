@@ -34,7 +34,7 @@ require 'Scheduler'
 require 'optparse'
 require 'ostruct'
 require 'Utils'
-require 'ruby-debug'
+#require 'ruby-debug'
 
 # Constants for context of the job description...
 SEQUENCE = 1;
@@ -1200,14 +1200,14 @@ def processCalanaTrace(reportFileName, traceFileName, loadLevel)
   }
 
   # Run the plots
-#  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
-#          "utilization", "Utilization per agent", "time", "utilization")
-#  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
-#          "queuelength", "Queue length per agent", "time", "queue length")
-#  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
-#          "qState", "Q-States", "time", "price")
-#  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
-#          "timePrice", "Price per second for agents along time", "time", "price/sec")
+  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
+          "utilization", "Utilization per agent", "time", "utilization")
+  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
+          "queuelength", "Queue length per agent", "time", "queue length")
+  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
+          "qState", "Q-States", "time", "price")
+  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
+          "timePrice", "Price per second for agents along time", "time", "price/sec")
 end
 
 ###
