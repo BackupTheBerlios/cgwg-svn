@@ -1138,6 +1138,8 @@ def processCalanaTrace(reportFileName, traceFileName, loadLevel)
   # Entities the array holds: utilization, queuelength, qState, price, timePrice
   # -> adapt this for changes in regarded entities
   entities = Array["utilization", "queuelength", "qState", "timePrice"]
+  # Sample rate
+  sampleRate = 100
 
   # Create structure for building the tables later on
   reportFile = File.new(reportFileName, 'r')
@@ -1163,20 +1165,30 @@ def processCalanaTrace(reportFileName, traceFileName, loadLevel)
     struct[entity] = Hash.new
   }
 
-  # Do the actual work
+  # Do the actual work (regarding sample rate)                # possible bug if sampleRate <= time differences in trace file
+  currentSample = sampleRate
+  tmp = Hash.new()
   traceFile = File.new(traceFileName, "r")
   traceFile.each_line{|line|
-    weg, agent, ent, time, value = line.split(/^trace\.(.*)\s-\s(.*)@(.*):\s(.*)$/)  # TODO "weg" wegmachen
+    agent, ent, time, value = line.match(/^trace\.(.*)\s-\s(.*)@(.*):\s(.*)$/).to_a[1,4]
     next if !entities.include?(ent)
-    entity = struct[ent]
-    if(!entity.has_key?(time.to_i))
-      entity[time.to_i] = tmplArray.dup
+
+    if(time.to_i < currentSample)
+      # store the values for each entity and agent for each sample (duration)
+      agentNo = agents.index(agent)
+      tmp[ent] = tmplArray.dup if !tmp.has_key?(ent)
+      tmp[ent][agentNo] = value.to_f if tmp[ent][agentNo] < value.to_f
+    else
+      tmp.each{|e, v|
+        entity = struct[e]
+        entity[currentSample] = v
+      }
+      currentSample += sampleRate
+      tmp = Hash.new()
     end
-    entityTime = entity[time.to_i]
-    entityTime[agents.index(agent)] = value
   }
 
-  # Build files                     #TODO use a sample only (see EventStore.prepare(rate))
+  # Build files
   entities.each{|entity|
     entityFile = File.new($outDir+"/#{entity}-#{loadLevel}.txt", "w")
     agents.each{|a| a.sub!("-", "")}
@@ -1188,14 +1200,14 @@ def processCalanaTrace(reportFileName, traceFileName, loadLevel)
   }
 
   # Run the plots
-  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
-          "utilization", "Utilization per agent", "time", "utilization")
-  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
-          "queuelength", "Queue length per agent", "time", "queue length")
-  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
-          "qState", "Q-States", "time", "price")
-  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
-          "timePrice", "Price per second for agents along time", "time", "price/sec")
+#  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
+#          "utilization", "Utilization per agent", "time", "utilization")
+#  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
+#          "queuelength", "Queue length per agent", "time", "queue length")
+#  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
+#          "qState", "Q-States", "time", "price")
+#  RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
+#          "timePrice", "Price per second for agents along time", "time", "price/sec")
 end
 
 ###
