@@ -24,7 +24,7 @@ require 'Annotations'
 R_CMD = "Rscript --vanilla"
 
 class RExperimentSingleAnalysis
-  def RExperimentSingleAnalysis.plotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel)
+  def RExperimentSingleAnalysis.plotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel, printLegend=false)
     @runner = RRunner.new(path)
     outFile = fileName+"-"+loadlevel.to_s
     inFile = outFile+".txt"
@@ -37,10 +37,18 @@ class RExperimentSingleAnalysis
         ylab="#{yLabel}"
       )
     END_OF_CMD
+
+    # Draw legend if wanted
+    if(printLegend)
+      drawcmd+=<<-END_OF_CMD
+        numLastEntity <- length(colnames(data))
+        legend("topright", colnames(data[2:numLastEntity]), lwd=1, col=c(1:numLastEntity))
+      END_OF_CMD
+    end
     @runner.execute(fullInFile, outFile, drawcmd)
   end
 
-  def RExperimentSingleAnalysis.linePlotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel)
+  def RExperimentSingleAnalysis.linePlotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel, printLegend=false)
     @runner = RRunner.new(path)
     outFile = fileName+"-"+loadlevel.to_s
     inFile = outFile+".txt"
@@ -54,10 +62,18 @@ class RExperimentSingleAnalysis
         type="l"
       )
     END_OF_CMD
+
+    # Draw legend if wanted
+    if(printLegend)
+      drawcmd+=<<-END_OF_CMD
+        numLastEntity <- length(colnames(data))
+        legend("topright", colnames(data[2:numLastEntity]), lwd=1, col=c(1:numLastEntity))
+      END_OF_CMD
+    end
     @runner.execute(fullInFile, outFile, drawcmd)
   end
 
-  def RExperimentSingleAnalysis.barplotTwoDimensional(path, loadlevel, fileName, title, valuesCol, labelsCol, yLabel, outFileName="")
+  def RExperimentSingleAnalysis.barplotTwoDimensional(path, loadlevel, fileName, title, valuesCol, labelsCol, yLabel, outFileName="", printLegend=false)
     @runner = RRunner.new(path)
 
     # build input and output filenames
@@ -81,6 +97,14 @@ class RExperimentSingleAnalysis
         names.arg=data$#{labelsCol}
       )
     END_OF_CMD
+
+    # Draw legend if wanted
+    if(printLegend)
+      drawcmd+=<<-END_OF_CMD
+        numLastEntity <- length(colnames(data))
+        legend("topright", colnames(data[2:numLastEntity]), lwd=1, col=c(1:numLastEntity))
+      END_OF_CMD
+    end
     @runner.execute(fullInFile, outFile, drawcmd)
   end
 

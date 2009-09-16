@@ -878,7 +878,6 @@ def processCalanaTrace_OLD(traceFileName, loadLevel)
   utilization = Hash.new()
   qState = Hash.new()
   price = Hash.new()
-  #TODO create construct to save "time agent utilization price" to create a R compatible file
 
   traceFile=File.new(traceFileName, "r")
   puts "Processing trace file #{traceFileName}"
