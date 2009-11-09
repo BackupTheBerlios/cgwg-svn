@@ -825,7 +825,7 @@ def createWorkloadLoadFile(loadLevel)
 
     # save to file
     cpuUsage.each_index{|time|
-      wllFile.puts "#{time}\t#{cpuUsage[time]/totalCpus.to_f}" if cpuUsage[time]
+      wllFile.puts "#{time*10}\t#{cpuUsage[time]/totalCpus.to_f}" if cpuUsage[time]
     }
   end
 end
@@ -1264,7 +1264,7 @@ def processCalanaTrace(reportFileName, traceFileName, loadLevel)
   RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
           "qState", "Q-States", "time", "price")
   RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
-          "timePrice", "Price per second for agents along time", "time", "price/sec")
+          "timePrice", "Price per second for agents along time", "time", "price/sec", true)
 end
 
 ###

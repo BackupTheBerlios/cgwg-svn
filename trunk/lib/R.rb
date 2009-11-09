@@ -108,7 +108,7 @@ class RExperimentSingleAnalysis
     @runner.execute(fullInFile, outFile, drawcmd)
   end
 
-  def RExperimentSingleAnalysis.multiLinePlotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel)
+  def RExperimentSingleAnalysis.multiLinePlotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel, drawLOWorkload=false)
     @runner = RRunner.new(path)
     outFile = fileName+"-"+loadlevel.to_s
     inFile = outFile+".txt"
@@ -159,6 +159,7 @@ class RExperimentSingleAnalysis
       numLastEntity <- length(colnames(data))
       legend("topright", colnames(data[2:numLastEntity]), lwd=1, col=c(1:numLastEntity))
     END_OF_CMD
+    drawcmd += RExperimentSingleAnalysis.drawLoadOfWorkload(path, loadlevel) if drawLOWorkload
     @runner.execute(fullInFile, outFile, drawcmd)
   end
 
@@ -187,11 +188,14 @@ class RExperimentSingleAnalysis
     END_OF_CMD
   end
 
-  # draw load of workload                        # todo use it
+  # draw load of workload
   def RExperimentSingleAnalysis.drawLoadOfWorkload(path, loadlevel)
     drawcmd=<<-END_OF_CMD
+      max <- par("yaxp")[2]
       load <- read.table("#{path}/loadOfWorkload-#{loadlevel}.txt", T)
-      lines(load$time, load$load, col=black, lty=dotted)
+      axis(4, at=c(0, max/4, max/2, max*3/4, max), labels=c(0, 0.25, 0.5, 0.75, 1))
+      values <- load$load*max
+      lines(load$time, values, col="grey", lty="dotted")
     END_OF_CMD
   end
 end
