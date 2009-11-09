@@ -34,6 +34,7 @@ require 'Scheduler'
 require 'optparse'
 require 'ostruct'
 require 'Utils'
+require 'hpricot'
 #require 'ruby-debug'
 
 # Constants for context of the job description...
@@ -70,7 +71,7 @@ class Optparser
             opts.on("-s", "--sa-store FILE", "simulated annealing schedulde file") do |safile|
                 options.safile=safile
             end
-            opts.on("-o", "--output directory","the output directory for the report files") do |outdir|
+            opts.on("-o", "--output DIR","the output directory for the report files") do |outdir|
                 options.outdir=outdir
             end
             opts.on("-l", "--load FLOAT", "the load level of the run") do |load|
@@ -79,6 +80,12 @@ class Optparser
             # Boolean switch.
             opts.on("-v", "--verbose", "Run verbosely") do |v|
                 options.verbose = v
+            end
+            opts.on_tail("-w", "--show-workload", "Shows load of workload in diagrams (make sure you set -d option if used") do |w|
+                options.wlShow = w
+            end
+            opts.on_tail("-d", "--workload-dir DIR", "base path to the workload directories (set if -w option is set)") do |d|
+                options.wlDir = d
             end
             opts.on_tail("-h", "--help", "Show this message") do
                 puts opts
@@ -772,6 +779,57 @@ def createCalanaReport(reportFileName, loadLevel)
   reportFile.close()
 end
 
+def createWorkloadLoadFile(loadLevel)
+  if($wlShow)
+    reportFile = File.new($reportFileName, "r")
+    inFileName = $wlDir+"/workload-"+loadLevel+".xml"
+    outFileName = $outDir+"/loadOfWorkload-"+loadLevel+".txt"
+    wllFile = File.new(outFileName, "w")
+    wllFile.puts "time\tload"
+    eventQueue = Array.new
+
+    # get number of total CPUs used
+    totalCpus = 0
+    reportFile.each_line{|line|
+      if line =~ /total CPUs used/
+        totalCpus = line.match(/.*total CPUs used: (.*)/).to_a[1].to_i
+        break
+      end
+      # break if data lines reached.. should occour before that anyway
+      break if line =~ /===/
+    }
+    if totalCpus == 0
+      puts "total CPUs shouldn't be 0. please check if it occours in the report file."
+      puts "exiting.."
+      exit
+    end
+
+    # build eventQueue
+    doc = Hpricot.parse(File.read(inFileName))
+    (doc/:job).each {|job|
+      submittime = job.search("timing").first.get_attribute("submittime").to_i
+      runtime = job.search("actual").first.get_attribute("runtime").to_i
+      cpus = job.search("actual").first.get_attribute("cpus").to_i
+      eventQueue.push([submittime+1, cpus])
+      eventQueue.push([submittime+runtime, -cpus])
+    }
+    eventQueue.sort!
+
+    # traverse eventQueue
+    currCpu = 0;
+    cpuUsage = Array.new()          #TODO bessere datenstruktur!
+    eventQueue.each{|time, cpus|
+      currCpu += cpus
+      time >= cpuUsage.size ? cpuUsage.insert(time, currCpu) : cpuUsage[time] = currCpu
+    }
+
+    # save to file
+    cpuUsage.each_index{|time|
+      wllFile.puts "#{time}\t#{cpuUsage[time]/totalCpus.to_f}" if cpuUsage[time]
+    }
+  end
+end
+
 class EventStore
   attr_accessor :entityname
   def initialize(entityname)
@@ -1222,9 +1280,11 @@ $saFileName = options.safile
 $outDir = options.outdir
 $load = options.load
 $verbose = options.verbose
+$wlShow = options.wlShow
+$wlDir = options.wlDir
 
 if ($reportFileName == nil and $saFileName == nil and $traceFileName == nil) or
-  $outDir == nil or $load == nil
+  $outDir == nil or $load == nil or ($wlShow and $wlDir == nil)
   print "please read usage note (-h)\n"
   exit
 end
@@ -1232,6 +1292,7 @@ end
 puts "Using library path #{$:.join(":")}" if $verbose
 
 if ($reportFileName != nil)
+  createWorkloadLoadFile($load) if $wlShow
   createCalanaReport($reportFileName, $load)
   if ($traceFileName != nil)
     processCalanaTrace($reportFileName, $traceFileName, $load)

@@ -150,13 +150,7 @@ class RExperimentSingleAnalysis
     # Draw other lines
     color = color+1
     entities.each{|entity|
-      drawcmd+=<<-END_OF_CMD
-        lines(
-          data$#{baseEntity},
-          data$#{entity},
-          col=#{color}
-        );
-      END_OF_CMD
+      drawcmd += RExperimentSingleAnalysis.drawSingleLine(baseEntity, entity, color)
       color += 1
       }
 
@@ -184,6 +178,21 @@ class RExperimentSingleAnalysis
       for(rowNo in rownames(data)) points(data[rowNo,]$#{xRow}, data[rowNo,]$#{yRow}, col=data[rowNo,]$#{colorRow})
     END_OF_CMD
     @runner.execute(fullInFile, outFile, drawcmd)
+  end
+
+  # type is one out of {solid, dashed, dotted, dotdash, longdash, twodash}
+  def RExperimentSingleAnalysis.drawSingleLine(xRow, yRow, color, type="solid")
+    drawcmd=<<-END_OF_CMD
+      lines(data$#{xRow}, data$#{yRow}, col="#{color}", lty="#{type}");
+    END_OF_CMD
+  end
+
+  # draw load of workload                        # todo use it
+  def RExperimentSingleAnalysis.drawLoadOfWorkload(path, loadlevel)
+    drawcmd=<<-END_OF_CMD
+      load <- read.table("#{path}/loadOfWorkload-#{loadlevel}.txt", T)
+      lines(load$time, load$load, col=black, lty=dotted)
+    END_OF_CMD
   end
 end
 
