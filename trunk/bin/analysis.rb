@@ -67,6 +67,12 @@ class Optparser
       opts.on("-f", "--force", "Do not check whether the output directory is empty") do |v|
         options.force = v
       end
+      opts.on("-w", "--show-workload", "Shows load of workload in diagrams (make sure you set -d option if used") do |w|
+        options.wlShow = w
+      end
+      opts.on("-d", "--workload-dir DIR", "base path to the workload directories (set if -w option is set)") do |d|
+        options.wlDir = d
+      end
 
       opts.on_tail("-h", "--help", "Show this message") do
         puts opts
@@ -108,6 +114,7 @@ def calanaAnalysis
     report = File.join(File.expand_path(path), "report.log")
     trace = File.join(File.expand_path(path), "trace.log")
     cmd = "ruby #{$basedir}/bin/calana2report.rb -r #{report} -l #{load} -o #{$outDir}"
+      cmd += " -wlShow -wlDir #{$wlDir}" if $wlShow 
     if (not $short)
       cmd << " -t #{trace}" 
     end
@@ -146,7 +153,7 @@ def saAnalysis
   logDirs.each_pair {| load, path |
     puts "###\n## Processing load: #{load}\n#\n"
     #schedulebin = File.join($inDir, path)
-    cmd = "ruby #{$basedir}/bin/calana2report.rb -s #{path} -l #{load} -o #{$outDir}"
+    cmd = "ruby #{$basedir}/bin/calana2report.rb -s #{path} -l #{load} -o #{$outDir}"   #TODO maybe add wlShow/wlDir (see calanaAnalysis)
     if $verbose
       cmd << " -v"
     end
@@ -172,8 +179,10 @@ $outDir = options.outdir
 $verbose = options.verbose
 $short = options.short
 $force = options.force
+$wlShow = options.wlShow
+$wlDir = options.wlDir
 
-if $inDir == nil or $outDir == nil
+if $inDir == nil or $outDir == nil or ($wlShow == true and $wlDir == nil)
   print "please read usage note (-h)\n"
   exit
 end

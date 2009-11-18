@@ -82,10 +82,10 @@ class Optparser
             opts.on("-v", "--verbose", "Run verbosely") do |v|
                 options.verbose = v
             end
-            opts.on_tail("-w", "--show-workload", "Shows load of workload in diagrams (make sure you set -d option if used") do |w|
+            opts.on("-w", "--show-workload", "Shows load of workload in diagrams (make sure you set -d option if used") do |w|
                 options.wlShow = w
             end
-            opts.on_tail("-d", "--workload-dir DIR", "base path to the workload directories (set if -w option is set)") do |d|
+            opts.on("-d", "--workload-dir DIR", "base path to the workload directories (set if -w option is set)") do |d|
                 options.wlDir = d
             end
             opts.on_tail("-h", "--help", "Show this message") do
@@ -1265,7 +1265,7 @@ def processCalanaTrace(reportFileName, traceFileName, loadLevel)
   RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
           "qState", "Q-States", "time", "price")
   RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
-          "timePrice", "Price per second for agents along time", "time", "price/sec", true)
+          "timePrice", "Price per second for agents along time", "time", "price/sec", $wlShow)
 end
 
 ###
@@ -1285,7 +1285,7 @@ $wlShow = options.wlShow
 $wlDir = options.wlDir
 
 if ($reportFileName == nil and $saFileName == nil and $traceFileName == nil) or
-  $outDir == nil or $load == nil or ($wlShow and $wlDir == nil)
+  $outDir == nil or $load == nil or ($wlShow == true and $wlDir == nil)
   print "please read usage note (-h)\n"
   exit
 end
