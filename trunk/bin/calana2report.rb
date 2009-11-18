@@ -34,6 +34,7 @@ require 'Scheduler'
 require 'optparse'
 require 'ostruct'
 require 'Utils'
+require 'rubygems'
 require 'hpricot'
 #require 'ruby-debug'
 
