@@ -114,7 +114,7 @@ def calanaAnalysis
     report = File.join(File.expand_path(path), "report.log")
     trace = File.join(File.expand_path(path), "trace.log")
     cmd = "ruby #{$basedir}/bin/calana2report.rb -r #{report} -l #{load} -o #{$outDir}"
-      cmd += " -wlShow -wlDir #{$wlDir}" if $wlShow 
+      cmd += " -w -d #{$wlDir}" if $wlShow 
     if (not $short)
       cmd << " -t #{trace}" 
     end

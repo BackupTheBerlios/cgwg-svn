@@ -780,10 +780,10 @@ def createCalanaReport(reportFileName, loadLevel)
   reportFile.close()
 end
 
-def createWorkloadLoadFile(loadLevel)
+def createWorkloadLoadFile(loadLevel, wlDir)
   if($wlShow)
     reportFile = File.new($reportFileName, "r")
-    inFileName = $wlDir+"/workload-"+loadLevel+".xml"
+    inFileName = wlDir+"/workload-"+loadLevel+".xml"
     outFileName = $outDir+"/loadOfWorkload-"+loadLevel+".txt"
     wllFile = File.new(outFileName, "w")
     wllFile.puts "time\tload"
@@ -828,6 +828,7 @@ def createWorkloadLoadFile(loadLevel)
     cpuUsage.each_index{|time|
       wllFile.puts "#{time*10}\t#{cpuUsage[time]/totalCpus.to_f}" if cpuUsage[time]
     }
+    wllFile.close
   end
 end
 
@@ -1230,12 +1231,12 @@ def processCalanaTrace(reportFileName, traceFileName, loadLevel)
   traceFile.each_line{|line|
     agent, ent, time, value = line.match(/^trace\.(.*)\s-\s(.*)@(.*):\s(.*)$/).to_a[1,4]
     next if !entities.include?(ent)
-
+                                debugger
     if(time.to_i < currentSample)
       # store the values for each entity and agent for each sample (duration)
       agentNo = agents.index(agent)
       tmp[ent] = tmplArray.dup if !tmp.has_key?(ent)
-      tmp[ent][agentNo] = value.to_f if tmp[ent][agentNo] < value.to_f
+      tmp[ent][agentNo] = value.to_f if tmp[ent][agentNo] < value.to_nf
     else
       tmp.each{|e, v|
         entity = struct[e]
@@ -1243,7 +1244,7 @@ def processCalanaTrace(reportFileName, traceFileName, loadLevel)
       }
       currentSample += sampleRate
       tmp = Hash.new()
-    end
+    end                            # TODO find bug doesnt count right
   }
 
   # Build files
@@ -1293,7 +1294,7 @@ end
 puts "Using library path #{$:.join(":")}" if $verbose
 
 if ($reportFileName != nil)
-  createWorkloadLoadFile($load) if $wlShow
+  createWorkloadLoadFile($load, $wlDir) if $wlShow
   createCalanaReport($reportFileName, $load)
   if ($traceFileName != nil)
     processCalanaTrace($reportFileName, $traceFileName, $load)
