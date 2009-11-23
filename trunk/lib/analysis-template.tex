@@ -157,6 +157,14 @@ high load level: @@highload@@ \\
 
 \begin{figure}[htbp]
   \begin{center}
+    \includegraphics[width=12cm]{@@total-revenue-workloads@@}
+    \caption{total revenues for all workloads}
+    \label{fig:priceCorrelation}
+  \end{center}
+\end{figure}
+
+\begin{figure}[htbp]
+  \begin{center}
     \includegraphics[width=12cm]{@@priceCorrelation@@}
     \caption{priceCorrelation}
     \label{fig:priceCorrelation}
@@ -272,6 +280,30 @@ high load level: @@highload@@ \\
 \end{figure}
 
 \newpage
+\subsection{Prices for each job}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@price-lowload@@}
+    \caption{Prices for lowload}
+    \label{fig:price-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@price-midload@@}
+    \caption{Prices for midload}
+    \label{fig:price-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@price-highload@@}
+    \caption{Prices for highload}
+    \label{fig:price-highload}
+  \end{center}
+\end{figure}
+
+\newpage
 \subsection{Prices per second for all jobs}
 \begin{figure}[htbp]
   \begin{center}
@@ -295,6 +327,30 @@ high load level: @@highload@@ \\
   \end{center}
 \end{figure}
 
+
+\newpage
+\subsection{Queuetimes per runtime}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@queuetime-per-runtime-lowload@@}
+    \caption{Queuetimes per runtime for lowload}
+    \label{fig:queuetime-per-runtime-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@queuetime-per-runtime-midload@@}
+    \caption{Queuetimes per runtime for midload}
+    \label{fig:queuetime-per-runtime-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@queuetime-per-runtime-highload@@}
+    \caption{Queuetimes per runtime for highload}
+    \label{fig:queuetime-per-runtime-highload}
+  \end{center}
+\end{figure}
 
 \newpage
 \subsection{Queuetimes for all jobs}
@@ -396,7 +452,101 @@ high load level: @@highload@@ \\
   \end{center}
 \end{figure}
 
+\newpage
+\subsection{Total Revenue per Agent}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@revenue-per-agent-total-lowload@@}
+    \caption{Total revenue per agent for lowload}
+    \label{fig:revenue-per-agent-total-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@revenue-per-agent-total-midload@@}
+    \caption{Total revenue per agent for midload}
+    \label{fig:revenue-per-agent-total-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@revenue-per-agent-total-highload@@}
+    \caption{Total revenue per agent for highload}
+    \label{fig:revenue-per-agent-total-highload}
+  \end{center}
+\end{figure}
 
+\newpage
+\subsection{Relative Revenue (per runtime)}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@revenue-per-agent-relative-lowload@@}
+    \caption{Relative revenue per agent for lowload}
+    \label{fig:revenue-per-agent-relative-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@revenue-per-agent-relative-midload@@}
+    \caption{Relative revenue per agent for midload}
+    \label{fig:revenue-per-agent-relative-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@revenue-per-agent-relative-highload@@}
+    \caption{Relative revenue per agent for highload}
+    \label{fig:revenue-per-agent-relative-highload}
+  \end{center}
+\end{figure}
+
+\newpage
+\section{User related plots}
+\subsection{Price per second for each user}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@user-boxes-lowload@@}
+    \caption{Price per second for each user for lowload}
+    \label{fig:user-boxes-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@user-boxes-midload@@}
+    \caption{Price per second for each user for midload}
+    \label{fig:user-boxes-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@user-boxes-highload@@}
+    \caption{Price per second for each user for highload}
+    \label{fig:user-boxes-highload}
+  \end{center}
+\end{figure}
+
+\subsection{Costs for each particular user for each job}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@user-costs-lowload@@}
+    \caption{User costs for lowload}
+    \label{fig:user-costs-lowload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@user-costs-midload@@}
+    \caption{User costs for midload}
+    \label{fig:user-costs-midload}
+  \end{center}
+\end{figure}
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=12cm]{@@user-costs-highload@@}
+    \caption{User costs for highload}
+    \label{fig:user-costs-highload}
+  \end{center}
+\end{figure}
 
 
 \end{document}

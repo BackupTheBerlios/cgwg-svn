@@ -1231,20 +1231,21 @@ def processCalanaTrace(reportFileName, traceFileName, loadLevel)
   traceFile.each_line{|line|
     agent, ent, time, value = line.match(/^trace\.(.*)\s-\s(.*)@(.*):\s(.*)$/).to_a[1,4]
     next if !entities.include?(ent)
-                                debugger
     if(time.to_i < currentSample)
       # store the values for each entity and agent for each sample (duration)
       agentNo = agents.index(agent)
       tmp[ent] = tmplArray.dup if !tmp.has_key?(ent)
-      tmp[ent][agentNo] = value.to_f if tmp[ent][agentNo] < value.to_nf
+      tmp[ent][agentNo] = value.to_f if tmp[ent][agentNo] < value.to_f
     else
       tmp.each{|e, v|
         entity = struct[e]
         entity[currentSample] = v
       }
-      currentSample += sampleRate
+      while(time.to_i > currentSample)
+        currentSample += sampleRate
+      end
       tmp = Hash.new()
-    end                            # TODO find bug doesnt count right
+    end
   }
 
   # Build files
