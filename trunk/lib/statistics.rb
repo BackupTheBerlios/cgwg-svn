@@ -83,6 +83,7 @@ end
 # TODO: Eliminate outliers before merging and scaling - see Walsh test,
 # http://www.statistics4u.info/fundstat_germ/ee_walsh_outliertest.html
 def generateDoubleGaussianRandoms(amount)
+  amount = amount+1 # dirty fix for uneven users (otherwise there are insufficient numbers generated)
   range=Range.new(0,1)
   leftvalues=generateGaussianRandoms(amount/2,mean=0.1,sd=0.1)
   rightvalues=generateGaussianRandoms(amount/2,mean=0.9,sd=0.1)
