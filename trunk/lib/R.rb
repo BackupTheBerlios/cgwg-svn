@@ -93,7 +93,7 @@ class RExperimentSingleAnalysis
       data <- data[order(data$#{valuesCol}, decreasing=T),]
       barplot(data$#{valuesCol},
         main="#{title}",
-        xlab="#{xLabel}"
+        xlab="#{xLabel}",
         ylab="#{yLabel}",
         names.arg=data$#{labelsCol}
       )
