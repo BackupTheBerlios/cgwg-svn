@@ -577,10 +577,10 @@ class AgentRevenue
     }
     @reportFile.close
     RExperimentSingleAnalysis.barplotTwoDimensional(@directory, @load, "revenue-per-agent",
-            "Total revenue for each agent", "totalRevenue", "agent", "Agent#", "Total Revenue",
+            "Total revenue for each agent", "totalRevenue", "agent", "Agent ID", "Total Revenue",
             outFileName="revenue-per-agent-total")
     RExperimentSingleAnalysis.barplotTwoDimensional(@directory, @load, "revenue-per-agent",
-            "Relative revenue for each agent", "revenuePerRuntime", "agent", "Agent#", "Revenue per Runtime",
+            "Relative revenue for each agent", "revenuePerRuntime", "agent", "Agent ID", "Revenue per Runtime",
             outFileName="revenue-per-agent-relative")
   end
 end
