@@ -21,7 +21,7 @@ require 'Annotations'
 #require "ruby-debug"
 
 # Run R without saving of environment, as quiet as possible.
-R_CMD = "R --vanilla"
+R_CMD = "Rscript --vanilla"
 
 class RExperimentSingleAnalysis
   def RExperimentSingleAnalysis.plotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel, printLegend=false)
