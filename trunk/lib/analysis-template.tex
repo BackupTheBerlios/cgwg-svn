@@ -171,14 +171,6 @@ high load level: @@highload@@ \\
   \end{center}
 \end{figure}
 
-\begin{figure}[htbp]
-  \begin{center}
-    \includegraphics[width=12cm]{@@load-total-revenue@@}
-    \caption{totalRevenue}
-    \label{fig:totalRevenue}
-  \end{center}
-\end{figure}
-
 
 \newpage
 \section{Histograms}
@@ -429,30 +421,6 @@ high load level: @@highload@@ \\
 
 \newpage
 \section{Agent-related plots}
-\subsection{Total Revenue}\label{sub:total_revenue}
-\begin{figure}[htbp]
-  \begin{center}
-    \includegraphics[width=12cm]{@@total-revenue-lowload@@}
-    \caption{Total revenue per agent for lowload}
-    \label{fig:total-revenue-lowload}
-  \end{center}
-\end{figure}
-\begin{figure}[htbp]
-  \begin{center}
-    \includegraphics[width=12cm]{@@total-revenue-midload@@}
-    \caption{Total revenue per agent for midload}
-    \label{fig:total-revenue-midload}
-  \end{center}
-\end{figure}
-\begin{figure}[htbp]
-  \begin{center}
-    \includegraphics[width=12cm]{@@total-revenue-highload@@}
-    \caption{Total revenue per agent for highload}
-    \label{fig:total-revenue-highload}
-  \end{center}
-\end{figure}
-
-\newpage
 \subsection{Total Revenue per Agent}
 \begin{figure}[htbp]
   \begin{center}
@@ -502,7 +470,7 @@ high load level: @@highload@@ \\
 
 \newpage
 \section{User related plots}
-\subsection{Price per second for each user}
+\subsection{Price per second for each user (users ordered by price preference)}
 \begin{figure}[htbp]
   \begin{center}
     \includegraphics[width=12cm]{@@user-boxes-lowload@@}
@@ -525,7 +493,8 @@ high load level: @@highload@@ \\
   \end{center}
 \end{figure}
 
-\subsection{Costs for each particular user for each job}
+\newpage
+\subsection{Costs for each particular user for each job (colors distinguish users)}
 \begin{figure}[htbp]
   \begin{center}
     \includegraphics[width=12cm]{@@user-costs-lowload@@}

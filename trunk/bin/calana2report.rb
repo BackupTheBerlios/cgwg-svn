@@ -257,13 +257,14 @@ class LoadRevenue
     mode = "a" if File.exists?("#{@fullReportFileName}.txt")
     File.open("#{@fullReportFileName}.txt", mode) {|handle|
       handle.puts("load totalRevenue") if mode == "w"
-      handle.puts("#{@load}\t#{@totalRevenue}")
+      shortLoad = (@load.to_f*100).round / 100.0
+      handle.puts("#{shortLoad}\t#{@totalRevenue}")
       }
   end
 
   def LoadRevenue.plotTotalRevenue()
     RExperimentSingleAnalysis.barplotTwoDimensional(@@directory, NIL, @@reportFileName,
-            "Total revenues for each workload", "totalRevenue", "load", "revenue")
+            "Total revenues for each workload", "totalRevenue", "load", "LoadLevel", "Revenue")
   end
 end
 
@@ -576,10 +577,10 @@ class AgentRevenue
     }
     @reportFile.close
     RExperimentSingleAnalysis.barplotTwoDimensional(@directory, @load, "revenue-per-agent",
-            "Total revenue for each agent", "totalRevenue", "agent", "agent",
+            "Total revenue for each agent", "totalRevenue", "agent", "Agent#", "Total Revenue",
             outFileName="revenue-per-agent-total")
     RExperimentSingleAnalysis.barplotTwoDimensional(@directory, @load, "revenue-per-agent",
-            "Relative revenue for each agent", "revenuePerRuntime", "agent", "agent",
+            "Relative revenue for each agent", "revenuePerRuntime", "agent", "Agent#", "Revenue per Runtime",
             outFileName="revenue-per-agent-relative")
   end
 end
@@ -601,9 +602,9 @@ class ReportCollection
     #report9 = TotalRevenueReport.new($outDir, load);
     #report10 = DataplotReport.new($outDir, load);
     report10 = RReport.new($outDir, load);
-
-#    report12 = LatexExperimentReport.new($outDir);
-    @reports << report1 << report2 << report3 
+    #report12 = LatexExperimentReport.new($outDir);
+    
+    @reports << report1 << report2 << report3
     @reports << report4 << report5 << report6
     @reports << report7 << report8 << report9
     @reports << report10 #<< report11 #<< report12

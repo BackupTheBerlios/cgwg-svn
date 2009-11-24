@@ -21,7 +21,7 @@ require 'Annotations'
 #require "ruby-debug"
 
 # Run R without saving of environment, as quiet as possible.
-R_CMD = "Rscript --vanilla"
+R_CMD = "R --vanilla"
 
 class RExperimentSingleAnalysis
   def RExperimentSingleAnalysis.plotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel, printLegend=false)
@@ -73,7 +73,7 @@ class RExperimentSingleAnalysis
     @runner.execute(fullInFile, outFile, drawcmd)
   end
 
-  def RExperimentSingleAnalysis.barplotTwoDimensional(path, loadlevel, fileName, title, valuesCol, labelsCol, yLabel, outFileName="", printLegend=false)
+  def RExperimentSingleAnalysis.barplotTwoDimensional(path, loadlevel, fileName, title, valuesCol, labelsCol, xLabel, yLabel, outFileName="", printLegend=false)
     @runner = RRunner.new(path)
 
     # build input and output filenames
@@ -93,6 +93,7 @@ class RExperimentSingleAnalysis
       data <- data[order(data$#{valuesCol}, decreasing=T),]
       barplot(data$#{valuesCol},
         main="#{title}",
+        xlab="#{xLabel}"
         ylab="#{yLabel}",
         names.arg=data$#{labelsCol}
       )
@@ -213,8 +214,8 @@ class RExperimentAnalysis
     drawcmd=<<-END_OF_CMD
       plot(data$stime, data$qtime,
         main="Queuetime for all jobs",
-        xlab="submittime",
-        ylab="queuetime"
+        xlab="Submittime",
+        ylab="Queuetime"
       )
     END_OF_CMD
     outfile="queuetimes-"+@loadlevel.to_s
@@ -225,8 +226,8 @@ class RExperimentAnalysis
     drawcmd=<<-END_OF_CMD
       plot(data$stime, data$qtime/data$rtime,
         main="Queuetime per runtime",
-        xlab="submittime",
-        ylab="queuetime/runtime"
+        xlab="Submittime",
+        ylab="Queuetime/Runtime"
       )
     END_OF_CMD
     outfile="queuetime-per-runtime-"+@loadlevel.to_s
@@ -250,7 +251,7 @@ class RExperimentAnalysis
       plot(data$pricepref, data$pricert,
         main="Price preference vs. price per second",
         xlab="Price Preference",
-        ylab="price/runtime [price/s]"
+        ylab="Price/Runtime [price/s]"
       )
     END_OF_CMD
     outfile="priceprefvspricert-"+@loadlevel.to_s
@@ -262,7 +263,7 @@ class RExperimentAnalysis
       plot(data$perfpref, data$qtime,
         main="Performance preference vs. queuetime",
         xlab="Performance Preference",
-        ylab="absolute queuetime [s]"
+        ylab="Absolute Queuetime [s]"
       )
     END_OF_CMD
     outfile="perfprefvsqtime-"+@loadlevel.to_s
@@ -274,7 +275,7 @@ class RExperimentAnalysis
       plot(data$pricert,
         main="Price per second for all jobs",
         xlab="Job ID",
-        ylab="price/runtime [price/s]"
+        ylab="Price/Runtime [price/s]"
       )
     END_OF_CMD
     outfile="pricepersecond-"+@loadlevel.to_s
@@ -334,7 +335,7 @@ class RExperimentAnalysis
       ordereduids <- unique(data[order(data$pricepref, decreasing=T),]$uid)
       uids <- factor(data$uid, levels=ordereduids)
       boxplot(data$price/data$rtime ~ uids, col=c(1:8),
-        main="Price per sec for each user", xlab="users", ylab="price/sec")
+        main="Price per sec for each user", xlab="Users", ylab="Price/Sec")
     END_OF_CMD
     outfile="user-boxes-"+@loadlevel.to_s
     @runner.execute(@datafile, outfile, drawcmd)
