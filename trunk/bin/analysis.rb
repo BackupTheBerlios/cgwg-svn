@@ -76,12 +76,12 @@ class Optparser
 
       opts.on_tail("-h", "--help", "Show this message") do
         puts opts
-      exit
+        exit
+      end
     end
+    opts.parse!(args)
+    options
   end
-  opts.parse!(args)
-  options
-end
 end
 
 def calanaAnalysis
@@ -222,4 +222,4 @@ if $verbose
 end
 output = `#{cmd}`
 puts "#{output}" if $verbose
-
+nca

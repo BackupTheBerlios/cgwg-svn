@@ -4,8 +4,6 @@
 #include <linearpricing.hpp>
 #include <simpleresource.hpp>
 
-using namespace config;
-
 const std::string config::getConfigString() {
   std::ostringstream oss;
   oss << "Configuration id: " << config::CONFIG_NAME;
@@ -16,8 +14,10 @@ const std::string config::getConfigString() {
 }
   
 scheduler::ResourcePool::Ptr config::createResourcePool() {
-  if (CONFIG_NAME == THREE_SIMPLE_RESOURCES)
-	return create3SimpleResources();
+  if (CONFIG_NAME == config::THREE_SIMPLE_RESOURCES)
+	  return create3SimpleResources();
+  else if(CONFIG_NAME == config::ADAPTABLE_SIMPLE_RESSOURCES)
+    return createAdaptableSimpleResources();
   else {
 	std::ostringstream oss;
 	oss << "Config id " << CONFIG_NAME << ": no such configuration available.";
@@ -31,9 +31,23 @@ scheduler::ResourcePool::Ptr config::create3SimpleResources() {
   for(unsigned int i=0; i<3; i++) {
 	std::ostringstream oss;
 	oss << "Resource-" << i;
-	scheduler::PricingPlan::Ptr simplePricing(new scheduler::LinearPricing(0.1*(i+1)));
+	scheduler::PricingPlan::Ptr simplePricing(new scheduler::LinearPricing(0, 0.1*(i+1)));
 	scheduler::SimpleResource::Ptr resource(new scheduler::SimpleResource(i, oss.str(), simplePricing));
 	resources->add(resource);
+  }
+  return resources;
+}
+
+scheduler::ResourcePool::Ptr config::createAdaptableSimpleResources() {
+  scheduler::ResourcePool::Ptr resources(new scheduler::ResourcePool());
+  std::ostringstream oss;
+  for(unsigned int i=0; i<config::LOOP_COUNT; i++) {
+    oss << "Resource-" << i;
+	  scheduler::PricingPlan::Ptr simplePricing(new scheduler::LinearPricing(
+          config::ADAPTABLE_BASE_PRICES[i],
+          config::ADAPTABLE_TIME_PRICES[i]));
+  	scheduler::SimpleResource::Ptr resource(new scheduler::SimpleResource(i, oss.str(), simplePricing));
+	  resources->add(resource);
   }
   return resources;
 }

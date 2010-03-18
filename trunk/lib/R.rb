@@ -24,7 +24,7 @@ require 'Annotations'
 R_CMD = "Rscript --vanilla"
 
 class RExperimentSingleAnalysis
-  def RExperimentSingleAnalysis.plotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel, printLegend=false)
+  def RExperimentSingleAnalysis.plotTwoDimensional(path, loadlevel, fileName, title, xLabel, yLabel, printLegend=false, drawLOWorkload=false)
     @runner = RRunner.new(path)
     outFile = fileName+"-"+loadlevel.to_s
     inFile = outFile+".txt"
@@ -45,6 +45,9 @@ class RExperimentSingleAnalysis
         legend("topright", colnames(data[2:numLastEntity]), lwd=1, col=c(1:numLastEntity))
       END_OF_CMD
     end
+
+    # Print load of workload
+    RExperimentSingleAnalysis.drawLoadOfWorkload(path, loadlevel) if drawLOWorklaod
     @runner.execute(fullInFile, outFile, drawcmd)
   end
 
@@ -231,6 +234,19 @@ class RExperimentAnalysis
       )
     END_OF_CMD
     outfile="queuetime-per-runtime-"+@loadlevel.to_s
+    @runner.execute(@datafile, outfile, drawcmd)
+  end
+
+  def plotSingleRun_QueueRunTime_with_load_of_workload
+    drawcmd=<<-END_OF_CMD
+      plot(data$stime, data$qtime/data$rtime,
+        main="Queuetime per runtime",
+        xlab="Submittime",
+        ylab="Queuetime/Runtime"
+      )
+    END_OF_CMD
+    RExperimentSingleAnalysis.drawLoadOfWorkload(@workingdir, @loadlevel.to_s)
+    outfile="queuetime-per-runtime-with-load"+@loadlevel.to_s
     @runner.execute(@datafile, outfile, drawcmd)
   end
 
