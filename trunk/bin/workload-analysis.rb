@@ -68,9 +68,6 @@ class Optparser
       opts.on("-o", "--output directory","the output directory for the report files") do |outdir|
         options.outdir=outdir
     end
-    opts.on("-l", "--loadlevel [double]","loadlevel to analyze") do |loadlevel|
-      options.loadlevel=loadlevel
-    end
     opts.on("-u", "--include-utilization","include the utilization analysis") do |utilization|
       options.utilization=utilization
     end

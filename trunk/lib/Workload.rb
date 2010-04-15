@@ -857,7 +857,7 @@ class WorkloadAnalysis
     picfilepath=File.expand_path(File.join(@outdir,"/allocationsamples-#{@levelString}.eps"))
     puts("Working on load level #{@loadlevel}, sampling to #{datafilepath}")
     datafile=File.new(datafilepath, "w")
-    datafile.print("time\trequested nodes\n")
+    datafile.print("time\trequestedNodes\n")
     @workload.eachJob{|job|
       ###
       ## Todo: Think about the timing!
@@ -905,7 +905,8 @@ class WorkloadAnalysis
     #  datafilepath=@outdir+"/allocationsamples-#{@levelString}.txt"
     #  picfilepath=@outdir+"/allocationsamples-#{@levelString}.eps"
     puts "Plotting workload..." if $verbose
-    gnuPlot2Lines(datafilepath, picfilepath, "Accumulated allocation (load = #{@levelString})", "time", "requested nodes", 1, 2, maxTime, maxNodes)
+    #gnuPlot2Lines(datafilepath, picfilepath, "Accumulated allocation (load = #{@levelString})", "time", "requestedNodes", 1, 2, maxTime, maxNodes)
+    RPlot.plot(@outdir, "allocationsamples-#{@levelString}.txt", "allocationsamples-#{@levelString}.eps", "time", "requestedNodes", "time", "requested nodes", "Accumulated allocation", subtitle="load #{@levelString}", type="l", color="red")
     #}
   end
 end

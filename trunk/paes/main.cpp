@@ -34,6 +34,7 @@ void printHelp() {
   std::cout << " -i <FILE>: Specify input file" << std::endl;
   std::cout << " -o <DIR>: Specify output directory" << std::endl;
   std::cout << " -s <UINT>: Specify RNG seed value" << std::endl;
+  std::cout << " -n <INT>: Set number of iterations (default 10,000,000)" << std::endl;
   std::cout << " -v: Verbose output" << std::endl;
 }
 
@@ -86,12 +87,13 @@ int main (int argc, char** argv) {
   char *inputfile = NULL;
   char *outputdir = NULL;
   char *rng_seed_str = NULL;
+  unsigned int max_iterations = 0;
   int c;
 
   register_inthandlers();
 
   opterr = 0;
-  while ((c = getopt (argc, argv, "hvi:o:s:")) != -1)
+  while ((c = getopt (argc, argv, "hvi:o:s:n:")) != -1)
 	switch (c) {
 	  case 'h':
 		printHelp();
@@ -109,6 +111,9 @@ int main (int argc, char** argv) {
 	  case 's':
 		rng_seed_str = optarg;
 		break;
+    case 'n':
+    sscanf(optarg, "%u", &max_iterations);
+    break;
 	  case '?':
 		if (optopt == 'i')
 		  fprintf (stderr, "Option -%c requires an argument.\n", optopt);
@@ -165,6 +170,10 @@ int main (int argc, char** argv) {
 	}
   }
 
+  if (max_iterations == 0) {
+    max_iterations = config::MAX_ITERATION;
+  }
+
   std::string configInfo(config::getConfigString());
   std::cout << "Compile-time configuration is: " << std::endl << configInfo << std::endl;
 
@@ -199,7 +208,7 @@ int main (int argc, char** argv) {
 
   // prepare reporting
   unsigned long archivedSolutions=0;
-  unsigned long report_interval = config::MAX_ITERATION / 3;
+  unsigned long report_interval = max_iterations / 3;
   std::cout << "Will dump intermediate report every "<<report_interval << " iterations." << std::endl;
   std::ostringstream iteration_oss;
   iteration_oss << outputdir << "/runtime-report.txt";
@@ -236,7 +245,7 @@ int main (int argc, char** argv) {
   // Main loop
   double prev_distance=0.0;
   double sum_delta_distance=0.0;
-  for( unsigned long iteration = 0; iteration < config::MAX_ITERATION; iteration += 1) {
+  for( unsigned long iteration = 0; iteration < max_iterations; iteration += 1) {
 	// 2. mutate c to produce m and evaluate m
 	scheduler::Schedule::Ptr mutation(new scheduler::Schedule(*current));
 	mutation->mutate();

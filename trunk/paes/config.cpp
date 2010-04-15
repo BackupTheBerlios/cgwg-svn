@@ -40,8 +40,8 @@ scheduler::ResourcePool::Ptr config::create3SimpleResources() {
 
 scheduler::ResourcePool::Ptr config::createAdaptableSimpleResources() {
   scheduler::ResourcePool::Ptr resources(new scheduler::ResourcePool());
-  std::ostringstream oss;
   for(unsigned int i=0; i<config::LOOP_COUNT; i++) {
+    std::ostringstream oss;
     oss << "Resource-" << i;
 	  scheduler::PricingPlan::Ptr simplePricing(new scheduler::LinearPricing(
           config::ADAPTABLE_BASE_PRICES[i],
