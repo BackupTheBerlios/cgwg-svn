@@ -205,14 +205,10 @@ class RExperimentSingleAnalysis
 end
 
 class RPlot
-  def RPlot.plot(path, inFile, outFile, xRow, yRow, xLab, yLab, title, subtitle=nil, type="l", color="black")
-    puts "#{path} #{inFile} #{outFile} #{xRow} #{yRow} #{xLab} #{yLab} #{title} #{subtitle} #{type} #{color}"
+  def RPlot.plot(path, inFile, outFile, xRow, yRow, xLab, yLab, title, type="l", color="black")
     @runner = RRunner.new(path)
-    iF = File.join(path, inFile)
-    drawcmd =  "plot("
-    drawcmd += "xRow, yRow, "
-    drawcmd += "sub=#{subtitle}" if subtitle != nil
-    drawcmd += "type=#{type}, col=#{color}, main=#{title}, xlab=#{xLab}, ylab=#{yLab})"
+    iF = File.expand_path(inFile, path)
+    drawcmd = "plot(data$#{xRow}, data$#{yRow}, xlab='#{xLab}', ylab='#{yLab}', main='#{title}', type='#{type}', col='#{color}');"
     @runner.execute(iF, outFile, drawcmd)
   end
 end

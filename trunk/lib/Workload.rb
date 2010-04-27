@@ -906,7 +906,7 @@ class WorkloadAnalysis
     #  picfilepath=@outdir+"/allocationsamples-#{@levelString}.eps"
     puts "Plotting workload..." if $verbose
     #gnuPlot2Lines(datafilepath, picfilepath, "Accumulated allocation (load = #{@levelString})", "time", "requestedNodes", 1, 2, maxTime, maxNodes)
-    RPlot.plot(@outdir, "allocationsamples-#{@levelString}.txt", "allocationsamples-#{@levelString}.eps", "time", "requestedNodes", "time", "requested nodes", "Accumulated allocation", subtitle="load #{@levelString}", type="l", color="red")
+    RPlot.plot(@outdir, "allocationsamples-#{@levelString}.txt", "allocationsamples-#{@levelString}.eps", "time", "requestedNodes", "time", "requested nodes", "Accumulated allocaion (#{@levelString})", type="l", color="red")
     #}
   end
 end
