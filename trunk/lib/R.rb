@@ -179,7 +179,7 @@ class RExperimentSingleAnalysis
     drawcmd=<<-END_OF_CMD
       xRan <- range(data$#{xRow})
       yRan <- range(data$#{yRow})
-      plot(0, 0, xlab="#{xLabel}", ylab="#{yLabel}", xlim=xRan, ylim=yRan)
+      plot(0, 0, main="#{title}", xlab="#{xLabel}", ylab="#{yLabel}", xlim=xRan, ylim=yRan)
       for(rowNo in rownames(data)) points(data[rowNo,]$#{xRow}, data[rowNo,]$#{yRow}, col=data[rowNo,]$#{colorRow})
     END_OF_CMD
     @runner.execute(fullInFile, outFile, drawcmd)
@@ -200,6 +200,7 @@ class RExperimentSingleAnalysis
       axis(4, at=c(0, max/4, max/2, max*3/4, max), labels=c(0, 0.25, 0.5, 0.75, 1))
       values <- load$load*max
       lines(load$time, values, col="grey", lty="dotted")
+      legend("topleft", "load of workload", lwd=2, col="grey", bty="o")
     END_OF_CMD
   end
 end
@@ -346,13 +347,13 @@ class RExperimentAnalysis
   def plotSingleRun_user_prices
     RExperimentSingleAnalysis.multiLinePlotTwoDimensional2(@workingdir, @loadlevel,
             "rtable", "user-costs", "stime", "price", "uid",
-            "User costs for each job", "JobID", "Price")
+            "User costs for each job", "Submit time", "Price")
   end
 
   def plotSingleRun_user_qtimes
     RExperimentSingleAnalysis.multiLinePlotTwoDimensional2(@workingdir, @loadlevel,
             "rtable", "user-queuetimes", "stime", "qtime", "uid",
-            "User queuetimes for each job", "JobID", "Queuetime")
+            "User queue times for each job", "Submit time", "Queuetime")
   end
 
   def plotSingleRun_userBoxplot
