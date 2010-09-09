@@ -82,9 +82,6 @@ class Optparser
             opts.on("-v", "--verbose", "Run verbosely") do |v|
                 options.verbose = v
             end
-            opts.on("-w", "--show-workload", "Shows load of workload in diagrams (make sure you set -d option if used") do |w|
-                options.wlShow = w
-            end
             opts.on("-d", "--workload-dir DIR", "base path to the workload directories (set if -w option is set)") do |d|
                 options.wlDir = d
             end
@@ -782,7 +779,7 @@ def createCalanaReport(reportFileName, loadLevel)
 end
 
 def createWorkloadLoadFile(loadLevel, wlDir)
-  if($wlShow)
+  if($wlDir != nil)
     reportFile = File.new($reportFileName, "r")
     inFileName = wlDir+"/workload-"+loadLevel+".xml"
     outFileName = $outDir+"/loadOfWorkload-"+loadLevel+".txt"
@@ -1268,7 +1265,7 @@ def processCalanaTrace(reportFileName, traceFileName, loadLevel)
   RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
           "qState", "Q-States", "time", "price")
   RExperimentSingleAnalysis.multiLinePlotTwoDimensional($outDir, loadLevel,
-          "timePrice", "Price per second for agents along time", "time", "price/sec", $wlShow)
+          "timePrice", "Price per second for agents along time", "time", "price/sec", ($wlDir != nil))
 end
 
 ###
@@ -1284,11 +1281,10 @@ $saFileName = options.safile
 $outDir = options.outdir
 $load = options.load
 $verbose = options.verbose
-$wlShow = options.wlShow
 $wlDir = options.wlDir
 
 if ($reportFileName == nil and $saFileName == nil and $traceFileName == nil) or
-  $outDir == nil or $load == nil or ($wlShow == true and $wlDir == nil)
+   $outDir == nil or $load == nil
   print "please read usage note (-h)\n"
   exit
 end
@@ -1296,7 +1292,7 @@ end
 puts "Using library path #{$:.join(":")}" if $verbose
 
 if ($reportFileName != nil)
-  createWorkloadLoadFile($load, $wlDir) if $wlShow
+  createWorkloadLoadFile($load, $wlDir) if $wlDir != nil
   createCalanaReport($reportFileName, $load)
   if ($traceFileName != nil)
     processCalanaTrace($reportFileName, $traceFileName, $load)
